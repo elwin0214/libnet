@@ -3,8 +3,7 @@
 #include "selector_provider.h"
 #include "default_selector.h"
 #include "poll_selector.h"
-
-#ifdef EPOLL
+#ifdef HAVE_EPOLL
 #include "epoll_selector.h"
 #endif
 
@@ -25,7 +24,7 @@ Selector* SelectorProvider::provide(EventLoop *loop)
   }
   if (strcmp(env, "epoll") == 0)
   {
-    #ifdef EPOLL
+    #ifdef HAVE_EPOLL
     return new EpollSelector(loop);
     #else
     return new PollSelector(loop);

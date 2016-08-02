@@ -1,7 +1,7 @@
 SET (HTTP_SRCS http_server.cc http_response.cc http_processor.cc)
 SET (HTTP_HEADERS http_context.h http_request.h http_server.h)
 
-message(" http= " ${PROJECT_SOURCE_DIR})
+message(" PROJECT_SOURCE_DIR = " ${PROJECT_SOURCE_DIR})
 #INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 
 
