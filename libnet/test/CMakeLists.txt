@@ -41,6 +41,11 @@ target_link_libraries(countdown_latch_unitest libnet)
 add_executable(digits_unitest digits_unitest.cc)
 target_link_libraries(digits_unitest libnet)
 
+add_executable(condition_unitest condition_unitest.cc)
+target_link_libraries(condition_unitest libnet)
+
+add_executable(condition_wait_unitest condition_wait_unitest.cc)
+target_link_libraries(condition_wait_unitest libnet)
 
 add_test(NAME buffer_unitest COMMAND buffer_unitest)
 add_test(NAME endian_unitest COMMAND endian_unitest)
@@ -52,6 +57,8 @@ add_test(NAME thread_unitest COMMAND thread_unitest)
 add_test(NAME timestamp_unitest COMMAND timestamp_unitest)
 add_test(NAME countdown_latch_unitest COMMAND countdown_latch_unitest)
 add_test(NAME digits_unitest COMMAND digits_unitest)
+add_test(NAME condition_unitest COMMAND condition_unitest)
+add_test(NAME condition_wait_unitest COMMAND condition_wait_unitest)
 
 #add_test(NAME atomic_unitest COMMAND atomic_unitest)
 
