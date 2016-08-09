@@ -89,7 +89,7 @@ bool HttpProcessor::processHeaders(HttpContext &context)
 
   if (length.size() > 0)
   {
-    int len;
+    size_t len;
     digits::stringToDigit(length.c_str(), &len);  //fix error
     request.body.chunked_ = false;
     request.body.size_ = len;
@@ -97,10 +97,6 @@ bool HttpProcessor::processHeaders(HttpContext &context)
   }
   
   std::string transferEncoding = request.getHeader("Transfer-Encoding");
-  //std::cout << (transferEncoding) << (transferEncoding.size())<< "|" << std::endl;
-  //std::cout << ("chunked" == transferEncoding) << std::endl;
-  //std::cout << (transferEncoding == "chunked") << std::endl;
-  //LOG_INFO << "transferEncoding=" << transferEncoding  <<" equal=" << ("chunked" == transferEncoding) <<".";
   if ("chunked" == transferEncoding)
   {
     request.body.chunked_ = true;
@@ -192,7 +188,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
         }
         context.setState(HttpContext::kHeadersProcessed);
       }
-        //return true; // callback outside
+        
         break;
       case HttpContext::kHeadersProcessed :
         {
@@ -236,7 +232,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
         {
           done = true;
           result = true;
-          break;//return true; //need more
+          break;
         }
         input.moveReadIndex(used);
         request.body.offset_ += used;
@@ -246,7 +242,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
           requestHandlerCallBack_(input, context);
           done = true;
           result = true;
-          break;//return true; //need more
+          break;
         }
       }
         break;
@@ -259,24 +255,15 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
         {
           done = true;
           result = true;
-          break;//return true; //need more
+          break;
         }
         const char* start = input.beginRead();
         std::string length = std::string(start, pos - start);
-        int len;
+        size_t len;
         digits::xstringToDigit(length.c_str(), &(len));
         request.body.size_ = len;
         input.moveReadIndex(pos + 2 - input.beginRead());
-        // if (request.body.size_ == 0)
-        // { 
-        //   if (input.readable() < 2)
-        //     return true;
-          
-        //   input.moveReadIndex(2); //0\r\n
-        //   context.setState(HttpContext::kAllChunkSent);
-        //   requestHandlerCallBack_(input, context);
-        //   return true;
-        // }
+
         context.setState(HttpContext::kPartChunkSizeSent);
       }
         break;
@@ -291,7 +278,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
             {
               done = true;
               result = true;
-              break;//return true; //need more
+              break;
             }
             input.moveReadIndex(2); //0\r\n
             context.setState(HttpContext::kAllChunkSent);
@@ -299,25 +286,22 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
 
             done = true;
             result = true;
-            break;//return true; //need more
+            break;
           }
-          //while (input.readable() > 0)
-          //{
+
             if (request.body.remain() == 0)
             {
               if (input.readable() < 2)
               {
                 done = true;
                 result = true;
-                break;//return true; //need more
+                break;
               } 
 
               input.moveReadIndex(2);
               context.setState(HttpContext::kPartChunkSent);
               request.body.reset();
-              //done = false;
-              //result = true;
-              break;//return true; //need more
+              break;
             }
             size_t allowed = std::min(input.readable(), request.body.remain());
             int used = processBody(input, allowed, context);
@@ -325,14 +309,14 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
             {
               done = true;
               result = true;
-              break;//return true; //need more
+              break;
             } 
             input.moveReadIndex(used);
             request.body.offset_ += used;
           
           //}
         }
-        break;//return true;
+        break;
       case HttpContext::kPartChunkSent:
         context.setState(HttpContext::kPartChunkSending);
         break;

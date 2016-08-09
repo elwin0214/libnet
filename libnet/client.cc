@@ -1,6 +1,7 @@
 #include "client.h"
 #include "connection.h"
 #include "channel.h"
+#include "logger.h"
 
 namespace libnet
 {
@@ -17,6 +18,7 @@ Client::Client(EventLoop* loop, const char* host, int port, int connNum)
 
 Client::~Client()
 {
+  LOG_DEBUG << "~Client()" ;
   for (std::map<int, ConnectionPtr>::iterator itr = connections_.begin();
         itr != connections_.end(); itr++)
   {

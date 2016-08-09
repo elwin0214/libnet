@@ -3,6 +3,7 @@
 #include <libnet/countdown_latch.h>
 #include <libnet/nocopyable.h>
 #include <libnet/mutexlock.h>
+#include <libnet/logger.h>
 #include "command.h"
 #include "message.h"
 #include "memcached_client.h"
@@ -12,34 +13,71 @@ using namespace libnet;
 class Context : public NoCopyable
 {
 public:
-  typedef std::queue<std::shared_ptr<Message>> Queue;
+  typedef std::queue<std::shared_ptr<Message>> CommandQueue;
+
   Context():lock_()
   {
 
   }
 
-  std::shared_ptr<Message>& front()
+  ~Context()
   {
     LockGuard guard(lock_);
-    return queue_.front();
+    while (!commandSendingQueue_.empty())
+    {
+      commandSendingQueue_.front()->wakeup();
+      commandSendingQueue_.pop();
+    }
+    while (!commandSentQueue_.empty())
+    {
+      commandSentQueue_.front()->wakeup();
+      commandSentQueue_.pop();
+    }
   }
 
-  void pop()
+  void write(const MemcachedClient::ConnectionPtr& connectionPtr)
   {
     LockGuard guard(lock_);
-    queue_.pop();
+    while (!commandSendingQueue_.empty())
+    {
+      Buffer* buffer = new Buffer(0, 1024);
+      std::shared_ptr<Message>& messagePtr = commandSendingQueue_.front();
+      messagePtr->append(*buffer);
+      connectionPtr->sendBuffer(buffer);
+      commandSentQueue_.push(messagePtr); 
+      commandSendingQueue_.pop();
+    }
   }
 
-  void push(std::shared_ptr<Message>& message)
+  void push(const std::shared_ptr<Message>& message)
   {
     LockGuard guard(lock_);
-    queue_.push(message);
+    commandSendingQueue_.push(message);
+  }
+
+  bool parse(Buffer& input)
+  {
+    if (commandSentQueue_.empty()){
+      assert(input.readable() <= 0);// 多余数据
+      return false;
+    }
+    std::shared_ptr<Message>& messagePtr = commandSentQueue_.front();
+    if (messagePtr->parse(input))
+    {
+      LOG_DEBUG << "parse.wakup" ;
+      messagePtr->wakeup();
+      commandSentQueue_.pop();
+      //todo
+      return true;
+    }
+
+    return false;
   }
 
 private:
   MutexLock lock_;
-  Queue queue_;
-
+  CommandQueue commandSendingQueue_;
+  CommandQueue commandSentQueue_;
 };
 
 void MemcachedClient::connect()
@@ -56,7 +94,7 @@ void MemcachedClient::onConnection(const ConnectionPtr& conn)
     Context* ctx = new Context();
     conn->setContext(ctx);
     connectionPtr_ = conn;
-    countDownLatch_.countDown();
+    latch_.countDown();
   }
   else if (conn->disconnected())
   {
@@ -65,43 +103,35 @@ void MemcachedClient::onConnection(const ConnectionPtr& conn)
   }
 };
 
-std::shared_ptr<Message> MemcachedClient::set(const std::string& key, int32_t exptime, const std::string& value)
+void MemcachedClient::send(const std::shared_ptr<Message>& message)
 {
-  std::shared_ptr<Message> message(new Message(new SetCommand(key, exptime, value)));
   Context* context = static_cast<Context*>(connectionPtr_->getContext());
-
   context->push(message);
-  Buffer* buffer = new Buffer(0, 1024);
-  message->append(*buffer);
-  LOG_TRACE << " send = " << (buffer->toString()) ;
-  connectionPtr_->sendBuffer(buffer);
-  return message;
+  notify();
 };
-
-std::shared_ptr<Message> MemcachedClient::get(const std::string& key)
-{
-  std::shared_ptr<Message> message(new Message(new GetCommand(key)));
-  Context* context = static_cast<Context*>(connectionPtr_->getContext());
-
-  context->push(message);
-  Buffer* buffer = new Buffer(0, 1024);
-  message->append(*buffer);
-  LOG_TRACE << " send = " << (buffer->toString()) ;
-  connectionPtr_->sendBuffer(buffer);
-  return message;
-};
-
 
 void MemcachedClient::onMessage(const ConnectionPtr& conn)
 {
   Buffer& input = conn->input();
-  LOG_DEBUG << "read=" << input.toString() ;
+  LOG_TRACE << "read=" << input.toString() ;
   Context* context = static_cast<Context*>(connectionPtr_->getContext());
-  std::shared_ptr<Message>& message = context->front();
-  message->parse(input);
-  if (message->code() != kNeedMore)
+
+  while(context->parse(input))// more response
   {
-    context->pop();
-    message->wakeup();
   }
+
 };
+
+void MemcachedClient::write()
+{
+  (connectionPtr_->loop()->assertInLoopThread());
+  Context* context = static_cast<Context*>(connectionPtr_->getContext());
+  context->write(connectionPtr_);
+};
+
+void MemcachedClient::notify()
+{
+  connectionPtr_->loop()->runInLoop(std::bind(&MemcachedClient::write, this));
+}
+
+

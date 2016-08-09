@@ -5,6 +5,7 @@
 #include <map>
 #include "atomic.h"
 #include "inet_address.h"
+#include "mutexlock.h"
 
 namespace libnet
 {
@@ -52,6 +53,7 @@ private:
   InetAddress serverAddress_;
   Channels channels_; // 
   NewConnectionCallBack newConnectionCallBack_;
+  MutexLock lock_;
 
 };
 

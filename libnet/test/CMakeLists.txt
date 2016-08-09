@@ -47,6 +47,9 @@ target_link_libraries(condition_unitest libnet)
 add_executable(condition_wait_unitest condition_wait_unitest.cc)
 target_link_libraries(condition_wait_unitest libnet)
 
+add_executable(eventloop_unitest eventloop_unitest.cc)
+target_link_libraries(eventloop_unitest libnet)
+
 add_test(NAME buffer_unitest COMMAND buffer_unitest)
 add_test(NAME endian_unitest COMMAND endian_unitest)
 add_test(NAME inet_address_unitest COMMAND inet_address_unitest)
@@ -59,6 +62,9 @@ add_test(NAME countdown_latch_unitest COMMAND countdown_latch_unitest)
 add_test(NAME digits_unitest COMMAND digits_unitest)
 add_test(NAME condition_unitest COMMAND condition_unitest)
 add_test(NAME condition_wait_unitest COMMAND condition_wait_unitest)
+add_test(NAME eventloop_unitest COMMAND eventloop_unitest)
+
+
 
 #add_test(NAME atomic_unitest COMMAND atomic_unitest)
 

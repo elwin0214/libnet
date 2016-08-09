@@ -17,9 +17,9 @@ pthread_t currentTid()
 
 void* thread_execute(void* param)
 {
-    Thread *thread = (Thread*)param;
-    thread->run();
-    return NULL;
+  Thread *thread = static_cast<Thread*>(param);
+  thread->run();
+  return NULL;
 };
 
 }
@@ -44,14 +44,14 @@ Thread::Thread(const ThreadFunc &func,const std::string &name)
 
 void Thread::start()
 {
-    if (started_) 
-        return;
-    started_ = true;
-    int r = pthread_create(&tid_, NULL, thread::thread_execute, this);
-    if (r == 0)
-        LOG_DEBUG << "tid=" << tid_;
-    else
-        LOG_SYSFATAL << "pthread_create!" ;
+  if (started_) 
+    return;
+  started_ = true;
+  int r = pthread_create(&tid_, NULL, thread::thread_execute, this);
+  if (r == 0)
+    LOG_DEBUG << "tid=" << tid_;
+  else
+    LOG_SYSFATAL << "pthread_create!" ;
 };
 
 void Thread::run()

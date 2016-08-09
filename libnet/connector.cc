@@ -7,20 +7,20 @@ namespace libnet
 {
 
 Connector::Connector(EventLoop* loop, const InetAddress& serverAddress)
-  : //state_(kDisconnected),
-    stop_(false),
+  : stop_(false),
     loop_(loop),
     serverAddress_(serverAddress),
-    channels_()
-    //connect_(false)
+    channels_(),
+    lock_()
 {
 
 };
 
 Connector::~Connector()
 {
-  loop_->assertInLoopThread();
+  //loop_->assertInLoopThread();
   stop_ = true;
+  LockGuard guard(lock_);
   for (Channels::iterator itr = channels_.begin(); itr != channels_.end(); itr++) 
   {
     itr->second->disableAll();
@@ -37,14 +37,12 @@ void Connector::start()
 
 void Connector::stop()
 {
-   
   stop_ = true;
 };
 
 void Connector::connect()
 {
   if (stop_) return ;
-  //if (!started_.cas(false, true)) return;
   loop_->runInLoop(std::bind(&Connector::connectInLoop, this));
 };
 
@@ -52,6 +50,7 @@ void Connector::registerConnect(int fd)
 {
   loop_->assertInLoopThread();
   LOG_DEBUG << "fd=" << fd ; 
+  LockGuard guard(lock_);
   channels_[fd].reset(new Channel(loop_, fd));
   channels_[fd]->setWriteCallback(std::bind(&Connector::handleWrite, this, fd));
   channels_[fd]->setErrorCallback(std::bind(&Connector::handleError, this, fd));
@@ -66,7 +65,7 @@ void Connector::connectInLoop()
   int fd = sockets::createSocketFd();
   sockets::setNoBlocking(fd);
   int r = sockets::connect(fd, serverAddress_.getSockAddrIn());
-  int err = errno;  
+  int err = (0 == r) ? 0 : errno;  
 
   switch (err)
   {
@@ -96,6 +95,7 @@ void Connector::handleWrite(int fd)
 {
   loop_->assertInLoopThread();
   LOG_DEBUG << "fd=" << fd ;
+  LockGuard guard(lock_);
   channels_[fd]->disableAll();
   channels_[fd]->remove();
 
@@ -123,6 +123,7 @@ void Connector::handleError(int fd)
 {  
   loop_->assertInLoopThread();
   LOG_DEBUG << "fd=" << fd ;
+  LockGuard guard(lock_);
   channels_[fd]->disableAll();
   channels_[fd]->remove();
   loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, true));
@@ -132,6 +133,7 @@ void Connector::handleError(int fd)
 void Connector::removeChannelInLoop(int fd, bool close)
 {
   loop_->assertInLoopThread();
+  LockGuard guard(lock_);
   Channels::iterator itr = channels_.find(fd);
   if (itr == channels_.end()) return;
   if (close)

@@ -61,6 +61,11 @@ public:
     return getAndAdd(n) + n;
   }
 
+  T getValue()
+  {
+    return value_;
+  }
+
 private:
   volatile T value_;
 

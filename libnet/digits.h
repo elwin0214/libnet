@@ -3,31 +3,60 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "logger.h"
 
 namespace libnet
 {
 namespace digits
 {
-  
-inline int stringToDigit(const char* str, int *num)
+
+inline int stringToDigit(const char* str, unsigned int *num)
 {
-  return sscanf(str,"%d", num);
+  int r = sscanf(str,"%d", num);
+  if (r < 0)
+    LOG_SYSERROR << "str=" << str ;
+  return r;
 };
 
-inline int xstringToDigit(const char* str, int *num)
+inline int stringToDigit(const char* str, unsigned long *num)
 {
-  return sscanf(str,"%x", num);
+  int r = sscanf(str,"%ld", num);
+  if (r < 0)
+    LOG_SYSERROR << "str=" << str ;
+  return r;
+};
+
+inline int xstringToDigit(const char* str, unsigned int *num)
+{
+  int r = sscanf(str,"%x", num);
+  if (r < 0)
+    LOG_SYSERROR << "str=" << str ;
+  return r;
+};
+
+inline int xstringToDigit(const char* str, unsigned long *num)
+{
+  int r = sscanf(str,"%lx", num);
+  if (r < 0)
+    LOG_SYSERROR << "str=" << str ;
+  return r;
 };
 
 
-inline int digitToString(int num, char* str)
+inline int digitToString(uint32_t num, char* str)
 {
-  return sprintf(str,"%d", num);
+  int r = sprintf(str,"%d", num);
+  if (r < 0)
+    LOG_SYSERROR << "num=" << num ;
+  return r;
 };
 
-inline int digitToXstring(int num, char* str)
+inline int digitToXstring(uint32_t num, char* str)
 {
-  return sprintf(str,"%x", num);
+  int r = sprintf(str,"%x", num);
+  if (r < 0)
+     LOG_SYSERROR << "num=" << num ;
+  return r;
 };
 
 }

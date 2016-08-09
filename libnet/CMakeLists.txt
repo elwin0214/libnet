@@ -1,6 +1,10 @@
 INCLUDE(CheckFunctionExists)
 check_function_exists(epoll_create HAVE_EPOLL)
 
+if(HAVE_EPOLL)
+  set_source_files_properties(selector/selector_provider.cc PROPERTIES COMPILE_FLAGS "-DHAVE_POLL")
+endif()
+
 SET (SRCS
  acceptor.cc
  buffer.cc
@@ -27,7 +31,8 @@ SET (SRCS
  selector/poll_selector.cc
 )
 
-if(EPOLL)
+if(HAVE_EPOLL)
+  message(STATUS "library include epoll")
   SET(SRCS ${SRCS} selector/epoll_selector.cc)
 endif()
 
@@ -56,7 +61,7 @@ SET (HEADERS
   timestamp.h
 )
 
-message(" = " ${PROJECT_SOURCE_DIR})
+message("PROJECT_SOURCE_DIR = " ${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 
 ADD_LIBRARY(libnet SHARED ${SRCS})

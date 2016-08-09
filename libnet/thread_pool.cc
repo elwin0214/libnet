@@ -6,7 +6,7 @@
 namespace libnet
 {
 
-ThreadPool::ThreadPool(int threadSize, int maxQueueSize)
+ThreadPool::ThreadPool(size_t threadSize, size_t maxQueueSize)
     : threadSize_(threadSize),
       maxQueueSize_(maxQueueSize),
       stop_(false),

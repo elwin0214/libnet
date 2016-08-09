@@ -12,17 +12,6 @@ namespace libnet
 {
 namespace sockets
 {
-
-void setNoBlocking(int fd)
-{
-  int flags = ::fcntl(fd, F_GETFL, 0);
-  flags |= O_NONBLOCK;
-  int ret = ::fcntl(fd, F_SETFL, flags);
-  if (ret < 0)
-    LOG_SYSERROR << "fd=" << fd ;
-};
-
-
 void createSocketPair(int pair[])
 {
   if (0 > ::socketpair(AF_UNIX, 0, SOCK_STREAM, pair))
@@ -70,15 +59,6 @@ int bind(int fd, const struct sockaddr_in &addr)
   return ret;
 };
 
-void setResuseAddr(int fd)
-{
-  int val = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int)) < 0)
-  {
-    LOG_SYSERROR << "fd=" << fd <<"setResuseAddr!" ;
-  }
-};
-
 int listen(int fd, int backlog)
 {
   int ret = ::listen(fd, backlog);
@@ -112,14 +92,12 @@ ssize_t write(int fd, const void *buf, size_t count)
   return ::write(fd, buf, count);
 };
 
-
 void close(int fd)
 {
   if (::close(fd) < 0)
-    LOG_SYSERROR << "fd=" << fd <<" close!" ;
+    LOG_SYSERROR << "sockfd=" << fd <<" close!" ;
   else
-    LOG_DEBUG << "fd=" << fd ;
-
+    LOG_DEBUG << "sockfd=" << fd ;
 };
 
 void convert(const char *host, uint16_t port, struct sockaddr_in *addr)
@@ -141,11 +119,6 @@ uint16_t getPort(sockaddr_in &addr)
   return ntohs(addr.sin_port);
 };
 
-void shutdownWrite(int sockfd)
-{
-  ::shutdown(sockfd, SHUT_WR);
-};
-
 int getSocketError(int sockfd)
 {
   int optval;
@@ -159,6 +132,15 @@ int getSocketError(int sockfd)
   {
     return optval;
   }
+};
+
+void setNoBlocking(int fd)
+{
+  int flags = ::fcntl(fd, F_GETFL, 0);
+  flags |= O_NONBLOCK;
+  int ret = ::fcntl(fd, F_SETFL, flags);
+  if (ret < 0)
+    LOG_SYSERROR << "sockfd=" << fd ;
 };
 
 }

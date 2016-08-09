@@ -18,11 +18,13 @@ const int kSelectTimeMs = 10000;
 
 EventLoop::EventLoop()
   : selector_(selector::SelectorProvider::provide(this)),
+    functors_(),
     tid_(thread::currentTid()),
     stop_(false),
     wakeup_(false),
     timerQueue_(new TimerQueue(this))
 {
+  LOG_TRACE << "EventLoop.tid = " << tid_ << " current.tid = "<< thread::currentTid();
   sockets::createPipe(wakeupFd_);
   LOG_TRACE << "create pipe=" << (wakeupFd_[0]) << " and " << wakeupFd_[1] ;
   wakeupChannel_ = new Channel(this, wakeupFd_[0]);
@@ -118,7 +120,8 @@ void EventLoop::runInLoop(Functor functor)
 {
   // assertInLoopThread();
   // functor();
-  LOG_TRACE << "inloop=" << inLoopThread() <<  " add functor ";
+ // LOG_INFO << (this) ;
+ // LOG_TRACE << "inloop=" << inLoopThread() <<  " add functor ";
   if (inLoopThread())
   {
     functor();
@@ -134,6 +137,7 @@ void EventLoop::queueInLoop(Functor functor)
   {
         //LOG_DEBUG("%s", "runInQueue");
     LockGuard guard(lock_);
+    //functor();
     functors_.push(functor);
         //LOG_DEBUG("%s", "push");
   }
@@ -172,11 +176,11 @@ void EventLoop::shutdown()
 
 void EventLoop::wakeup()
 {
-  if (!wakeup_.cas(false, true))
-  {
-    LOG_TRACE << "cas fail! fd=" << (wakeupFd_[1]);
-    return;
-  }
+  //if (!wakeup_.cas(false, true))
+  //{
+  //  LOG_TRACE << "cas fail! fd=" << (wakeupFd_[1]);
+  //  return;
+  //}
   LOG_TRACE << "goto write fd=" << (wakeupFd_[1]);
   ssize_t n = sockets::write(wakeupFd_[1], "a", 1);
   if (n < 0)

@@ -209,10 +209,7 @@ void HttpResponse::flush()
     assert(n + 2 <= 32);
     buf[n] = '\r';
     buf[n + 1] = '\n';
-    //LOG_INFO << "n = " << n <<" size = " << std::string(buf, n + 2) ;
-    //LOG_INFO << "buffer = " << (buffer_->toString());
     buffer_->prepare(buf, n + 2);
-    //LOG_INFO << "buffer = " << (buffer_->toString());
     buffer_->append("\r\n");
     sendCallback_(buffer_.release());
     buffer_.reset(new Buffer(kPrepend, kSize));

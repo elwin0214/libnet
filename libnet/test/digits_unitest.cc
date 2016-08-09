@@ -9,13 +9,13 @@ using namespace std;
 
 int main()
 {
-  int num;
+  size_t num;
   stringToDigit("16", &num);
   assert(16 == num);
   cout << num << endl;
 
 
-  int num2;
+  size_t num2;
   xstringToDigit("10", &num2);
   assert(16 == num);
   cout << num2 << endl;

@@ -52,9 +52,8 @@ public:
   void cancel(const TimerId& timerId) {timerQueue_->cancel(timerId); }
     
 private:
-    std::queue<Functor>  functors_;
     std::shared_ptr<selector::Selector> selector_;
-    
+    std::queue<Functor>  functors_;
     pthread_t tid_;
     MutexLock lock_;
     bool stop_;

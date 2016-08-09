@@ -11,12 +11,6 @@ Timestamp Timestamp::now()
   return Timestamp(tv.tv_sec * 1000000 + tv.tv_usec);
 };
 
-
-void Timestamp::add(int timeMs)
-{
-  microSeconds_ = microSeconds_ + timeMs * 1000;
-};
-
 std::string Timestamp::toString() const
 {
   char buf[32];

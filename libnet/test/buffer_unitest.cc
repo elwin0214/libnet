@@ -82,6 +82,17 @@ struct TestBuffer  : public Test::Suite
   }
 
 
+  void test_startWiths()
+  {
+    Buffer buf(16, 1024);
+    buf.append("0123456789", 10);
+
+    assert(buf.startWiths("0123", 4));
+    assert(buf.startWiths("0123", 2));
+    assert(!buf.startWiths("2123", 2));
+  }
+
+
   TestBuffer()
   {
     TEST_ADD(TestBuffer::test_append);
@@ -90,7 +101,7 @@ struct TestBuffer  : public Test::Suite
     TEST_ADD(TestBuffer::test_equal);
     TEST_ADD(TestBuffer::test_find);
     TEST_ADD(TestBuffer::test_prepre);
-    
+    TEST_ADD(TestBuffer::test_startWiths);
   }
 };
  

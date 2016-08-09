@@ -19,8 +19,8 @@ public:
 private:
   std::queue<Task> queue_;
   std::vector<std::shared_ptr<Thread>> threads_;
-  int threadSize_;
-  int maxQueueSize_;
+  size_t threadSize_;
+  size_t maxQueueSize_;
 
   bool stop_;
 
@@ -34,7 +34,7 @@ private:
   bool isFull();
 
 public:
-  ThreadPool(int threadSize, int maxQueueSize);
+  ThreadPool(size_t threadSize, size_t maxQueueSize);
     
   void start();
 

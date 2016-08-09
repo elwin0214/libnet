@@ -9,7 +9,7 @@ A simple noblocking TCP Server imitate muduo.
 
 ```shell
 mkdir build
-cmake -DCMAKE_BUILD_TYPE=Debug/Release  -DEPOLL=ON/OFF ..
+cmake -DCMAKE_BUILD_TYPE=Debug/Release ..
 make 
 make test
 ```

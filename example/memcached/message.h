@@ -7,50 +7,59 @@
 #include <string>
 #include <memory>
 #include "command.h"
+#include "future.h"
 
 class Message : public NoCopyable
 {
 public:
-  Message(Command* command)
-    : countDownLatch_(1),
-      command_(command)
+  Message(Command* command, const std::shared_ptr<Future>& future)
+    : command_(command),
+      future_(future)
   {
 
   };
 
-  Code code()
-  {
-    return command_->code();
-  };
+  // Code code()
+  // {
+  //   return command_->code();
+  // };
 
-  std::string result()
-  {
-    return command_->result();
-  };
+  // std::string desc()
+  // {
+  //   return command_->desc();
+  // };
+
+  // std::string result()
+  // {
+  //   return command_->result();
+  // };
 
   void append(Buffer& buffer)
   {
     command_->append(buffer);
   };
 
-  void parse(Buffer& buffer)
+  bool parse(Buffer& buffer)
   {
-    command_->parse(buffer);
+    return command_->parse(buffer);
   };
 
-  void wait()
-  {
-    countDownLatch_.wait();
-  };
+  // void wait()
+  // {
+  //   future_.wait();
+  // };
 
   void wakeup()
   {
-    countDownLatch_.countDown();
+    future_->set(command_->code(), command_->result());
+    future_->wakeup();
   }
 
+
 private:
-  CountDownLatch countDownLatch_;
+  //CountDownLatch countDownLatch_;
   std::unique_ptr<Command> command_;
+  std::shared_ptr<Future> future_;
 };
 
 #endif

@@ -91,6 +91,19 @@ public:
     return *(beginRead() + index);//data_[readIndex_ + index];
   };
 
+  bool startWiths(const char* str)
+  {
+    return startWiths(str, ::strlen(str));
+  };
+
+  bool startWiths(const char* str, size_t len)
+  {
+    size_t size = readable();
+    if (size < len) return false;
+    size_t nlen = size < len ? size : len;
+    return ::strncmp(beginRead(), str, nlen) == 0;
+  };
+
   void makeRoom(size_t len);
 
   const char* find(const char* str);

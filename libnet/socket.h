@@ -16,7 +16,6 @@ public:
   explicit Socket(int fd):fd_(fd)
   {
   }
-  ~Socket();
 
   int fd(){ return fd_; }
 
@@ -31,12 +30,18 @@ public:
   int write(Buffer &buffer);
 
   int write(const CString &cstring);
+    
+  void shutdownWrite();
 
   void setReuseAddr();
 
   void setNoBlocking();
-    
-  void shutdownWrite();
+
+  void setTcpNoDelay(bool on);
+
+  void setKeepAlive(bool on);
+
+  ~Socket();
 
 private:
     int fd_;

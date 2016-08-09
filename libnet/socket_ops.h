@@ -18,8 +18,6 @@ void createPipe(int fds[]);
 
 int createSocketFd();
 
-void setNoBlocking(int fd);
-
 const struct sockaddr* sockaddr_cast(const struct sockaddr_in* addr);
 
 struct sockaddr* sockaddr_cast(struct sockaddr_in* addr);
@@ -44,11 +42,9 @@ std::string getIp(sockaddr_in &addr);
 
 uint16_t getPort(sockaddr_in &addr);
 
-void setResuseAddr(int fd);
-
-void shutdownWrite(int fd);
-
 int getSocketError(int fd);
+
+void setNoBlocking(int fd);
 
 }
 }

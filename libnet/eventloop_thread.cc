@@ -9,6 +9,7 @@ EventLoopThread::EventLoopThread(const std::string& name)
   : name_(name),
     lock_(),
     cond_(lock_),
+    loop_(NULL),
     thread_(std::bind(&EventLoopThread::exec, this), name_)
 {
 

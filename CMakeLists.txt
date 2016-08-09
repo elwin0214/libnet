@@ -1,25 +1,43 @@
 set(CMAKE_MACOSX_RPATH 1)
 cmake_minimum_required(VERSION 2.8)
+project(libnet)
+
 enable_testing()
 
+
 set(CMAKE_CXX_COMPILER "g++")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread")
+set(CMAKE_CXX_FLAGS "-std=c++11 -pthread")
 
-SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -Wall -g")
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2 -Wall -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_PROFILER "-O0 -Wall -g")
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -Wall -g")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -DNDEBUG")
 
-#cmake -DCMAKE_BUILD_TYPE=Debug/Release  -DEPOLL=ON/OFF path
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
+#cmake -DCMAKE_BUILD_TYPE=Debug/Release/Profiler path
+ 
 message(STATUS " project source directory = " ${PROJECT_SOURCE_DIR})
+message(STATUS " CMAKE_BUILD_TYPE = " ${CMAKE_BUILD_TYPE})
+string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
+message(STATUS " CMAKE_CXX_FLAGS = " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_${BUILD_TYPE}})
 
 
-OPTION(EPOLL "epoll sys call" OFF)  
-IF(EPOLL)
-    ADD_DEFINITIONS(-DEPOLL)
-ENDIF(EPOLL)
+find_path(PROFILER_INCLUDE_DIR gperftools/profiler.h)
+find_library(PROFILER_LIBRARY NAMES profiler)
+find_path(TCMALLOC_INCLUDE_DIR gperftools/heap-profiler.h)
+find_library(TCMALLOC_LIBRARY NAMES tcmalloc)
 
 
-project (libnet)
+if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
+message(STATUS "found profiler " ${PROFILER_INCLUDE_DIR} ${PROFILER_LIBRARY})
+endif()
+
+
+if(TCMALLOC_INCLUDE_DIR AND TCMALLOC_LIBRARY)
+message(STATUS "found tcmalloc")
+endif()
+
 add_subdirectory(libnet)
 add_subdirectory(example)
  
