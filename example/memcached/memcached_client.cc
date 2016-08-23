@@ -57,6 +57,7 @@ public:
 
   bool parse(Buffer& input)
   {
+    LockGuard guard(lock_);
     if (commandSentQueue_.empty()){
       assert(input.readable() <= 0);// 多余数据
       return false;

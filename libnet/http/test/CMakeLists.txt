@@ -5,19 +5,19 @@
 #add_executable(digits_test digits_test.cc)
 
 add_executable(httpprocessor_req_unitest httpprocessor_req_unitest.cc)
-target_link_libraries(httpprocessor_req_unitest libnet_http cpptest)
+target_link_libraries(httpprocessor_req_unitest libnet_http)
 
 add_executable(httpprocessor_keepalive_unitest httpprocessor_keepalive_unitest.cc)
-target_link_libraries(httpprocessor_keepalive_unitest libnet_http cpptest)
+target_link_libraries(httpprocessor_keepalive_unitest libnet_http)
 
 add_executable(httpprocessor_chunked_req_unitest httpprocessor_chunked_req_unitest.cc)
-target_link_libraries(httpprocessor_chunked_req_unitest libnet_http cpptest)
+target_link_libraries(httpprocessor_chunked_req_unitest libnet_http)
 
 
 
 
 add_executable(httpserver_test httpserver_test.cc)
-target_link_libraries(httpserver_test libnet_http cpptest)
+target_link_libraries(httpserver_test libnet_http)
 
 #add_test(NAME digits_test COMMAND digits_test)
 add_test(NAME httpprocessor_req_unitest COMMAND httpprocessor_req_unitest)

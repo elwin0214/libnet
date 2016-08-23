@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <cpptest.h>
 #include <iostream>
 #include <libnet/logger.cc>
 #include <libnet/buffer.h>
@@ -66,11 +65,9 @@ ProxyConnection proxyConnection;
 
 
 
-struct TestHttpProcessor  : public Test::Suite
+struct TestHttpProcessor 
 {
-
-
-  virtual void setup()
+  void setup()
   {
     gHttpProcessor = new HttpProcessor();
     gContext = new HttpContext();
@@ -85,7 +82,7 @@ struct TestHttpProcessor  : public Test::Suite
   
   } 
 
-  virtual void tear_down()
+  void tear_down()
   {
     delete gHttpProcessor;
     delete gContext;
@@ -117,15 +114,13 @@ struct TestHttpProcessor  : public Test::Suite
     cout << "request body=" << gResponseBuffer->toString() << endl;
   }
 
-  TestHttpProcessor()
-  {
-    TEST_ADD(TestHttpProcessor::test_post);
-  }
+
 };
  
 int main()
 {
   TestHttpProcessor th;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (th.run(output, false));
+  th.setup();
+  th.test_post();
+  th.tear_down();
 }

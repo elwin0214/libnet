@@ -1,26 +1,22 @@
-#include <cpptest.h>
 #include <libnet/logger.h>
 #include <assert.h>
 
 using namespace libnet;
 using namespace libnet::log;
 
-struct TestLoggerStream  : public Test::Suite
+struct TestLoggerStream 
 {
   void test_append()
   {
     LoggerStream stream;
     stream << "abc" ;
     assert(stream.buffer().toString() == "abc");
-    TEST_ASSERT(stream.buffer().toString() == "abc");
 
     stream << "def" ;
     assert(stream.buffer().toString() == "abcdef");
-    TEST_ASSERT(stream.buffer().toString() == "abcdef");
 
     stream << 100 ;
     assert(stream.buffer().toString() == "abcdef100");
-    TEST_ASSERT(stream.buffer().toString() == "abcdef100");
 
   }
 
@@ -48,19 +44,16 @@ struct TestLoggerStream  : public Test::Suite
   }
 
 
-  TestLoggerStream()
-  {
-    TEST_ADD(TestLoggerStream::test_append);
-    TEST_ADD(TestLoggerStream::test_append_over);
-    TEST_ADD(TestLoggerStream::test_close);
-  }
 };
  
 int main()
 {
-  TestLoggerStream tl;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (tl.run(output, false));
+  TestLoggerStream tls;
+
+  tls.test_append();
+  tls.test_append_over();
+  tls.test_close();
+
   return 0;
 }
 

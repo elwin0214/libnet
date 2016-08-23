@@ -15,7 +15,7 @@ pid_t gettid()
 {
      return syscall(SYS_gettid);  
 };
-
+int gInited = 0;
 struct Test
 {
   pthread_t tid_;
@@ -24,16 +24,25 @@ struct Test
   {
     tid_ = thread::currentTid();
   }
+
+  void init()
+  {
+    gInited = 1;
+  }
 };
+
 
 void test_tid()
 {
   Test t;
+  Thread::registerInitCallback(std::bind(&Test::init, &t));
+
   Thread thread(std::bind(&Test::f, &t), "test");
   thread.start();
   thread.join();
   cout << t.tid_  << " "  << thread.tid() ;
   assert(t.tid_ == thread.tid());
+  assert(gInited == 1);
 }
 
 int main()

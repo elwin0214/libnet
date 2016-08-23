@@ -14,7 +14,7 @@ class MemcachedClient : public NoCopyable
 public:
   typedef std::shared_ptr<Connection> ConnectionPtr;
   MemcachedClient(EventLoop* loop, const char* host, int port, CountDownLatch& latch)
-    : client_(loop, host, port, 1),
+    : client_(loop, host, port),
       latch_(latch)
   {
   };

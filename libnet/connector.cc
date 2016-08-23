@@ -8,9 +8,10 @@ namespace libnet
 
 Connector::Connector(EventLoop* loop, const InetAddress& serverAddress)
   : stop_(false),
+    state_(kDisConnected),
     loop_(loop),
     serverAddress_(serverAddress),
-    channels_(),
+    channel_(),
     lock_()
 {
 
@@ -20,19 +21,24 @@ Connector::~Connector()
 {
   //loop_->assertInLoopThread();
   stop_ = true;
+  state_ = kDisConnected;
   LockGuard guard(lock_);
-  for (Channels::iterator itr = channels_.begin(); itr != channels_.end(); itr++) 
+  // for (Channels::iterator itr = channels_.begin(); itr != channels_.end(); itr++) 
+  // {
+  if (channel_)
   {
-    itr->second->disableAll();
-    itr->second->remove();
+    channel_->disableAll();
+    channel_->remove();
     LOG_DEBUG << "close" ;
-    sockets::close(itr->second->fd());
+    sockets::close(channel_->fd());
   }
+  //}
 };
 
 void Connector::start()
 {
   stop_ = false;
+  loop_->runInLoop(std::bind(&Connector::connect, this));
 };
 
 void Connector::stop()
@@ -42,25 +48,28 @@ void Connector::stop()
 
 void Connector::connect()
 {
-  if (stop_) return ;
+  loop_->assertInLoopThread();
+  if (state_ == kConnecting) return;
+  state_ = kConnecting;
   loop_->runInLoop(std::bind(&Connector::connectInLoop, this));
 };
 
 void Connector::registerConnect(int fd)
 {
   loop_->assertInLoopThread();
+
   LOG_DEBUG << "fd=" << fd ; 
   LockGuard guard(lock_);
-  channels_[fd].reset(new Channel(loop_, fd));
-  channels_[fd]->setWriteCallback(std::bind(&Connector::handleWrite, this, fd));
-  channels_[fd]->setErrorCallback(std::bind(&Connector::handleError, this, fd));
-  channels_[fd]->enableWriting();  //error ?
+  channel_.reset(new Channel(loop_, fd));
+  channel_->setWriteCallback(std::bind(&Connector::handleWrite, this, fd));
+  channel_->setErrorCallback(std::bind(&Connector::handleError, this, fd));
+  channel_->enableWriting();  //error ?
 };
 
 void Connector::connectInLoop()
 {
 
-  if(stop_) return;
+  if (stop_) return;
   loop_->assertInLoopThread();
   int fd = sockets::createSocketFd();
   sockets::setNoBlocking(fd);
@@ -96,10 +105,10 @@ void Connector::handleWrite(int fd)
   loop_->assertInLoopThread();
   LOG_DEBUG << "fd=" << fd ;
   LockGuard guard(lock_);
-  channels_[fd]->disableAll();
-  channels_[fd]->remove();
+  channel_->disableAll();
+  channel_->remove();
 
-  int err = sockets::getSocketError(fd);
+  int err = sockets::getSocketError(fd);//socket 连接建立变为可读，如果出错 即可读又可写
   
   if (err)
   {
@@ -124,8 +133,8 @@ void Connector::handleError(int fd)
   loop_->assertInLoopThread();
   LOG_DEBUG << "fd=" << fd ;
   LockGuard guard(lock_);
-  channels_[fd]->disableAll();
-  channels_[fd]->remove();
+  channel_->disableAll();
+  channel_->remove();
   loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, true));
   retry();
 };
@@ -134,13 +143,14 @@ void Connector::removeChannelInLoop(int fd, bool close)
 {
   loop_->assertInLoopThread();
   LockGuard guard(lock_);
-  Channels::iterator itr = channels_.find(fd);
-  if (itr == channels_.end()) return;
+  channel_.reset();
   if (close)
   {
     sockets::close(fd); 
   }
-  channels_.erase(fd);
-
+  else
+  {
+    state_ = kConnected;
+  }
 };
 }

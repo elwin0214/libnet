@@ -1,4 +1,3 @@
-#include <cpptest.h>
 #include <libnet/logger.h>
 #include <assert.h>
 
@@ -17,8 +16,7 @@ void flush_func()
 
 }
 
-
-struct TestLogger : public Test::Suite
+struct TestLogger
 {
 
   void test_output()
@@ -28,18 +26,11 @@ struct TestLogger : public Test::Suite
     LOG_INFO << "abc" ;
   }
 
-
-  TestLogger()
-  {
-    TEST_ADD(TestLogger::test_output);
-  }
-
 };
  
 int main()
 {
   TestLogger tl;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (tl.run(output, false));
+  tl.test_output();
   return 0;
 }

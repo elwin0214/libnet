@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <cpptest.h>
 #include <iostream>
 #include <libnet/logger.cc>
 #include <libnet/buffer.h>
@@ -64,10 +63,10 @@ struct ProxyConnection
 ProxyHandler proxyHandler;
 ProxyConnection proxyConnection;
 
-struct TestHttpProcessorGet  : public Test::Suite
+struct TestHttpProcessorGet
 {
 
-  virtual void setup()
+  void setup()
   {
     gHttpProcessor = new HttpProcessor();
     gContext = new HttpContext();
@@ -82,7 +81,7 @@ struct TestHttpProcessorGet  : public Test::Suite
   
   } 
 
-  virtual void tear_down()
+  void tear_down()
   {
     delete gHttpProcessor;
     delete gContext;
@@ -97,7 +96,6 @@ struct TestHttpProcessorGet  : public Test::Suite
     buffer.append("GET / HTTP/1.1\r\n\r\n");
     gContext->getResponse().setClose(true);
     gHttpProcessor->process(buffer, *gContext);
-    TEST_ASSERT(gContext->getState() == HttpContext::kBodySent);
     assert(gContext->getState() == HttpContext::kBodySent);
 
     std::string response ="HTTP/1.1 200 OK\r\nConnection: close\r\n\r\nhello world";
@@ -114,7 +112,6 @@ struct TestHttpProcessorGet  : public Test::Suite
     buffer.append("GET / HTTP/1.1\r\n\r\n");
     gContext->getResponse().setClose(false);
     gHttpProcessor->process(buffer, *gContext);
-    TEST_ASSERT(gContext->getState() == HttpContext::kBodySent);
     assert(gContext->getState() == HttpContext::kBodySent);
 
     std::string response ="HTTP/1.1 200 OK\r\nContent-Length: 11\r\nConnection: Keep-Alive\r\n\r\nhello world";
@@ -124,16 +121,16 @@ struct TestHttpProcessorGet  : public Test::Suite
     assert (response == (gResponseBuffer->toString()));
   }
 
-  TestHttpProcessorGet()
-  {
-    TEST_ADD(TestHttpProcessorGet::test_get_close);
-    TEST_ADD(TestHttpProcessorGet::test_get_keepalive);
-  }
 };
  
 int main()
 {
   TestHttpProcessorGet th;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (th.run(output, false));
+  th.setup();
+  th.test_get_close();
+  th.tear_down();
+
+  th.setup();
+  th.test_get_keepalive();
+  th.tear_down();
 }

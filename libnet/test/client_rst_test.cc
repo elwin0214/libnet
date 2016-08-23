@@ -4,11 +4,11 @@
 
 using namespace libnet;
 
-EventLoop* gEventLoop;
+EventLoop* gLoop;
 
 void cancel()
 {
-  gEventLoop->shutdown();
+  gLoop->shutdown();
 };
 
 int main()
@@ -16,9 +16,9 @@ int main()
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
   EventLoop loop;
-  gEventLoop = &loop;
-  Client client(gEventLoop, "127.0.0.1", 9999, 1);
+  gLoop = &loop;
+  Client client(gLoop, "127.0.0.1", 9999);
   client.connect();
-  gEventLoop->runAfter(15000, std::bind(cancel));
-  gEventLoop->loop();
+  gLoop->runAfter(15000, std::bind(cancel));
+  gLoop->loop();
 }

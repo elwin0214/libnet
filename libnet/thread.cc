@@ -56,7 +56,10 @@ void Thread::start()
 
 void Thread::run()
 {
-
+  if (Thread::initCallback_)
+  {
+    Thread::initCallback_();
+  }
   if ("" != name_)
     thread::currentThreadName = name_.c_str();
   else 
@@ -90,5 +93,5 @@ Thread::~Thread()
   }
 
 };
-
+Thread::ThreadFunc Thread::initCallback_ = std::function<void()>();
 }

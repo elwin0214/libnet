@@ -1,4 +1,3 @@
-#include <cpptest.h>
 #include <libnet/logger.h>
 #include <assert.h>
 

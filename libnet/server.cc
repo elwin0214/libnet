@@ -74,7 +74,7 @@ void Server::newConnection(int fd, InetAddress& addr)
   loopPtr->runInLoop(std::bind(&Connection::establish, connPtr));  
 };
 
-void Server::removeConnection(const ConnectionPtr &connPtr)
+void Server::removeConnection(const ConnectionPtr &connPtr)//2次操作，避免锁竞争
 {
   loop_->runInLoop(std::bind(&Server::removeConnectionInLoop, this, connPtr)); 
 };

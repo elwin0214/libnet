@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <cpptest.h>
 #include <iostream>
 #include <string>
 #include <libnet/logger.cc>
@@ -75,7 +74,7 @@ ProxyHandler proxyHandler;
 ProxyConnection proxyConnection;
 
 
-struct TestChunkedHttpProcessor  : public Test::Suite
+struct TestChunkedHttpProcessor
 {
   virtual void setup()
   {
@@ -170,10 +169,6 @@ struct TestChunkedHttpProcessor  : public Test::Suite
     assert (body == "6\r\n123456\r\nc\r\n012345678901\r\n14\r\n01234567890123456789\r\n0\r\n\r\n");
   }
 
-  TestChunkedHttpProcessor()
-  {
-    TEST_ADD(TestChunkedHttpProcessor::test_post);
-  }
 };
  
 int main()
@@ -181,6 +176,9 @@ int main()
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
   TestChunkedHttpProcessor th;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (th.run(output, false));
+
+  th.setup();
+  th.test_post();
+  th.tear_down();
+
 }

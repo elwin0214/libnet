@@ -23,10 +23,6 @@ void onConnection(std::string name, const ConnectionPtr& conPtr)
   }
 };
 
-// void onMessage(ConnectionPtr conPtr)
-// {
-
-// };
 
 void server_start()
 {
@@ -41,7 +37,7 @@ void server_start()
 void client_start()
 {
   EventLoop loop;
-  Client client(&loop, "127.0.0.1", 9999, 1);
+  Client client(&loop, "127.0.0.1", 9999);
   client.setConnectionCallBack(std::bind(onConnection, "client", _1));
   client.connect();
   loop.loop();
@@ -56,7 +52,6 @@ int main()
 
   Thread client(std::bind(client_start), "client");
   client.start();
-
   //Connector connector()
   server.join();
   client.join();

@@ -6,12 +6,12 @@
 namespace libnet
 {
 
-Client::Client(EventLoop* loop, const char* host, int port, int connNum)
+Client::Client(EventLoop* loop, const char* host, int port)
   : loop_(loop),
     serverAddr_(host, port),
     connector_(std::make_shared<Connector>(loop_, serverAddr_)),
     connId_(1),
-    connNum_(connNum)
+    connectionPtr_()
 {
   connector_->setNewConnectionCallBack(std::bind(&Client::newConnection, this, std::placeholders::_1));
 };
@@ -19,23 +19,28 @@ Client::Client(EventLoop* loop, const char* host, int port, int connNum)
 Client::~Client()
 {
   LOG_DEBUG << "~Client()" ;
-  for (std::map<int, ConnectionPtr>::iterator itr = connections_.begin();
-        itr != connections_.end(); itr++)
+  // for (std::map<int, ConnectionPtr>::iterator itr = connections_.begin();
+  //       itr != connections_.end(); itr++)
+  // {
+  //   ConnectionPtr conn = itr->second;
+  //   itr->second.reset();
+  //   conn->loop()->runInLoop(std::bind(&Connection::destroy, conn));
+  //   conn.reset();
+  // }
+  if (connectionPtr_)
   {
-    ConnectionPtr conn = itr->second;
-    itr->second.reset();
-    conn->loop()->runInLoop(std::bind(&Connection::destroy, conn));
-    conn.reset();
+    loop_->runInLoop(std::bind(&Connection::destroy, connectionPtr_));
+    connectionPtr_.reset();
   }
 };
 
 void Client::connect()
 {
   connector_->start();
-  for (int i = 0; i < connNum_; i++)
-  {
-    connector_->connect();
-  }
+  // for (int i = 0; i < connNum_; i++)
+  // {
+  //   connector_->connect();
+  // }
 };
 
 void Client::disconnect()
@@ -47,14 +52,20 @@ void Client::disconnect()
 void Client::disconnectInLoop()
 {
   loop_->assertInLoopThread();
-  for (std::map<int, ConnectionPtr>::iterator itr = connections_.begin();
-        itr != connections_.end(); itr++)
+  if (connectionPtr_)
   {
-    ConnectionPtr conn = itr->second;
-    itr->second.reset();
-    conn->loop()->runInLoop(std::bind(&Connection::shutdown, conn));
-    conn.reset();
+    loop_->runInLoop(std::bind(&Connection::shutdown, connectionPtr_));
+    //connectionPtr_->reset();
   }
+  
+  // for (std::map<int, ConnectionPtr>::iterator itr = connections_.begin();
+  //       itr != connections_.end(); itr++)
+  // {
+  //   ConnectionPtr conn = itr->second;
+  //   itr->second.reset();
+  //   conn->loop()->runInLoop(std::bind(&Connection::shutdown, conn));
+  //   conn.reset();
+  // }
 };
 
 void Client::newConnection(int fd)
@@ -64,21 +75,24 @@ void Client::newConnection(int fd)
   connectionPtr->setConnectionCallBack(connectionCallBack_);
   connectionPtr->setReadCallBack(messageCallBack_);
   connectionPtr->setCloseCallBack(std::bind(&Client::removeConnection, this, std::placeholders::_1));
-  connections_[connectionPtr->id()] = connectionPtr;
+  connectionPtr_ = connectionPtr;
   connectionPtr->loop()->runInLoop(std::bind(&Connection::establish, connectionPtr));
 };
 
 void Client::removeConnection(const ConnectionPtr& connPtr)
 {
-  loop_->runInLoop(std::bind(&Client::removeConnectionInLoop, this, connPtr));
+  //loop_->runInLoop(std::bind(&Client::removeConnectionInLoop, this, connPtr));
+  loop_->queueInLoop(std::bind(&Connection::destroy, connPtr));
+  connectionPtr_.reset();
+
 };
 
-void Client::removeConnectionInLoop(const ConnectionPtr &connPtr) 
-{
-  loop_->assertInLoopThread();
-  int id = connPtr->id();
-  LOG_DEBUG << "connection id=" << id ;
-  connections_.erase(id);
-  connPtr->loop()->queueInLoop(std::bind(&Connection::destroy, connPtr));// 最后在worker 里面destroy
-};
+// void Client::removeConnectionInLoop(const ConnectionPtr &connPtr) 
+// {
+//   loop_->assertInLoopThread();
+//   int id = connPtr->id();
+//   LOG_DEBUG << "connection id=" << id ;
+//   connections_.erase(id);
+//   connPtr->loop()->queueInLoop(std::bind(&Connection::destroy, connPtr));// 最后在worker 里面destroy
+// };
 }

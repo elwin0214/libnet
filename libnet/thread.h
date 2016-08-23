@@ -27,6 +27,7 @@ public:
     virtual void run();
     void join();
     virtual ~Thread();
+    static void registerInitCallback(std::function<void()> func) { Thread::initCallback_ = func; }
 
 protected:
     bool started_;
@@ -36,8 +37,7 @@ private:
     ThreadFunc func_;
     std::string name_;
     pthread_t tid_;
-    
-
+    static ThreadFunc initCallback_;
 };
 
 }

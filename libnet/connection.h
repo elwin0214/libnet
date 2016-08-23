@@ -24,12 +24,8 @@ public:
 public:
     Connection(EventLoop* loop, int fd, /*InetAddress& addr, */int id);
 
-    //int fd();
     int id(){ return id_; }
     EventLoop* loop(){ return loop_; }
-    //void start();
-
-    //void send(const char *str, int len);
 
     void sendString(const CString& cstring);
     void send(const std::shared_ptr<Buffer>& buffer);
@@ -44,8 +40,8 @@ public:
     Buffer& input() {return inputBuffer_;}
     Buffer& output() {return outputBuffer_;}
 
-    bool connected() {return state_ == CONNECTED;}
-    bool disconnected() {return state_ == DIS_CONNECTED;}
+    bool connected() {return state_ == kConnected;}
+    bool disconnected() {return state_ == kDisConnected;}
 
     void establish();
     void destroy();
@@ -69,7 +65,7 @@ public:
     ~Connection();
 
 private:
-    enum State {CONNECTING, CONNECTED, DIS_CONNECTING, DIS_CONNECTED};
+    enum State {kConnecting, kConnected, kDisConnecting, kDisConnected};
 
     EventLoop* loop_;
     State state_;

@@ -1,16 +1,12 @@
 #include <iostream>
-#include <cpptest.h>
 #include <assert.h>
 #include "../atomic.h"
-
-//#include <libnet/atomic.h>
 
 using namespace std;
 using namespace libnet;
 using namespace libnet::atomic;
 
-struct TestAtomic : public Test::Suite
-{
+struct TestAtomic
 
   void test_cas_bool()
   {
@@ -33,23 +29,13 @@ struct TestAtomic : public Test::Suite
 
   }
 
-  TestAtomic()
-  {
-    TEST_ADD(TestAtomic::test_cas_bool);
-    TEST_ADD(TestAtomic::test_cas_int);
-  }
-
-  ~TestAtomic()
-  {
-    
-  }
 };
  
 int main()
 {
   TestAtomic ta;
-  Test::TextOutput output(Test::TextOutput::Verbose);
-  (ta.run(output, false));
+  ta.test_cas_bool();
+  ta.test_cas_int();
   return 0;
 }
 

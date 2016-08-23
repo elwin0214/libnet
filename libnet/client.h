@@ -22,7 +22,7 @@ public:
   typedef std::shared_ptr<Connection> ConnectionPtr;
   typedef std::function<void(const ConnectionPtr&)> ConnectionCallBack;
  
-  Client(EventLoop* loop, const char* host, int port, int connNum);
+  Client(EventLoop* loop, const char* host, int port);
 
   ~Client();
 
@@ -34,13 +34,11 @@ public:
 
   void setMessageCallBack(ConnectionCallBack callback) { messageCallBack_ = callback; }
 
-  void newConnection(int fd);
-
-  void removeConnection(const ConnectionPtr& connPtr);
-
 private:
+  void newConnection(int fd);
   void disconnectInLoop();
-  void removeConnectionInLoop(const ConnectionPtr& connPtr);
+  void removeConnection(const ConnectionPtr& connPtr);
+  //void removeConnectionInLoop(const ConnectionPtr& connPtr);
 
 private:
   ConnectionCallBack connectionCallBack_;
@@ -51,8 +49,8 @@ private:
   InetAddress serverAddr_;
   std::shared_ptr<Connector> connector_;
   int connId_;
-  int connNum_;
-  std::map<int, ConnectionPtr> connections_;
+  ConnectionPtr connectionPtr_;
+  //std::map<int, ConnectionPtr> connections_;
  };
 
 }

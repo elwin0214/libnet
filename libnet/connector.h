@@ -19,8 +19,9 @@ public:
   typedef std::shared_ptr<Connection> ConnectionPtr;
   typedef std::function<void(ConnectionPtr)> ConnectionCallBack;
   typedef std::unique_ptr<Channel> ChannelPtr;
-  typedef std::map<int, ChannelPtr> Channels;
+  //typedef std::map<int, ChannelPtr> Channels;
   typedef std::function<void(int)> NewConnectionCallBack;
+
 
   Connector(EventLoop* loop, const InetAddress& serverAddress);
 
@@ -30,12 +31,12 @@ public:
 
   void stop();
 
-  void connect();
-
   void setNewConnectionCallBack(NewConnectionCallBack callback) { newConnectionCallBack_ = callback; };
 
 private:
   void retry();
+
+  void connect();
 
   void connectInLoop();
 
@@ -48,10 +49,19 @@ private:
   void removeChannelInLoop(int fd, bool close);
 
 private:
+  enum State
+  {
+    kConnecting,
+    kConnected,
+    kDisConnected
+  };
+
   bool stop_;
+  State state_;
   EventLoop* loop_;
   InetAddress serverAddress_;
-  Channels channels_; // 
+  //Channels channels_; // 
+  ChannelPtr channel_;
   NewConnectionCallBack newConnectionCallBack_;
   MutexLock lock_;
 

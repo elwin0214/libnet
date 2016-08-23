@@ -52,6 +52,14 @@ void get(int count, const std::string& value)
 }
 };
 
+struct ThreadInitializer
+{
+void profile()
+{
+  ::ProfilerRegisterThread();
+}
+};
+
 int main(int argc, char *argv[])
 {
   if (argc < 7)
@@ -65,7 +73,10 @@ int main(int argc, char *argv[])
   int level = atoi(argv[3]);
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
-
+  #ifdef PROFILE
+  ThreadInitializer initialzer;
+  Thread::registerInitCallback(std::bind(&ThreadInitializer::profile, &initialzer));
+  #endif
   char *opt = static_cast<char *>(argv[4]);
   bool isSet = false;
   if (::strncmp(opt, "set", 3) == 0)
@@ -117,9 +128,9 @@ int main(int argc, char *argv[])
   }
 
   Timestamp start = Timestamp::now();
-  #ifdef PROFILER
-  ProfilerStart("memcached_bench.prof");
-  #endif
+  //#ifdef PROFILER
+  //ProfilerStart("memcached_bench.prof");
+  //#endif
   for (int i = 0; i < clients; i++)
   {
      threads[i]->start();
@@ -130,9 +141,9 @@ int main(int argc, char *argv[])
     threads[i]->join();
   }
   Timestamp end = Timestamp::now();
-  #ifdef PROFILER
-  ProfilerStop();
-  #endif
+  //#ifdef PROFILER
+  //ProfilerStop();
+  //#endif
   int64_t time = end.value() - start.value();
   LOG_INFO << "clients = "  << clients << " number = " << number  << " succ = " << (gCounter.getValue()) << " time = " << (time/1000) << "ms";
   

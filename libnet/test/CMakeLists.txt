@@ -1,5 +1,5 @@
 add_executable(buffer_unitest buffer_unitest.cc)
-target_link_libraries(buffer_unitest libnet cpptest)
+target_link_libraries(buffer_unitest libnet)
 
 add_executable(endian_unitest endian_unitest.cc)
 target_link_libraries(endian_unitest libnet)
@@ -8,10 +8,10 @@ add_executable(inet_address_unitest inet_address_unitest.cc)
 target_link_libraries(inet_address_unitest libnet)
 
 add_executable(logger_stream_unitest logger_stream_unitest.cc)
-target_link_libraries(logger_stream_unitest libnet cpptest)
+target_link_libraries(logger_stream_unitest libnet)
 
 add_executable(logger_unitest logger_unitest.cc)
-target_link_libraries(logger_unitest libnet cpptest)
+target_link_libraries(logger_unitest libnet)
 
 add_executable(logger_test logger_test.cc)
 target_link_libraries(logger_test libnet)
