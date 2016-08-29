@@ -25,36 +25,39 @@ void HttpServer::start()
   server_.start();
 };
 
-void HttpServer::onConnection(const ConnectionPtr& connPtr)
+void HttpServer::onConnection(const ConnectionPtr& connection)
 {
-  LOG_DEBUG << "onConnection connected=" << (connPtr->connected()) ;
-  if (connPtr->connected())
+  LOG_DEBUG << "onConnection connected=" << (connection->connected()) ;
+  if (connection->connected())
   {
-    HttpContext* context = new HttpContext();
-    connPtr->setContext(context);
-    context->getResponse().setSendCallback(std::bind(&Connection::sendBuffer, connPtr, std::placeholders::_1));
-    context->getResponse().setSendStringCallback(std::bind(&Connection::sendString, connPtr, std::placeholders::_1));
+    //HttpContext* context = new HttpContext();
+    std::shared_ptr<HttpContext> context = std::make_shared<HttpContext>();
+    connection->setContext(context);
+    context->getResponse().setSendCallback(std::bind(&Connection::sendBuffer, connection, std::placeholders::_1));
+    context->getResponse().setSendStringCallback(std::bind(&Connection::sendString, connection, std::placeholders::_1));
 
   }
   else
   {
-    HttpContext* ctxPtr = static_cast<HttpContext*>(connPtr->getContext());
-    if (NULL == ctxPtr) return;
-    delete ctxPtr;
+    //HttpContext* ctxPtr = static_cast<HttpContext*>(connPtr->getContext());
+    //if (NULL == ctxPtr) return;
+    //delete ctxPtr;
   }
   
 };
 
-void HttpServer::onMessage(const ConnectionPtr& connPtr)
+void HttpServer::onMessage(const ConnectionPtr& connection)
 {
-  HttpContext *const context = static_cast<HttpContext*>(connPtr->getContext());
-  Buffer &input = connPtr->input();
+  //HttpContext *const context = static_cast<HttpContext*>(connPtr->getContext());
+  std::shared_ptr<HttpContext> context = std::static_pointer_cast<HttpContext>(connection->getContext());
+
+  Buffer &input = connection->input();
   bool r = httpProcessor_.process(input, *context);
   LOG_DEBUG << "onConnection " <<  (context->getState()) << " process = " << r ;
   if (!r)
   {
-    connPtr->send("HTTP/1.1 400 Bad Request\r\n\r\n");
-    connPtr->shutdown();
+    connection->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+    connection->shutdown();
     return;
   }
   HttpResponse& response = context->getResponse();
@@ -62,7 +65,7 @@ void HttpServer::onMessage(const ConnectionPtr& connPtr)
   if (context->getState() == HttpContext::kBodySent || context->getState() == HttpContext::kAllChunkSent)
   {
     if (response.isClose())
-      connPtr->shutdown();
+      connection->shutdown();
     context->reset();
   }
 

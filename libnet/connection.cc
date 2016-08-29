@@ -69,45 +69,45 @@ void Connection::sendString(const CString& cstring)
   if (state_ != kConnected) return;
   if (!loop_->inLoopThread())
   {
-    loop_->queueInLoop(std::bind(&Connection::sendStringInLoop, shared_from_this(), cstring));
+    loop_->queueInLoop(std::bind(&Connection::sendInLoop, shared_from_this(), cstring.toString()));
   }
   else
   {
-    sendStringInLoop(cstring);
+    sendInLoop(cstring);
   }
 };
 
-void Connection::send(const std::shared_ptr<Buffer>& buffer)
-{
-  if (state_ != kConnected) return;
-  if (!loop_->inLoopThread())
-  {
-    loop_->queueInLoop(std::bind(&Connection::sendInLoop, shared_from_this(), buffer));//send 必须持有 shared_ptr
-  }
-  else
-  {
-    sendInLoop(buffer);
-  }
-};
+// void Connection::send(const std::shared_ptr<Buffer>& buffer)
+// {
+//   if (state_ != kConnected) return;
+//   if (!loop_->inLoopThread())
+//   {
+//     loop_->queueInLoop(std::bind(&Connection::sendInLoop, shared_from_this(), buffer));//send 必须持有 shared_ptr
+//   }
+//   else
+//   {
+//     sendInLoop(buffer);
+//   }
+// };
 
-void Connection::sendBuffer(Buffer* buffer)
-{
-  if (state_ != kConnected){
-    delete buffer;
-    return;
-  } 
-  if (!loop_->inLoopThread())
-  {
-    loop_->queueInLoop(std::bind(&Connection::sendBufferInLoop, shared_from_this(), buffer));//send 必须持有 shared_ptr
-  }
-  else
-  {
-    sendBufferInLoop(buffer);
-  }
-};
+// void Connection::sendBuffer(Buffer* buffer)
+// {
+//   if (state_ != kConnected){
+//     //delete buffer;
+//     return;
+//   } 
+//   if (!loop_->inLoopThread())
+//   {
+//     loop_->queueInLoop(std::bind(&Connection::sendInLoop, shared_from_this(), buffer.toString()));//send 必须持有 shared_ptr
+//   }
+//   else
+//   {
+//     send(buffer.beginRead(), buffer.readable());
+//   }
+// };
 
 
-void Connection::sendStringInLoop(const CString& cstring)
+void Connection::sendInLoop(const CString& cstring)
 {
   loop_->assertInLoopThread();
   if (state_ == kDisConnected)
@@ -135,40 +135,40 @@ void Connection::sendStringInLoop(const CString& cstring)
   }
 };
 
-void Connection::sendInLoop(const std::shared_ptr<Buffer>& buffer)
-{
-  loop_->assertInLoopThread();
-  if (state_ == kDisConnected)
-  {
-    LOG_ERROR <<"conId-" <<id_ << ", fd-" << (channel_->fd()) << ", error-disconnected";
-    return;
-  }
-  int n = 0;
-  if (!channel_->isWriting() && outputBuffer_.readable() == 0)
-  {
-    n = socket_->write(*buffer);
-  }
-  if (n < 0)
-  {
-    handleError();
-  }
-  else
-  {
-    int remain = buffer->readable();
-    if (remain > 0)
-    {
-      outputBuffer_.append(*buffer);
-      channel_->enableWriting();
-    }
-  }
-};
+// void Connection::sendInLoop(const std::shared_ptr<Buffer>& buffer)
+// {
+//   loop_->assertInLoopThread();
+//   if (state_ == kDisConnected)
+//   {
+//     LOG_ERROR <<"conId-" <<id_ << ", fd-" << (channel_->fd()) << ", error-disconnected";
+//     return;
+//   }
+//   int n = 0;
+//   if (!channel_->isWriting() && outputBuffer_.readable() == 0)
+//   {
+//     n = socket_->write(*buffer);
+//   }
+//   if (n < 0)
+//   {
+//     handleError();
+//   }
+//   else
+//   {
+//     int remain = buffer->readable();
+//     if (remain > 0)
+//     {
+//       outputBuffer_.append(*buffer);
+//       channel_->enableWriting();
+//     }
+//   }
+// };
 
-void Connection::sendBufferInLoop(Buffer* buffer)
-{
-  loop_->assertInLoopThread();
-  sendStringInLoop(CString(buffer->beginRead(), buffer->readable()));
-  delete buffer;
-};
+// void Connection::sendBufferInLoop(Buffer* buffer)
+// {
+//   loop_->assertInLoopThread();
+//   sendStringInLoop(CString(buffer->beginRead(), buffer->readable()));
+//   delete buffer;
+// };
 
 void Connection::shutdown()
 {

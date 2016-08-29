@@ -20,30 +20,30 @@ void EchoServer::start()
   server_.start();
 };
 
-void EchoServer::onConnection(std::shared_ptr<Connection> conPtr)
+void EchoServer::onConnection(std::shared_ptr<Connection> connection)
 {
-  LOG_INFO << "connection id=" << (conPtr->id())  <<" state=" << (conPtr->stateToString());
+  LOG_INFO << "connection id=" << (connection->id())  <<" state=" << (connection->stateToString());
 
-  if (conPtr->connected())
+  if (connection->connected())
   {
-    LOG_INFO << "connection id=" << (conPtr->id()) << " connected";
+    LOG_INFO << "connection id=" << (connection->id()) << " connected";
   }
-  else if (conPtr->disconnected())
+  else if (connection->disconnected())
   {
-    LOG_INFO << "connection id=" << (conPtr->id()) << " disconnected";
+    LOG_INFO << "connection id=" << (connection->id()) << " disconnected";
   }
 };
 
-void EchoServer::onMessage(std::shared_ptr<Connection> conPtr)
+void EchoServer::onMessage(std::shared_ptr<Connection> connection)
 {
-  std::string str = conPtr->input().toString();
-  int id = conPtr->id();
+  std::string str = connection->input().toString();
+  int id = connection->id();
   LOG_INFO << "connection id="<< id << " message=" << str;
   
   if (str == "exit\r\n")
   {
     LOG_INFO << "connection id="<< id << " go to close.";
-    conPtr->shutdown();
+    connection->shutdown();
     return;
   }
   else if (str == "exit all\r\n")
@@ -53,8 +53,8 @@ void EchoServer::onMessage(std::shared_ptr<Connection> conPtr)
     loop_->wakeup();
     return;
   }
-  std::shared_ptr<Buffer> echo(new Buffer(1024));
-  echo->append(conPtr->input());
-  conPtr->input().clear();
-  conPtr->send(echo);
+  //std::shared_ptr<Buffer> echo(new Buffer(1024));
+  //echo->append(conPtr->input());
+  connection->input().clear();
+  connection->send(str.data(), str.size());
 };

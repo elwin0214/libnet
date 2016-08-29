@@ -22,8 +22,19 @@ public:
 
   }
 
+  CString(const std::string& str)
+    : data_(str.data()),
+      len_(str.size())
+  {
+
+  }
+
   const char* data() const { return data_; }
   size_t length() const {return len_; }
+  std::string toString() const
+  {
+    return std::string(data_, len_);
+  }
 
 private:
   const char *data_;
