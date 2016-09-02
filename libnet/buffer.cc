@@ -84,6 +84,8 @@ const char* Buffer::find(const char* str)
   return NULL;
 };
 
+
+
 const char* Buffer::rfind(const char* end, char ch)
 {
   const char* start = beginRead();
@@ -94,6 +96,8 @@ const char* Buffer::rfind(const char* end, char ch)
   }
   return NULL;
 };
+
+//const char* Buffer::find()
 
 void Buffer::makeRoom(size_t len)
 {
@@ -114,7 +118,7 @@ void Buffer::compact()
   std::vector<char>::iterator start = data_.begin() + readIndex_; 
   std::vector<char>::iterator end = data_.begin() + writeIndex_;
   int distance = writeIndex_ - readIndex_;
-  copy(start, end , data_.begin()); 
+  std::copy(start, end , data_.begin()); 
   readIndex_ = prepend_;
   writeIndex_ = distance;
 };

@@ -6,6 +6,7 @@
 #include "../future.h"
 
 using namespace libnet;
+using namespace memcached::client;
 
 EventLoop* gLoop; 
 MemcachedClient* gClient;

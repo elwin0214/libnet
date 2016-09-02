@@ -1,5 +1,5 @@
-#ifndef __LIBNET_MEMCACHED_COMMAND_H__
-#define __LIBNET_MEMCACHED_COMMAND_H__
+#ifndef __LIBNET_MEMCACHED_CLIENT_COMMAND_H__
+#define __LIBNET_MEMCACHED_CLIENT_COMMAND_H__
 
 #include <libnet/buffer.h>
 #include <libnet/countdown_latch.h>
@@ -7,17 +7,12 @@
 #include <string>
 #include "code.h"
 
+namespace memcached
+{
+namespace client
+{
 using namespace libnet;
 
-// enum Code
-// {
-
-//   kError, 
-//   kFail,
-//   kSucc, 
-//   kInit//,
-//   //kNeedMore
-// };
 class Command
 {
 public:
@@ -153,7 +148,7 @@ private:
   uint32_t value_;
 };
 
-
-
+}
+}
 
 #endif

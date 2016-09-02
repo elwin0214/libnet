@@ -12,6 +12,7 @@
 
 using namespace std;
 using namespace libnet;
+using namespace memcached::client;
 
 MemcachedClient* gClient;
 EventLoop* gLoop;
@@ -56,7 +57,9 @@ struct ThreadInitializer
 {
 void profile()
 {
+  #ifdef PROFILE
   ::ProfilerRegisterThread();
+  #endif
 }
 };
 

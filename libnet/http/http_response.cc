@@ -188,16 +188,18 @@ void HttpResponse::flush()
   {
     sending_ = true;
     //std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(512);
-    Buffer* buffer = new Buffer(kPrepend, kSize);
-    appendToBuffer(buffer);
-    sendCallback_(buffer);
+    //Buffer* buffer = new Buffer(kPrepend, kSize);
+    Buffer buffer(kPrepend, kSize);
+    appendToBuffer(&buffer);
+    sendCallback_(&buffer);
   }
   if (!chunked_)
   {
     if (buffer_->readable() > 0)
     {
-      sendCallback_(buffer_.release());
-      buffer_.reset(new Buffer(kPrepend, kSize));
+      sendCallback_(buffer_.get());
+      buffer_->clear();
+      //buffer_.reset(new Buffer(kPrepend, kSize));
     }
   }
   else
@@ -211,8 +213,9 @@ void HttpResponse::flush()
     buf[n + 1] = '\n';
     buffer_->prepare(buf, n + 2);
     buffer_->append("\r\n");
-    sendCallback_(buffer_.release());
-    buffer_.reset(new Buffer(kPrepend, kSize));
+    sendCallback_(buffer_.get());
+    buffer_->clear();
+    //buffer_.reset(new Buffer(kPrepend, kSize));
   }
 };
 

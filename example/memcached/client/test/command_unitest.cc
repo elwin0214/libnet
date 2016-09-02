@@ -4,6 +4,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace memcached::client;
 
 void test_set()
 {

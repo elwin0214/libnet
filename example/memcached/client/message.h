@@ -1,5 +1,5 @@
-#ifndef __LIBNET_MEMCACHED_MESSAGE_H__
-#define __LIBNET_MEMCACHED_MESSAGE_H__
+#ifndef __LIBNET_MEMCACHED_CLIENT_MESSAGE_H__
+#define __LIBNET_MEMCACHED_CLIENT_MESSAGE_H__
 
 #include <libnet/buffer.h>
 #include <libnet/nocopyable.h>
@@ -8,6 +8,10 @@
 #include <memory>
 #include "command.h"
 #include "future.h"
+namespace memcached
+{
+namespace client
+{
 
 class Message : public NoCopyable
 {
@@ -19,21 +23,6 @@ public:
 
   };
 
-  // Code code()
-  // {
-  //   return command_->code();
-  // };
-
-  // std::string desc()
-  // {
-  //   return command_->desc();
-  // };
-
-  // std::string result()
-  // {
-  //   return command_->result();
-  // };
-
   void append(Buffer& buffer)
   {
     command_->append(buffer);
@@ -44,11 +33,6 @@ public:
     return command_->parse(buffer);
   };
 
-  // void wait()
-  // {
-  //   future_.wait();
-  // };
-
   void wakeup()
   {
     future_->set(command_->code(), command_->result());
@@ -57,9 +41,10 @@ public:
 
 
 private:
-  //CountDownLatch countDownLatch_;
   std::unique_ptr<Command> command_;
   std::shared_ptr<Future> future_;
 };
 
+}
+}
 #endif

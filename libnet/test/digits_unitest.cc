@@ -7,34 +7,60 @@
 using namespace libnet::digits;
 using namespace std;
 
-int main()
+
+void test_string_digit()
 {
   size_t num;
   stringToDigit("16", &num);
   assert(16 == num);
   cout << num << endl;
+};
+
+void test_string_digit_width()
+{
+  uint16_t num;
+  uint32_t value  = 1 << 20;
+  char buf[32];
+  sprintf(buf, "%d", value);
+  cout << buf  << endl;
+  int r = stringToDigit(buf, &num);
+  //assert(16 == num);
+  cout << "result = " << r <<" num = "<< num << endl;
+};
 
 
-  size_t num2;
-  xstringToDigit("10", &num2);
+void test_xstring_digit()
+{
+  size_t num;
+  xstringToDigit("10", &num);
   assert(16 == num);
-  cout << num2 << endl;
+  cout << num << endl;
+};
 
-
+void test_digit_string()
+{
   char buf[100];
   bzero(buf, sizeof(buf));
-  digitToString(16, buf);
+  digitToString(static_cast<uint32_t>(16), buf);
   assert("16" == std::string(buf, 2));
   cout << buf << endl;
+};
 
-  char buf2[100];
-  digitToXstring(16, buf2);
-  assert("10" == std::string(buf2, 2));
-  cout << buf2 << endl;
+void test_digit_xstring()
+{
+  char buf[100];
+  digitToXstring(16, buf);
+  assert("10" == std::string(buf, 2));
+  cout << buf << endl;
+}
 
+int main()
+{
 
-
-  // int s = convert("16", 10);
-  // cout << s << endl;
+  test_string_digit();
+  test_string_digit_width();
+  test_xstring_digit();
+  test_digit_string();
+  test_digit_xstring();
   return 0;
 }

@@ -3,6 +3,11 @@
 #include <libnet/digits.h>
 #include <assert.h>
 
+namespace memcached
+{
+namespace client
+{
+
 void TextStoreCommand::append(Buffer& buffer)
 {
   buffer.append(name_);
@@ -210,7 +215,5 @@ bool CountCommand::parse(Buffer& buffer)
   return true;
 };
 
-
-
-
-
+}
+}

@@ -30,25 +30,16 @@ void HttpServer::onConnection(const ConnectionPtr& connection)
   LOG_DEBUG << "onConnection connected=" << (connection->connected()) ;
   if (connection->connected())
   {
-    //HttpContext* context = new HttpContext();
     std::shared_ptr<HttpContext> context = std::make_shared<HttpContext>();
     connection->setContext(context);
     context->getResponse().setSendCallback(std::bind(&Connection::sendBuffer, connection, std::placeholders::_1));
     context->getResponse().setSendStringCallback(std::bind(&Connection::sendString, connection, std::placeholders::_1));
 
-  }
-  else
-  {
-    //HttpContext* ctxPtr = static_cast<HttpContext*>(connPtr->getContext());
-    //if (NULL == ctxPtr) return;
-    //delete ctxPtr;
-  }
-  
+  }  
 };
 
 void HttpServer::onMessage(const ConnectionPtr& connection)
 {
-  //HttpContext *const context = static_cast<HttpContext*>(connPtr->getContext());
   std::shared_ptr<HttpContext> context = std::static_pointer_cast<HttpContext>(connection->getContext());
 
   Buffer &input = connection->input();

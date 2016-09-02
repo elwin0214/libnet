@@ -1,8 +1,13 @@
-#ifndef __LIBNET_MEMCACHED_FUTURE_H__
-#define __LIBNET_MEMCACHED_FUTURE_H__
+#ifndef __LIBNET_MEMCACHED_CLIENT_FUTURE_H__
+#define __LIBNET_MEMCACHED_CLIENT_FUTURE_H__
 #include <libnet/countdown_latch.h>
 #include <libnet/nocopyable.h>
 #include "code.h"
+
+namespace memcached
+{
+namespace client
+{
 
 class Future : public NoCopyable
 {  
@@ -32,4 +37,7 @@ private:
   CountDownLatch latch_;
 
 };
+
+}
+}
 #endif

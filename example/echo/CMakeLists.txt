@@ -1,0 +1,2 @@
+add_executable(echo_server_test echo_server.cc echo_server_test.cc)
+TARGET_LINK_LIBRARIES(echo_server_test libnet)

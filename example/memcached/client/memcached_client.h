@@ -6,6 +6,11 @@
 #include <libnet/mutexlock.h>
 #include "message.h"
 
+namespace memcached
+{
+namespace client
+{
+
 using namespace libnet;
 using namespace std;
 
@@ -89,8 +94,10 @@ private:
 private:
   Client client_;
   CountDownLatch& latch_;
-  ConnectionPtr connectionPtr_;
+  ConnectionPtr connection_;
 
 };
 
+}
+}
 #endif

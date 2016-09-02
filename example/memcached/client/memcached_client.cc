@@ -8,8 +8,12 @@
 #include "message.h"
 #include "memcached_client.h"
 
-using namespace libnet;
+namespace memcached
+{
+namespace client
+{
 
+using namespace libnet;
 class Context : public NoCopyable
 {
 public:
@@ -17,7 +21,7 @@ public:
 
   Context():lock_()
   {
-
+    
   }
 
   ~Context()
@@ -88,34 +92,33 @@ void MemcachedClient::connect()
   client_.connect();
 };
 
-void MemcachedClient::onConnection(const ConnectionPtr& conn)
+void MemcachedClient::onConnection(const ConnectionPtr& connection)
 {
-  if (conn->connected())
+  if (connection->connected())
   {
-    Context* ctx = new Context();
-    conn->setContext(ctx);
-    connectionPtr_ = conn;
+    std::shared_ptr<Context> context = std::make_shared<Context>();
+    connection->setContext(context);
+    connection_ = connection;
     latch_.countDown();
   }
-  else if (conn->disconnected())
+  else if (connection->disconnected())
   {
-    Context* ctx = static_cast<Context*>(conn->getContext());
-    delete ctx;
   }
 };
 
 void MemcachedClient::send(const std::shared_ptr<Message>& message)
 {
-  Context* context = static_cast<Context*>(connectionPtr_->getContext());
+  std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->push(message);
   notify();
 };
 
-void MemcachedClient::onMessage(const ConnectionPtr& conn)
+void MemcachedClient::onMessage(const ConnectionPtr& connection)
 {
-  Buffer& input = conn->input();
+  Buffer& input = connection->input();
   LOG_TRACE << "read=" << input.toString() ;
-  Context* context = static_cast<Context*>(connectionPtr_->getContext());
+
+  std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection->getContext());
 
   while(context->parse(input))// more response
   {
@@ -125,14 +128,15 @@ void MemcachedClient::onMessage(const ConnectionPtr& conn)
 
 void MemcachedClient::write()
 {
-  (connectionPtr_->loop()->assertInLoopThread());
-  Context* context = static_cast<Context*>(connectionPtr_->getContext());
-  context->write(connectionPtr_);
+  (connection_->loop()->assertInLoopThread());
+  std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
+  context->write(connection_);
 };
 
 void MemcachedClient::notify()
 {
-  connectionPtr_->loop()->runInLoop(std::bind(&MemcachedClient::write, this));
+  connection_->loop()->runInLoop(std::bind(&MemcachedClient::write, this));
+};
+
 }
-
-
+}
