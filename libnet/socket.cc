@@ -33,10 +33,9 @@ int Socket::accept(InetAddress *addr)
 int Socket::read(Buffer &buffer)
 {
   size_t len = buffer.writable();
-  //LOG_DEBUG << "writable = " << len;
   if (len <= 0) buffer.makeRoom(128); 
   len = buffer.writable();
-  ssize_t n = sockets::read(fd_, buffer.cur(), len);
+  ssize_t n = sockets::read(fd_, buffer.beginWrite(), len);
   LOG_TRACE << "read return=" << n ;
   if (n <= 0) return n; //todo errno
   if (n > 0) 
@@ -47,7 +46,7 @@ int Socket::read(Buffer &buffer)
 int Socket::write(Buffer &buffer)
 {
   int len = buffer.readable();
-  ssize_t n = sockets::write(fd_, buffer.cur(), len);
+  ssize_t n = sockets::write(fd_, buffer.beginRead(), len);
   if (n <= 0) return n; //todo errno
   LOG_DEBUG << "buffer-" << buffer.toString() << ", len-" << len  ;
   buffer.moveReadIndex(n);
