@@ -4,21 +4,17 @@
 
 namespace libnet
 {
-Exception::Exception()
+
+Exception::Exception(const char* str):message_(str)
 {
   fillStackTrace();
 };
 
-Exception::Exception(const Exception& e)
+Exception::Exception(const std::string& str):message_(str)
 {
-  stack_ = e.stack_; //exception safe?
+  fillStackTrace();
 };
 
-Exception& Exception::operator=(Exception e)
-{
-  swap(stack_, e.stack_);
-};
-//todo move constructor?
 void Exception::fillStackTrace()
 { 
   const int len = 128;

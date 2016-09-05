@@ -1,6 +1,7 @@
-#include <errno.h> 
+#include <stdlib.h>
 #include "thread.h"
 #include "logger.h"
+#include "exception.h"
 #include "current_thread.h"
 
 namespace libnet
@@ -65,7 +66,22 @@ void Thread::run()
   else 
     thread::currentThreadName = "main";
 
-  func_();
+  try
+  {
+    func_();
+  }
+  catch(const Exception& e)
+  {
+    fprintf(stderr, "exception caught in Thread %s\n", name_.c_str());
+    fprintf(stderr, "reason: %s\n", e.message());
+    fprintf(stderr, "stack trace: %s\n", e.stackTrace());
+    abort();
+  }
+  catch(...)
+  {
+    fprintf(stderr, "unknown exception caught in Thread %s\n", name_.c_str());
+    abort();
+  }
 };
 
 void Thread::join()

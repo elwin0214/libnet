@@ -1,32 +1,31 @@
-#ifndef __LIBNET_LOG_LOGGER_H__
-#define __LIBNET_LOG_LOGGER_H__
+#ifndef __LIBNET_EXCEPTION_H__
+#define __LIBNET_EXCEPTION_H__
 
 #include <errno.h>
 #include <string.h>
 #include <string>
+#include <exception>
 #include "nocopyable.h"
 
 namespace libnet
 {
-class Exception
+class Exception : public std::exception
 {
 public:
-  Exception();
-  Exception(const Exception& e); //move constructor?
-  Exception& operator=(Exception e);
-  std::string& toString(){return stack_; }
+  Exception(const char* str);
+  Exception(const std::string& str);
+
+  const char* message() const { return message_.c_str();}
+  const char* stackTrace() const { return stack_.c_str(); }
 
 private:
-  fillStackTrace();
+  void fillStackTrace();
 
 private:
+  std::string message_;
   std::string stack_;
 };
 }
 
-class ConvertException : public Exception
-{
-
-};
 
 #endif
