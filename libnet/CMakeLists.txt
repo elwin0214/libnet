@@ -12,6 +12,7 @@ SET (SRCS
  client.cc
  connection.cc
  connector.cc
+ exception.cc
  eventloop.cc
  eventloop_group.cc
  eventloop_thread.cc

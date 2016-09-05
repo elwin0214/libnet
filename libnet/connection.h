@@ -24,17 +24,22 @@ public:
   Connection(EventLoop* loop, int fd, /*InetAddress& addr, */int id);
 
   int id(){ return id_; }
+
+  void set_name(const std::string& name) { name_ = name;}
+  void set_name(std::string&& name) { name_ = std::move(name);}
+
+  const std::string& get_name(){ return name_;}
+
   EventLoop* loop(){ return loop_; }
 
   void sendString(const CString& cstring);
-    //void send(const std::shared_ptr<Buffer>& buffer);
   void sendBuffer(Buffer* buffer)
   {
     sendString(CString(buffer->beginRead(), buffer->readable()));
   }
 
   void sendInLoop(const CString& cstring);
-  void send(const char* str, size_t len) { sendString(CString(str, len)); }
+  void sendWithLen(const char* str, size_t len) { sendString(CString(str, len)); }
   void send(const char* str) { sendString(CString(str));}
 
   Buffer& input() {return inputBuffer_;}
@@ -60,7 +65,7 @@ public:
   void handleError();
 
   void setContext(const std::shared_ptr<void>& context) { context_ = context; }
-  const std::shared_ptr<void>& getContext() { return context_; }
+  std::shared_ptr<void>& getContext() { return context_; }
   const char* stateToString();
   ~Connection();
 
@@ -78,7 +83,7 @@ private:
   Buffer inputBuffer_;
   Buffer outputBuffer_;
   int id_;
-
+  std::string name_;
   std::shared_ptr<void> context_;
 };
 

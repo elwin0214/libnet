@@ -56,5 +56,5 @@ void EchoServer::onMessage(std::shared_ptr<Connection> connection)
   //std::shared_ptr<Buffer> echo(new Buffer(1024));
   //echo->append(conPtr->input());
   connection->input().clear();
-  connection->send(str.data(), str.size());
+  connection->sendWithLen(str.data(), str.size());
 };

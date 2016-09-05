@@ -59,16 +59,7 @@ void LoggerStream::init()
   int size = snprintf(buffer_.cur(),buffer_.remain(), "%4d%02d%02d %02d:%02d:%02d",
              time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
              time.tm_hour, time.tm_min, time.tm_sec);
-
-
-  // time_t now;  
-  // time(&now);  
-  // int r = strftime(buffer_.cur(), buffer_.remain(), "%Y%m%d %H:%M:%S", localtime(&now)); 
-  // buffer_.move(r);
-
-  // int size = snprintf(buffer_.cur(), buffer_.remain(), "%s", str.c_str());
   buffer_.move(size);
-  //return *this;
 };
 
 Logger::Impl::Impl(const char* file, const char* func, int line, int err, LogLevel level)

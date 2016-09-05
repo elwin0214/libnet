@@ -26,12 +26,12 @@ IgnoreSigPipe()
 
 signal::IgnoreSigPipe gIgnoreSigPipe;
 
-Server::Server(EventLoop* loop, const char* host, int port, int workersNum)
+Server::Server(EventLoop* loop, const char* host, int port, int workers)
   : loop_(loop),
-    localAddr_(host, port),
-    acceptor_(loop_, localAddr_, 100),
-    loopGroupPtr_(new EventLoopGroup(loop_, workersNum, "worker")),
-    nextConId_(1),
+    local_addr_(host, port),
+    acceptor_(loop_, local_addr_, 100),
+    loop_group_(new EventLoopGroup(loop_, workers, "worker")),
+    next_id_(1),
     started_(false)
 {
   acceptor_.setNewConnectionCallback(std::bind(&Server::newConnection, this, std::placeholders::_1, std::placeholders::_2));
@@ -45,7 +45,7 @@ Server::~Server()
   {
     ConnectionPtr conn = itr->second;
     itr->second.reset();
-    LOG_TRACE << "connection Id=" << (conn->id()) ;
+    LOG_DEBUG << "connection =" << (conn->get_name()) ;
     conn->loop()->runInLoop(std::bind(&Connection::destroy, conn));//this?
     conn.reset();
   }
@@ -55,7 +55,7 @@ void Server::start()
 {
   if (started_) return;
   started_ = true;
-  loopGroupPtr_->start();
+  loop_group_->start();
   acceptor_.start();
   LOG_DEBUG <<" server start...";
 };
@@ -64,28 +64,37 @@ void Server::start()
 void Server::newConnection(int fd, InetAddress& addr)
 {
   loop_->assertInLoopThread();
-  EventLoop* loopPtr = loopGroupPtr_->getNextLoop();
-  int id = nextConId_++;
-  ConnectionPtr connPtr = std::make_shared<Connection>(loopPtr, fd, id);
-  connPtr->setConnectionCallBack(connectionCallBack_);
-  connPtr->setReadCallBack(messageCallBack_);
-  connPtr->setCloseCallBack(std::bind(&Server::removeConnection, this, std::placeholders::_1));  // server 关闭时，removeConnectionInLoop 执行？
-  connections_[id] = connPtr;
-  loopPtr->runInLoop(std::bind(&Connection::establish, connPtr));  
+  EventLoop* loop = loop_group_->getNextLoop();
+  int id = next_id_++;
+  ConnectionPtr connection = std::make_shared<Connection>(loop, fd, id);
+  connection->setConnectionCallBack(connection_callBack_);
+  connection->setReadCallBack(message_callBack_);
+  connection->setCloseCallBack(std::bind(&Server::removeConnection, this, std::placeholders::_1));  // server 关闭时，removeConnectionInLoop 执行？
+  connections_[id] = connection;
+  std::string name;
+  name.reserve(32);
+  name.append(std::to_string(id))
+      .append("-")
+      .append(addr.getIp())
+      .append(":")
+      .append(std::to_string(addr.getPort()));
+  LOG_DEBUG << "connection = " << name ;
+  connection->set_name(std::move(name));
+  loop->runInLoop(std::bind(&Connection::establish, connection));  
 };
 
-void Server::removeConnection(const ConnectionPtr &connPtr)//2次操作，避免锁竞争
+void Server::removeConnection(const ConnectionPtr &connection)//2次操作，避免锁竞争
 {
-  loop_->runInLoop(std::bind(&Server::removeConnectionInLoop, this, connPtr)); 
+  loop_->runInLoop(std::bind(&Server::removeConnectionInLoop, this, connection)); 
 };
 
-void Server::removeConnectionInLoop(const ConnectionPtr &connPtr) 
+void Server::removeConnectionInLoop(const ConnectionPtr &connection) 
 {
   loop_->assertInLoopThread();
-  int id = connPtr->id();
-  LOG_DEBUG << "connection id=" << id ;
+  int id = connection->id();
+  LOG_DEBUG << "connection =" << (connection->get_name());
   connections_.erase(id);
-  connPtr->loop()->queueInLoop(std::bind(&Connection::destroy, connPtr));// 最后在worker 里面destroy
+  connection->loop()->queueInLoop(std::bind(&Connection::destroy, connection));// 最后在worker 里面destroy
 };
 
 

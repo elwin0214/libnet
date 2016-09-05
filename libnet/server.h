@@ -24,39 +24,37 @@ class Server : public NoCopyable
 public: 
   typedef std::shared_ptr<Connection> ConnectionPtr;
   typedef std::function<void(const ConnectionPtr&)> ConnectionCallBack;
-
   typedef std::shared_ptr<Acceptor> AcceptorPtr;
   typedef EventLoop* EventLoopPtr;
-
   typedef std::shared_ptr<EventLoopGroup> EventLoopGroupPtr;
 
 public:
-  Server(EventLoop* loop, const char* host, int port, int workersNum);
+  Server(EventLoop* loop, const char* host, int port, int workers);
   ~Server();
 
   void start();
-  void setConnectionCallBack(ConnectionCallBack callback) { connectionCallBack_ = callback; }
-  void setMessageCallBack(ConnectionCallBack callback) { messageCallBack_ = callback; }
+  void setConnectionCallBack(ConnectionCallBack callback) { connection_callBack_ = callback; }
+  void setMessageCallBack(ConnectionCallBack callback) { message_callBack_ = callback; }
 
   void newConnection(int fd, InetAddress &addr);
-  void removeConnection(const ConnectionPtr &connPtr);
-  void removeConnectionInLoop(const ConnectionPtr &connPtr);
+  void removeConnection(const ConnectionPtr &connection);
+  void removeConnectionInLoop(const ConnectionPtr &connection);
 
   
 private:
   EventLoop* loop_;
-  InetAddress localAddr_;
+  InetAddress local_addr_;
   Acceptor acceptor_;
-  EventLoopGroupPtr loopGroupPtr_;
+  EventLoopGroupPtr loop_group_;
   
-  int nextConId_; 
+  int next_id_; 
   MutexLock lock_;
   bool started_;
   
   std::map<int, ConnectionPtr> connections_;
 
-  ConnectionCallBack connectionCallBack_;
-  ConnectionCallBack messageCallBack_;
+  ConnectionCallBack connection_callBack_;
+  ConnectionCallBack message_callBack_;
 };
 
 }

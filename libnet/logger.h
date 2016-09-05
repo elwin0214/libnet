@@ -132,7 +132,6 @@ private:
     LogLevel level_;
     
   };
-
   Impl impl_;
 };
 

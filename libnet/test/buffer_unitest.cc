@@ -61,6 +61,16 @@ struct TestBuffer
     assert((*p == '\r'));
   }
 
+  void test_find_from()
+  {
+    Buffer buf(0, 100);
+    const char *s = "abc\r\n123\r\n";
+    buf.append(s, strlen(s));
+    const char *p = buf.find(5, "\r\n");
+    assert((*p == '\r'));
+  }
+
+
   void test_prepre()
   {
     Buffer buf(16, 1024);
@@ -81,6 +91,13 @@ struct TestBuffer
   }
 
 
+  void test_ascii()
+  {
+    Buffer buf(16, 1024);
+    buf.append("\r\n");
+    assert("[13][10]" == buf.toAsciiString());
+  }
+
   TestBuffer()
   {
 
@@ -97,6 +114,7 @@ int main()
   tb.test_find();
   tb.test_prepre();
   tb.test_startWiths();
+  tb.test_ascii();
 
 }
 
