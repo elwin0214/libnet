@@ -31,7 +31,6 @@ public:
 
   bool isDigit(const char* str);
   virtual bool process(Buffer& buffer, MemcachedContext& context)=0;
-  //virtual ~Processor(){};
 
 
 protected:
@@ -41,7 +40,6 @@ protected:
   std::function<void(Item*)> item_remove_func_;
   std::function<Item*(uint32_t)> item_alloc_func_;
   std::function<void(Item*)> item_add_func_;
-  std::function<void(const char*)> send_func_;
 };
 
 
@@ -75,11 +73,6 @@ public:
     item_add_func_ = func;
   }
 
-  void set_send(std::function<void(const char*)> func)
-  {
-    send_func_ = func;
-  }
-
 private:
   std::vector<std::shared_ptr<Processor>> processors_; //virtual deconstrutor call
 
@@ -87,7 +80,6 @@ private:
   std::function<void(Item*)> item_remove_func_;
   std::function<Item*(uint32_t)> item_alloc_func_;
   std::function<void(Item*)> item_add_func_;
-  std::function<void(const char*)> send_func_;
 };
 
 }

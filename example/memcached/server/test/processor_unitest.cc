@@ -11,21 +11,17 @@ using namespace std::placeholders;
 
 struct ProcessorProxy
 {
-  ProcessorProxy(): cache_(),processor_(),buffer_(NULL)
+  ProcessorProxy(): cache_(),processor_()
   {
     processor_.set_item_find(std::bind(&ProcessorProxy::find, this, _1));
-    processor_.set_send(std::bind(&ProcessorProxy::send, this, _1));
     processor_.set_item_alloc(std::bind(&ProcessorProxy::alloc, this, _1));
     processor_.set_item_add(std::bind(&ProcessorProxy::add, this, _1));
     processor_.set_item_remove(std::bind(&ProcessorProxy::remove, this, _1));
-
     processor_.init();
   };
 
-
-  void process(Buffer& req, Buffer& resp, MemcachedContext& context)
+  void process(Buffer& req, MemcachedContext& context)
   {
-    buffer_ = &resp;
     processor_.process(req, context);
   }
 
@@ -57,11 +53,6 @@ struct ProcessorProxy
     return itr->second;
   };
 
-  void send(const char* str)
-  {
-    buffer_->append(str);
-  };
-
   void clear()
   {
     cache_.clear();
@@ -69,8 +60,6 @@ struct ProcessorProxy
 
   std::map<std::string, Item*> cache_;
   MemcachedProcessor processor_;
-  Buffer* buffer_;
-
 };
 
 ProcessorProxy gProcessor;
@@ -79,11 +68,14 @@ ProcessorProxy gProcessor;
 void process(const char* input, const char* ouput, Opt opt)
 {
   MemcachedContext context;
-  Buffer req(0, 1024);
+  bool closed = false;
   Buffer resp(0, 1024);
+  Buffer req(0, 1024);
+  context.set_send_func([&resp] (const char* str){ resp.append(str);});
+  context.set_close_func([&closed] (){ closed = true;});
   req.append(input);
-  gProcessor.process(req, resp, context);
-  cout << "resp = " << (resp.toString())  << endl;
+  gProcessor.process(req, context);
+  cout << "closed = " << closed << " resp = " << (resp.toString()) << endl;
   assert(resp.toString() == ouput);
   assert(opt == context.get_opt());
 };
@@ -118,6 +110,36 @@ void test_multi_opt()
   process(" add b 0 0 2\r\n23\r\nget b\r\n" ,"STORED\r\nVALUE b 0 2\r\n23\r\nEND\r\n", kNo);
 }
 
+ 
+
+void test_fragement()
+{
+  MemcachedContext context;
+  bool closed = false;
+  Buffer resp(0, 1024);
+  Buffer req(0, 1024);
+  context.set_send_func([&resp] (const char* str){ resp.append(str);});
+  context.set_close_func([&closed] (){ closed = true;});
+
+  req.append("set a 0 0 3\r\n");
+
+  gProcessor.process(req, context);
+  assert(context.get_opt()  == kSet );
+  req.append("1\r\n");
+
+  gProcessor.process(req, context);
+  assert(context.get_opt()  == kSet );
+  assert("" == resp.toString());
+  req.append("1\r\n");
+  gProcessor.process(req, context);
+  assert(context.get_opt()  == kNo);
+
+  cout << resp.toString() << "resp";
+  assert("ERROR\r\n" == resp.toString());
+
+};
+
+
 
 int main()
 {
@@ -125,15 +147,6 @@ int main()
   setLogLevel(logLevel);
   test_single_opt();
   test_multi_opt();
-  // test_process("key", "value", " get key\r\n" ,"VALUE key 0 5\r\nvalue\r\nEND\r\n", kNo);
-  // test_process("key", "value", 
-  //   " get key\r\nget key\r\n" ,"VALUE key 0 5\r\nvalue\r\nEND\r\nVALUE key 0 5\r\nvalue\r\nEND\r\n",
-  //   kNo);
-
-
-
-
-
-
+  test_fragement();
   return 0;
 }

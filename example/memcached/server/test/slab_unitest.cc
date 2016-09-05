@@ -10,11 +10,14 @@ using namespace memcached::server;
 
 void test_prealloc_slab()
 {
-  SlabPolicy policy = {16, 32, 1.2, true, 1024 * 1024 * 2};
-  SlabArray slab_array(policy);
+  log::LogLevel logLevel = log::LogLevel(0);
+  setLogLevel(logLevel);
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
+  SlabArray slab_array(option);
   slab_array.init();
   Item* item = slab_array.pop(16);
   assert (NULL != item);
+  cout << (item->size()) << endl;
   assert (item->size() == 16);
   const char* k = "abcdefg";
   const char* v = "1234567";
@@ -32,8 +35,8 @@ void test_slab_number()
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  SlabPolicy policy = {16, 128, 1.2, true, 1024 * 1024 * 2};
-  SlabArray slab_array(policy);
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
+  SlabArray slab_array(option);
   slab_array.init();
 
   size_t slabs = slab_array.slabs();
@@ -48,8 +51,8 @@ void test_slab_pop_push()
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  SlabPolicy policy = {16, 128, 1.2, true, 1024 * 1024 * 2};
-  SlabArray slab_array(policy);
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
+  SlabArray slab_array(option);
   slab_array.init();
 
   Slab& slab = slab_array[0];

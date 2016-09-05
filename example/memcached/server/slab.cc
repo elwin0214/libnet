@@ -2,19 +2,22 @@
 #include <assert.h>
 #include "slab.h"
 #include <libnet/logger.h>
+#include <libnet/exception.h>
+
+#define ENTIRE_SIZE(size) (sizeof(Item) + size)
+#define ALIGN(size) (((size) + ((8) - 1)) & ~ ((8) -1))
 
 namespace memcached
 {
 namespace server
 {
-static const size_t batch_alloc_size = 1024 ;
 
 Item* Slab::pop()
 {
   if (head_ == NULL) return NULL;
 
   Item* tmp = head_;
-  Item* next = head_->next();
+  Item* next = head_->next_;
   head_= next;
   if (tail_ == tmp) tail_ = NULL;
   number_--;
@@ -31,6 +34,8 @@ void Slab::push(Item* item)
     number_++;
     return;
   }
+  assert(NULL != tail_);
+  assert(NULL != head_);
 
   tail_->next_ = item;
   tail_ = item; 
@@ -39,37 +44,43 @@ void Slab::push(Item* item)
 };
 
 
-SlabArray::SlabArray(SlabPolicy policy)
-  : factor_(policy.factor_),
-    min_size_(policy.item_min_size_),
-    max_size_(policy.item_max_size_),
+SlabArray::SlabArray(const SlabOption& option)
+  : factor_(option.factor_),
+    min_size_(option.item_min_size_),
+    max_size_(option.item_max_size_),
+    batch_alloc_size_(option.batch_alloc_size_),
     slabs_(),
-    allocator_(new MemoryAllocator(policy.prealloc_, policy.total_mem_size_))
+    allocator_(option.prealloc_, option.total_mem_size_)
 {
 
 };
 
 void SlabArray::init()
 {
+
   if (factor_ <= 1)
   {
     factor_ = 1.2;
   }
+  min_size_ = ALIGN(ENTIRE_SIZE(min_size_));
+  max_size_ = ALIGN(ENTIRE_SIZE(max_size_));
   std::list<int> sizes_;
   size_t size;
   size_t last_size;
-  for (size = detail::align(min_size_); size <= max_size_; )
+  for (size = min_size_; size <= max_size_; )
   {
     sizes_.push_back(size);
     last_size = size;
     size *= factor_; 
-    size = detail::align(size);
+    size = ALIGN(size);
   }
   if (last_size < max_size_)
   {
-    size = detail::align(max_size_);
+    size = ALIGN(max_size_);
+    last_size = size;
     sizes_.push_back(size);
   }
+  max_size_ = last_size;
   slabs_.reserve(sizes_.size());
 
   int index = 0;
@@ -81,55 +92,53 @@ void SlabArray::init()
     slabs_.push_back(Slab(index, *itr));
     index++;
   }
+  max_item_size_ = max_size_ - sizeof(Item);
 };
 
-void SlabArray::doAlloc(Slab& slab, size_t item_size)
+void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
 {
-  size_t item_obj_size = sizeof(Item);
-  size_t item_entire_size = item_obj_size + item_size;
+  assert(item_entire_size <= max_size_);
 
-  assert(item_entire_size <= batch_alloc_size);
-
-  char* ptr = static_cast<char*>(allocator_->allocate(batch_alloc_size));
+  char* ptr = static_cast<char*>(allocator_.allocate(batch_alloc_size_));
 
   if (ptr != NULL)
   {
     Item* item = NULL;
     size_t offset = 0;
-    for(; offset + item_entire_size <= batch_alloc_size; )
+    for(; offset + item_entire_size <= batch_alloc_size_; )
     {
-      item = static_cast<Item*>(static_cast<void*>(ptr + offset));
-      item->clear();
-      item->reset(item_size);
+      void* item_ptr = static_cast<void*>(ptr + offset);
+      Item* item = new (item_ptr)Item(slab.index(), item_entire_size - sizeof(Item));
       offset += item_entire_size;
+      LOG_TRACE << "slab.index = " << (slab.index()) << "item->size()= " << (item->size()) << " " << (item->size_) ;
       slab.push(item);
     }
-
-    if (offset + item_entire_size < batch_alloc_size )
-    {
-      item->reset(batch_alloc_size - offset);//last item get more space
-    }
   }
+  else
+    LOG_ERROR << "can not alloc " << batch_alloc_size_ << "bytes memory";
 
 };
 
 Item* SlabArray::pop(size_t item_size)
-{
-  if (item_size > max_size_) return NULL;
+{ 
+  size_t item_entire_size = ENTIRE_SIZE(item_size);
+  if (item_entire_size > max_size_) return NULL;
 
   for (std::vector<Slab>::iterator itr = slabs_.begin();
       itr != slabs_.end();
       itr++)
   {
-    if (itr->item_size() >= item_size)
+    if (itr->item_size() >= item_entire_size)
     {
       if (itr->number() == 0)
       {
-        doAlloc(*itr, item_size);
+        doAlloc(*itr, itr->item_size());
       }
-      return itr->pop();
+      Item* item = itr->pop();
+      return item;
     }
   }
+  //throw Exception("can not find matched item in the slab!");
   assert(false);
   return NULL;
 };

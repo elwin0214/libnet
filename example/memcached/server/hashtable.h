@@ -27,6 +27,8 @@ public:
     : hashpower_(hashpower),
       size_(0),
       factor_(factor),
+      new_hashpower_(0),
+      moving_index_(-1),
       moving_(false),
       hash_(std::hash<std::string>()),
       buckets_(1 << hashpower)
@@ -39,25 +41,31 @@ public:
     return hash_(key);
   }
 
-  Item* get(const char* key);
+  Item* setItem(Item* item);
 
-  Item* set(Item* item);
+  void addItem(Item* item);
+
+  Item* removeItem(Item* item);
+
+  Item* get(const char* key);
 
   Item* remove(const char* key);
 
-  size_t size(){return size_; }
+  size_t size() { return size_; }
 
-  size_t buckets() {return buckets_.size();}
+  size_t buckets() { return buckets_.size();}
 
   bool moving(){ return moving_; }
 
-  bool resize(){return true; };
-
-
 private:
+
   void add(size_t index, Item* item);
 
-  HashTable::Bucket::iterator find(size_t bucket_index, const char* key);
+  void resize();
+
+  HashTable::Bucket::iterator find(Bucket& bucket, const char* key);
+
+  HashTable::Bucket& getBucket(size_t hashcode);
 
 
 private:
@@ -65,11 +73,12 @@ private:
   size_t hashpower_;
   size_t size_;
   double factor_;
-  size_t moving_bucket_;
+  size_t new_hashpower_;
+  ssize_t moving_index_; //moving bucket index
   bool moving_;
   std::function<size_t(const std::string&)> hash_;
   std::vector<Bucket> buckets_;
-  std::vector<Bucket> moving_buckets_;
+  std::vector<Bucket> new_buckets_;
 
 };
 

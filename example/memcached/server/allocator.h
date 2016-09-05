@@ -8,13 +8,6 @@ namespace memcached
 namespace server
 {
 using namespace libnet;
-namespace detail
-{
-inline size_t align(size_t size)
-{
-  return (size + ((1 << 3) - 1)) & ~ ((1 << 3) -1);
-};
-}
 
 class MemoryAllocator : public NoCopyable
 {

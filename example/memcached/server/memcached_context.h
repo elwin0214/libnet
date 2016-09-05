@@ -1,5 +1,6 @@
 #ifndef __LIBNET_MEMCACHED_SERVER_CONTEXT_H__
 #define __LIBNET_MEMCACHED_SERVER_CONTEXT_H__
+#include <functional>
 #include <libnet/nocopyable.h>
 #include <string>
 
@@ -65,6 +66,26 @@ public:
     return exptime_;
   }
 
+  void set_send_func(std::function<void(const char*)> func)
+  {
+    send_func_ = func;
+  }
+
+  void set_close_func(std::function<void()> func)
+  {
+    close_func_ = func;
+  }
+
+  void send(const char* str)
+  {
+    send_func_(str);
+  }
+
+  void close()
+  {
+    close_func_();
+  }
+
 
 
 private:
@@ -73,6 +94,8 @@ private:
   uint32_t exptime_;
   uint32_t bytes_;
   std::string key_;
+  std::function<void(const char*)> send_func_;
+  std::function<void()> close_func_;
 
 };
 

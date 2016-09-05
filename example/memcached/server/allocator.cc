@@ -1,12 +1,11 @@
 #include <stdlib.h>
 #include "allocator.h"
+#define ALIGN(size) (((size) + ((8) - 1)) & ~ ((8) -1))
 
 namespace memcached
 {
 namespace server
 {
-
-
 
 MemoryAllocator::MemoryAllocator(bool prealloc, size_t total)
   : prealloc_(prealloc),
@@ -14,20 +13,18 @@ MemoryAllocator::MemoryAllocator(bool prealloc, size_t total)
     total_(total),
     ptr_(NULL)
 {
-  total_ = detail::align(total_);
+  total_ = ALIGN(total_);
   if (prealloc_)
     ptr_ = static_cast<char*>(::malloc(total_));
 };
-
 MemoryAllocator::~MemoryAllocator()
 {
   if (prealloc_)
     ::free(ptr_);
 };
 
-void* MemoryAllocator::allocate(size_t size)
+void* MemoryAllocator::allocate(size_t size)//align before
 {
-  size = detail::align(size);
   if (!prealloc_)
   {
     return static_cast<char*>(::malloc(size));

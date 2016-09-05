@@ -27,5 +27,11 @@ TARGET_LINK_LIBRARIES(hashtable_unitest libnet)
 add_executable(tokenizer_unitest server/tokenizer.cc server/test/tokenizer_unitest.cc)
 TARGET_LINK_LIBRARIES(tokenizer_unitest libnet)
 
-add_executable(processor_get_unitest server/tokenizer.cc server/processor.cc server/test/processor_get_unitest.cc)
-TARGET_LINK_LIBRARIES(processor_get_unitest libnet)
+add_executable(processor_unitest server/tokenizer.cc server/processor.cc server/test/processor_unitest.cc)
+TARGET_LINK_LIBRARIES(processor_unitest libnet)
+
+
+add_executable(memcached_server_test server/allocator.cc server/slab.cc server/tokenizer.cc server/processor.cc server/hashtable.cc server/memcached_server.cc server/test/memcached_server_test.cc)
+TARGET_LINK_LIBRARIES(memcached_server_test libnet)
+
+

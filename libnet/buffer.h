@@ -85,6 +85,19 @@ public:
     return std::string(cur(), readable());
   };
 
+  std::string toAsciiString()
+  {
+    std::string str;
+    str.reserve(1024);
+    auto func = [&str](char ch)
+    { str.push_back('[');
+      str.append(std::to_string(static_cast<size_t>(ch)));
+      str.push_back(']');
+    };
+    std::for_each(beginRead(), beginWrite(), func);
+    return str;
+  };
+
   const char& at(size_t index)
   {
     assert(index < readable());
@@ -106,7 +119,12 @@ public:
 
   void makeRoom(size_t len);
 
-  const char* find(const char* str);
+  const char* find(const char* str)
+  {
+    return find(0, str);
+  }
+
+  const char* find(size_t pos, const char* str);
   const char* rfind(const char* end, char ch);
 
   void prepare(const char* str, size_t len);

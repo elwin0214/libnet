@@ -14,11 +14,28 @@ namespace server
 {
 using namespace libnet;
 
-struct SlabPolicy
-{
+struct SlabOption
+{ //16, 128, 1.2, true, 1024 * 1024 * 2}
+  SlabOption(size_t item_min_size, 
+      size_t item_max_size, 
+      double factor, 
+      size_t batch_alloc_size, 
+      bool prealloc,
+      size_t total_mem_size)
+    : item_min_size_(item_min_size),
+      item_max_size_(item_max_size),
+      factor_(factor),
+      batch_alloc_size_(batch_alloc_size),
+      prealloc_(prealloc),
+      total_mem_size_(total_mem_size)
+  {
+
+  };
+
   size_t item_min_size_;  // item最小值
   size_t item_max_size_; //item最大值
   double factor_;  //增长因子
+  size_t batch_alloc_size_;
   bool prealloc_;  //是否预先分配内存
   size_t total_mem_size_; //所需的总内存大小
 };
@@ -62,7 +79,7 @@ class SlabArray : public NoCopyable
 {
 
 public:
-  SlabArray(SlabPolicy slabPolicy);
+  SlabArray(const SlabOption& option);
 
   void init();
 
@@ -74,16 +91,20 @@ public:
 
   size_t slabs() { return slabs_.size(); }
   
+  size_t max_item_size() const { return max_item_size_; }
+  
 private:
-    void doAlloc(Slab& slab, size_t item_size);
+  void doAlloc(Slab& slab, size_t item_entire_size);
 
 private:
   double factor_;
   size_t min_size_;
   size_t max_size_;
+  size_t max_item_size_;
+  size_t batch_alloc_size_;
   std::vector<size_t> sizes_;
   std::vector<Slab> slabs_;
-  std::unique_ptr<MemoryAllocator> allocator_;
+  MemoryAllocator allocator_;
 };
 
 }

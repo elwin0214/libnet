@@ -64,9 +64,10 @@ bool Buffer::equals(const char* str)
   return true;
 };
 
-const char* Buffer::find(const char* str)
+const char* Buffer::find(size_t pos, const char* str)
 {
-  for (size_t i = 0; i < readable(); i++)
+  assert (pos <= readable());
+  for (size_t i = pos; i < readable(); i++)
   {
     bool found = true;
     for (size_t start = 0; start < strlen(str); start++)

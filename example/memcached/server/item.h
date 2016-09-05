@@ -3,27 +3,31 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <string.h>
+#include <functional>
 #include <libnet/digits.h>
+#include <libnet/nocopyable.h>
 
 namespace memcached
 {
 namespace server
 {
-
-class Item
+using namespace libnet;
+class Item : public NoCopyable
 {
-public:
 
-  void reset(uint16_t size)
-  {
-    size_ = size;
-    ::memset(data_, 0, size_);
-  }
+public:
+  Item(uint8_t index, uint32_t size)
+    : index_(index),
+      size_(size)
+    {
+      ::memset(data_, 0, size_);// the actual length of data is greater than size_
+    }
 
   void clear()
   {
     prev_ = NULL;
     next_ = NULL;
+    hash_ = 0;
     flags_ = 0;
     exptime_ = 0;
   }
@@ -38,17 +42,12 @@ public:
     return data_ + key_size_ + 1 ;
   }
 
-
-  // uint32_t expireTime()
-  // {
-  //   return stringToDigit
-  // } 
-
   void set_key(const char* key, uint8_t len)
   {
     ::memcpy(data_, key, len);
     data_[len] = '\0';
     key_size_ = len;
+    hash_ = std::hash<std::string>()(std::string(data_, len));
   }
 
   void set_value(const char* value, uint16_t len)
@@ -74,14 +73,18 @@ public:
   uint32_t get_bytes() { return bytes_; }
   void set_exptime(uint32_t exptime) { exptime_ = exptime; }
 
+private:
+  ~Item(){} //can not be delete
+
 public:
   Item* prev_;
   Item* next_;
-  //Item* hash_prev_;
-  //Item* hash_next_;
+  Item* hash_prev_;
+  Item* hash_next_;
 
-  uint8_t index_;  //const
-  uint32_t size_; // const
+  const uint8_t index_;  //const
+  const uint32_t size_; // const
+  size_t hash_;
   uint16_t flags_; 
   uint32_t exptime_; 
   uint32_t bytes_;
@@ -89,8 +92,6 @@ public:
   char data_[0]; //align
 
 };
-//VALUE <key> <flags> <bytes> [<cas unique>]\r\n<data block>\r\nEND\r\n  
-// key value expires 
 }
 }
 
