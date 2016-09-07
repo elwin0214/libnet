@@ -7,6 +7,7 @@
 #include "socket_ops.h"
 #include "timer_queue.h"
 #include "timestamp.h"
+#include "exception.h"
 #include <assert.h>
 
 namespace libnet
@@ -152,8 +153,9 @@ bool EventLoop::inLoopThread()
 
 void EventLoop::assertInLoopThread()
 {
-  if (!inLoopThread())
-    LOG_ERROR << "current thread ID "<< thread::currentTid() << ", but the EventLoop thread ID " << tid_;
+  if (!inLoopThread()){
+    LOG_SYSFATAL << "current thread ID "<< thread::currentTid() << ", but the EventLoop thread ID " << tid_;
+  }
 
 };
 

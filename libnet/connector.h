@@ -2,7 +2,8 @@
 #define __LIBNET_CONNECTOR_H__
 
 #include <memory>
-#include <map>
+#include <atomic>
+#include <functional>
 #include "atomic.h"
 #include "inet_address.h"
 #include "mutexlock.h"
@@ -19,7 +20,6 @@ public:
   typedef std::shared_ptr<Connection> ConnectionPtr;
   typedef std::function<void(ConnectionPtr)> ConnectionCallBack;
   typedef std::unique_ptr<Channel> ChannelPtr;
-  //typedef std::map<int, ChannelPtr> Channels;
   typedef std::function<void(int)> NewConnectionCallBack;
 
 
@@ -29,14 +29,18 @@ public:
   
   void start();
 
+  void restart();
+
   void stop();
 
-  void setNewConnectionCallBack(NewConnectionCallBack callback) { newConnectionCallBack_ = callback; };
+  void setNewConnectionCallBack(NewConnectionCallBack callback) { new_connection_callback_ = callback; };
 
 private:
   void retry();
 
-  void connect();
+  void startInLoop();
+
+  void stopInLoop();
 
   void connectInLoop();
 
@@ -46,7 +50,7 @@ private:
 
   void handleError(int fd);
 
-  void removeChannelInLoop(int fd, bool close);
+  void removeChannelInLoop();
 
 private:
   enum State
@@ -56,13 +60,12 @@ private:
     kDisConnected
   };
 
-  bool stop_;
+  std::atomic<bool> stop_;
   State state_;
   EventLoop* loop_;
-  InetAddress serverAddress_;
-  //Channels channels_; // 
+  InetAddress server_address_;
   ChannelPtr channel_;
-  NewConnectionCallBack newConnectionCallBack_;
+  NewConnectionCallBack new_connection_callback_;
   MutexLock lock_;
 
 };

@@ -33,8 +33,8 @@ public:
   ~Server();
 
   void start();
-  void setConnectionCallBack(ConnectionCallBack callback) { connection_callBack_ = callback; }
-  void setMessageCallBack(ConnectionCallBack callback) { message_callBack_ = callback; }
+  void setConnectionCallBack(ConnectionCallBack callback) { connection_callback_ = callback; }
+  void setMessageCallBack(ConnectionCallBack callback) { message_callback_ = callback; }
 
   void newConnection(int fd, InetAddress &addr);
   void removeConnection(const ConnectionPtr &connection);
@@ -53,8 +53,8 @@ private:
   
   std::map<int, ConnectionPtr> connections_;
 
-  ConnectionCallBack connection_callBack_;
-  ConnectionCallBack message_callBack_;
+  ConnectionCallBack connection_callback_;
+  ConnectionCallBack message_callback_;
 };
 
 }

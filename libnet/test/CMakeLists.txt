@@ -35,6 +35,9 @@ target_link_libraries(client_rst_test libnet)
 add_executable(client_hello_test client_hello_test.cc)
 target_link_libraries(client_hello_test libnet)
 
+add_executable(client_retry_test client_retry_test.cc)
+target_link_libraries(client_retry_test libnet)
+
 add_executable(countdown_latch_unitest countdown_latch_unitest.cc)
 target_link_libraries(countdown_latch_unitest libnet)
 
@@ -63,8 +66,6 @@ add_test(NAME digits_unitest COMMAND digits_unitest)
 add_test(NAME condition_unitest COMMAND condition_unitest)
 add_test(NAME condition_wait_unitest COMMAND condition_wait_unitest)
 add_test(NAME eventloop_unitest COMMAND eventloop_unitest)
-
-
 
 #add_test(NAME atomic_unitest COMMAND atomic_unitest)
 

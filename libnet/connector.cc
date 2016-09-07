@@ -6,11 +6,11 @@
 namespace libnet
 {
 
-Connector::Connector(EventLoop* loop, const InetAddress& serverAddress)
+Connector::Connector(EventLoop* loop, const InetAddress& server_address)
   : stop_(false),
     state_(kDisConnected),
     loop_(loop),
-    serverAddress_(serverAddress),
+    server_address_(server_address),
     channel_(),
     lock_()
 {
@@ -19,12 +19,9 @@ Connector::Connector(EventLoop* loop, const InetAddress& serverAddress)
 
 Connector::~Connector()
 {
-  //loop_->assertInLoopThread();
   stop_ = true;
   state_ = kDisConnected;
   LockGuard guard(lock_);
-  // for (Channels::iterator itr = channels_.begin(); itr != channels_.end(); itr++) 
-  // {
   if (channel_)
   {
     channel_->disableAll();
@@ -32,32 +29,62 @@ Connector::~Connector()
     LOG_DEBUG << "close" ;
     sockets::close(channel_->fd());
   }
-  //}
 };
 
 void Connector::start()
 {
   stop_ = false;
-  loop_->runInLoop(std::bind(&Connector::connect, this));
+  loop_->runInLoop(std::bind(&Connector::startInLoop, this));
+};
+
+void Connector::restart()
+{
+  loop_->assertInLoopThread();
+  stop_ = false;
+  state_ = kDisConnected;
+  startInLoop();
+};
+
+void Connector::startInLoop()
+{
+  loop_->assertInLoopThread();
+  if (state_ == kDisConnected)
+  {
+    if (!stop_)
+    {
+      connectInLoop();//本次调用设置 kConnecting 不会同时发起多个
+    }
+    else
+    {
+      LOG_DEBUG << "stopped!";
+    }
+  }
 };
 
 void Connector::stop()
 {
   stop_ = true;
+  loop_->runInLoop(std::bind(&Connector::stopInLoop, this));
 };
 
-void Connector::connect()
+void Connector::stopInLoop()
 {
   loop_->assertInLoopThread();
-  if (state_ == kConnecting) return;
-  state_ = kConnecting;
-  loop_->runInLoop(std::bind(&Connector::connectInLoop, this));
+  if (state_ == kConnecting)
+  {
+    state_ = kDisConnected;
+    LockGuard guard(lock_);
+    channel_->disableAll();
+    channel_->remove();
+    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
+  }
 };
+
 
 void Connector::registerConnect(int fd)
 {
   loop_->assertInLoopThread();
-
+  state_ = kConnecting;
   LOG_DEBUG << "fd=" << fd ; 
   LockGuard guard(lock_);
   channel_.reset(new Channel(loop_, fd));
@@ -69,11 +96,11 @@ void Connector::registerConnect(int fd)
 void Connector::connectInLoop()
 {
 
-  if (stop_) return;
+  //if (stop_) return;
   loop_->assertInLoopThread();
   int fd = sockets::createSocketFd();
   sockets::setNoBlocking(fd);
-  int r = sockets::connect(fd, serverAddress_.getSockAddrIn());
+  int r = sockets::connect(fd, server_address_.getSockAddrIn());
   int err = (0 == r) ? 0 : errno;  
 
   switch (err)
@@ -96,8 +123,7 @@ void Connector::retry()
 { 
   loop_->assertInLoopThread();
   LOG_DEBUG << "retry" ;
-  if (stop_) return ;
-  loop_->runAfter(2000, std::bind(&Connector::connectInLoop, shared_from_this()));
+  loop_->runAfter(2000, std::bind(&Connector::startInLoop, shared_from_this()));
 };
 
 void Connector::handleWrite(int fd)
@@ -108,23 +134,28 @@ void Connector::handleWrite(int fd)
   channel_->disableAll();
   channel_->remove();
 
-  int err = sockets::getSocketError(fd);//socket 连接建立变为可读，如果出错 即可读又可写
+  int err = sockets::getSocketError(fd);//the fd is readable and writeable when error
   
   if (err)
   {
-    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, true));
-    retry();
+    sockets::close(fd); 
+    // handleWrite is excuted inside the Channle::handleEvent
+    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
+    retry();//removeChannelInLoop() excute before the startInLoop() in retry()
     return;
   }
 
-  if (!stop_ && newConnectionCallBack_)
+  if (!stop_ && new_connection_callback_)
   {
-    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, false));
-    newConnectionCallBack_(fd);
+    state_ = kConnected;
+    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
+    new_connection_callback_(fd);
   }
   else
   {
-    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, true));
+    state_ = kDisConnected;
+    sockets::close(fd);
+    loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
   }
 };
 
@@ -135,22 +166,15 @@ void Connector::handleError(int fd)
   LockGuard guard(lock_);
   channel_->disableAll();
   channel_->remove();
-  loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this(), fd, true));
+  sockets::close(fd);
+  loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
   retry();
 };
 
-void Connector::removeChannelInLoop(int fd, bool close)
+void Connector::removeChannelInLoop()
 {
   loop_->assertInLoopThread();
   LockGuard guard(lock_);
   channel_.reset();
-  if (close)
-  {
-    sockets::close(fd); 
-  }
-  else
-  {
-    state_ = kConnected;
-  }
 };
 }

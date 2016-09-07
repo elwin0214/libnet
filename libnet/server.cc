@@ -67,8 +67,8 @@ void Server::newConnection(int fd, InetAddress& addr)
   EventLoop* loop = loop_group_->getNextLoop();
   int id = next_id_++;
   ConnectionPtr connection = std::make_shared<Connection>(loop, fd, id);
-  connection->setConnectionCallBack(connection_callBack_);
-  connection->setReadCallBack(message_callBack_);
+  connection->setConnectionCallBack(connection_callback_);
+  connection->setReadCallBack(message_callback_);
   connection->setCloseCallBack(std::bind(&Server::removeConnection, this, std::placeholders::_1));  // server 关闭时，removeConnectionInLoop 执行？
   connections_[id] = connection;
   std::string name;

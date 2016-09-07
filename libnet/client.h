@@ -4,7 +4,7 @@
 #include "eventloop.h"
 #include "connector.h"
 #include "inet_address.h"
-
+#include "mutexlock.h"
 #include <functional>
 #include <map>
 
@@ -26,31 +26,36 @@ public:
 
   ~Client();
 
+  bool retry(){ return retry_; }
+
+  void enableRetry(){ retry_ = true; }
+
   void connect();
 
   void disconnect();
 
-  void setConnectionCallBack(ConnectionCallBack callback) { connectionCallBack_ = callback; }
+  void setConnectionCallBack(ConnectionCallBack callback) { connection_callback_ = callback; }
 
-  void setMessageCallBack(ConnectionCallBack callback) { messageCallBack_ = callback; }
+  void setMessageCallBack(ConnectionCallBack callback) { message_callback_ = callback; }
 
 private:
   void newConnection(int fd);
   void disconnectInLoop();
   void removeConnection(const ConnectionPtr& connPtr);
-  //void removeConnectionInLoop(const ConnectionPtr& connPtr);
 
 private:
-  ConnectionCallBack connectionCallBack_;
-  ConnectionCallBack messageCallBack_;
-  ConnectionCallBack closeConnectionCallBack_;
+  ConnectionCallBack connection_callback_;
+  ConnectionCallBack message_callback_;
+  //ConnectionCallBack close_connection_callback_;
   
   EventLoop* loop_;
-  InetAddress serverAddr_;
+  InetAddress server_addr_;
   std::shared_ptr<Connector> connector_;
-  int connId_;
-  ConnectionPtr connectionPtr_;
-  //std::map<int, ConnectionPtr> connections_;
+  int next_id_;
+  ConnectionPtr connection_;
+  std::atomic<bool> stop_;
+  bool retry_;
+  MutexLock lock_;
  };
 
 }

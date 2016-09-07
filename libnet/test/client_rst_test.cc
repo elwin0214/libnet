@@ -13,7 +13,7 @@ void cancel()
 
 int main()
 {
-  log::LogLevel logLevel = log::LogLevel(0);
+  log::LogLevel logLevel = log::LogLevel(1);
   setLogLevel(logLevel);
   EventLoop loop;
   gLoop = &loop;
