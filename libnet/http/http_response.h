@@ -19,8 +19,7 @@ class HttpContext;
 class HttpResponse : public NoCopyable
 {
 public:
-  typedef std::function<void(Buffer*)> SendCallback;
-  typedef std::function<void(CString)> SendStringCallback;
+  typedef std::function<void(const CString&)> SendCallback;
   typedef std::map<std::string, std::string> Headers ;
 public:
   enum StatusCode
@@ -45,7 +44,7 @@ public:
       sending_(false),
       chunked_(false),
       headers_(),
-      sendCallback_(),
+      send_callback_(),
       buffer_(new Buffer(kPrepend, kSize))
   {
 
@@ -73,22 +72,21 @@ public:
   void send(const char* str, size_t len);
 
   void flush();
-  void setSendCallback(SendCallback sendCallback) { sendCallback_ = sendCallback; }
-  void setSendStringCallback(SendStringCallback sendCallback) { sendStringCallback_ = sendCallback; }
+  void setSendCallback(SendCallback callback) { send_callback_ = callback; }
+  //void setSendStringCallback(SendStringCallback sendCallback) { sendStringCallback_ = sendCallback; }
 
   void finish();
 private:
   void appendToBuffer(Buffer *buffer);
-  void send(const char* str) { sendStringCallback_(CString(str, ::strlen(str)));}
-  void send(Buffer* buffer) { sendCallback_(buffer); }
+  void send(const CString& str) { send_callback_(str);}
+  //void send(Buffer* buffer) { sendCallback_(buffer); }
 
   int status_;
   bool close_;
   bool sending_;
   bool chunked_;
   Headers headers_;
-  SendCallback sendCallback_;
-  SendStringCallback sendStringCallback_;
+  SendCallback send_callback_;
   std::unique_ptr<Buffer> buffer_;
   
 };

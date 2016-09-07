@@ -150,7 +150,8 @@ void HttpResponse::appendToBuffer(Buffer *output)
   else
   {
     if (!chunked_)
-    {
+    { 
+      char buf[32];
       snprintf(buf, sizeof(buf), "Content-Length: %zu\r\n", buffer_->readable());
       output->append(buf);
     }
@@ -191,13 +192,13 @@ void HttpResponse::flush()
     //Buffer* buffer = new Buffer(kPrepend, kSize);
     Buffer buffer(kPrepend, kSize);
     appendToBuffer(&buffer);
-    sendCallback_(&buffer);
+    send_callback_(CString(buffer.beginRead(), buffer.readable()));
   }
   if (!chunked_)
   {
     if (buffer_->readable() > 0)
     {
-      sendCallback_(buffer_.get());
+      send_callback_(CString(buffer_->beginRead(), buffer_->readable()));
       buffer_->clear();
       //buffer_.reset(new Buffer(kPrepend, kSize));
     }
@@ -213,7 +214,7 @@ void HttpResponse::flush()
     buf[n + 1] = '\n';
     buffer_->prepare(buf, n + 2);
     buffer_->append("\r\n");
-    sendCallback_(buffer_.get());
+    send_callback_(CString(buffer_->beginRead(), buffer_->readable()));
     buffer_->clear();
     //buffer_.reset(new Buffer(kPrepend, kSize));
   }

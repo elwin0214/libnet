@@ -85,18 +85,7 @@ public:
     return std::string(cur(), readable());
   };
 
-  std::string toAsciiString()
-  {
-    std::string str;
-    str.reserve(1024);
-    auto func = [&str](char ch)
-    { str.push_back('[');
-      str.append(std::to_string(static_cast<size_t>(ch)));
-      str.push_back(']');
-    };
-    std::for_each(beginRead(), beginWrite(), func);
-    return str;
-  };
+  std::string toAsciiString();
 
   const char& at(size_t index)
   {

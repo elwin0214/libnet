@@ -45,14 +45,6 @@ struct ProxyHandler
 //mock connection
 struct ProxyConnection
 {
-  void sendBuffer(Buffer* buffer)
-  {
-    //cout << "sendBuffer=" << (buffer->toString()) << endl; 
-    gResponseBuffer->append(buffer->beginRead(), buffer->readable());
-    buffer->clear();
-    delete buffer;
-  }
-
   void sendString(CString cstring)
   {
     gResponseBuffer->append(cstring.data(), cstring.length());
@@ -77,8 +69,7 @@ struct TestHttpProcessor
 
     gHttpProcessor->setBodyReaderCallBack(std::bind(&ProxyHandler::handleBody, &proxyHandler, _1, _2, _3));
     gHttpProcessor->setRequestHandlerCallBack(std::bind(&ProxyHandler::handleRequest, &proxyHandler, _1, _2));
-    gContext->getResponse().setSendCallback(std::bind(&ProxyConnection::sendBuffer, &proxyConnection, _1));
-    gContext->getResponse().setSendStringCallback(std::bind(&ProxyConnection::sendString, &proxyConnection, _1));
+    gContext->getResponse().setSendCallback(std::bind(&ProxyConnection::sendString, &proxyConnection, _1));
   
   } 
 

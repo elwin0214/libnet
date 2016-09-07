@@ -124,6 +124,18 @@ void Buffer::compact()
   writeIndex_ = distance;
 };
 
+std::string Buffer::toAsciiString()
+{
+  std::string str;
+  str.reserve(1024);
+  auto func = [&str](char ch)
+  { str.push_back('[');
+    str.append(std::to_string(static_cast<size_t>(ch)));
+    str.push_back(']');
+  };
+  std::for_each(beginRead(), beginWrite(), func);
+  return str;
+};
 
 
 }
