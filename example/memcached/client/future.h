@@ -9,6 +9,7 @@ namespace memcached
 namespace client
 {
 
+template<typename T>
 class Future : public NoCopyable
 {  
 public:
@@ -22,18 +23,18 @@ public:
   void wait() { latch_.wait(); }
   void wakeup() {latch_.countDown(); }
    
-  void set(Code code, const std::string& result)
+  void set(Code code, const T& result)
   {
     code_ = code;
     result_ = result;
   }
 
   Code code() { return code_; }
-  std::string result() { return result_; }
+  T result() { return result_; }
 
 private:
   Code code_;
-  std::string result_;
+  T result_;
   CountDownLatch latch_;
 
 };

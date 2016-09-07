@@ -109,7 +109,7 @@ void test_incr()
   Buffer resp(0, 1024);
   resp.append("1\r\n");
   cmd.parse(resp);
-  assert (cmd.code() == kSucc  && cmd.result() == "1");
+  assert (cmd.code() == kSucc  && cmd.result() == 1);
 }
 
 void test_incr_fail()

@@ -14,15 +14,15 @@ MemcachedClient* gClient;
 
 void test_set()
 {
-  std::shared_ptr<Future> set1 = gClient->set("a", 2000, "cc");
+  std::shared_ptr<Future<bool>> set1 = gClient->set("a", 2000, "cc");
   set1->wait();
   assert(set1->code() == kSucc);
   
-  std::shared_ptr<Future> set2 = gClient->set("b", 2000, "cc");
+  std::shared_ptr<Future<bool>> set2 = gClient->set("b", 2000, "cc");
   set2->wait();
   assert(set2->code() == kSucc);
 
-  std::shared_ptr<Future> get = gClient->get("b");
+  std::shared_ptr<Future<std::string>> get = gClient->get("b");
   get->wait();
   assert(get->code() == kSucc);
   assert(get->result() ==  "cc");
@@ -30,19 +30,19 @@ void test_set()
 
 void test_rem()
 {
-  std::shared_ptr<Future> rem = gClient->remove("a");
+  std::shared_ptr<Future<bool>> rem = gClient->remove("a");
   rem->wait();
   //assert(rem->code() == kSucc);
   
-  std::shared_ptr<Future> rem2 = gClient->remove("a");
+  std::shared_ptr<Future<bool>> rem2 = gClient->remove("a");
   rem2->wait();
   assert(rem2->code() == kFail);
 
-  std::shared_ptr<Future> set = gClient->set("a", 2000, "cc");
+  std::shared_ptr<Future<bool>> set = gClient->set("a", 2000, "cc");
   set->wait();
   assert(set->code() == kSucc);
 
-  std::shared_ptr<Future> rem3 = gClient->remove("a");
+  std::shared_ptr<Future<bool>> rem3 = gClient->remove("a");
   rem3->wait();
   assert(rem3->code() == kSucc);
 }
@@ -50,45 +50,45 @@ void test_rem()
 
 void test_add()
 {
-  std::shared_ptr<Future> rem = gClient->remove("a");
+  std::shared_ptr<Future<bool>> rem = gClient->remove("a");
   rem->wait();
   
 
-  std::shared_ptr<Future> add = gClient->add("a", 2000, "1");
+  std::shared_ptr<Future<bool>> add = gClient->add("a", 2000, "1");
   add->wait();
   assert(add->code() == kSucc);
 
 
-  std::shared_ptr<Future> add2 = gClient->add("a", 2000, "999");
+  std::shared_ptr<Future<bool>> add2 = gClient->add("a", 2000, "999");
   add2->wait();
   assert(add2->code() == kFail);
 
-  std::shared_ptr<Future> incr = gClient->incr("a", 1);
+  std::shared_ptr<Future<uint32_t>> incr = gClient->incr("a", 1);
   incr->wait();
   assert(incr->code() == kSucc);
-  assert(incr->result() == "2");
+  assert(incr->result() == 2);
 
-  std::string last_incr;
+  uint32_t last_incr;
   for (int i = 0 ; i < 100 ; i++)
   {
-    std::shared_ptr<Future> incr = gClient->incr("a", 1);
+    std::shared_ptr<Future<uint32_t>> incr = gClient->incr("a", 1);
     incr->wait();
     assert(incr->code() == kSucc);
     last_incr = incr->result();
   }
 
-  assert( last_incr == "102");
+  assert( last_incr == 102);
 
 
   for (int i = 0 ; i < 100 ; i++)
   {
-    std::shared_ptr<Future> decr = gClient->decr("a", 1);
+    std::shared_ptr<Future<uint32_t>> decr = gClient->decr("a", 1);
     decr->wait();
     assert(decr->code() == kSucc);
     last_incr = decr->result();
   }
     
-  assert( last_incr == "2");
+  assert( last_incr == 2);
 
 
 }

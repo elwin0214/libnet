@@ -17,7 +17,7 @@ using namespace libnet;
 class Context : public NoCopyable
 {
 public:
-  typedef std::queue<std::shared_ptr<Message>> CommandQueue;
+  typedef std::queue<std::shared_ptr<Caller>> CommandQueue;
 
   Context():lock_()
   {
@@ -27,51 +27,51 @@ public:
   ~Context()
   {
     LockGuard guard(lock_);
-    while (!commandSendingQueue_.empty())
+    while (!sending_queue_.empty())
     {
-      commandSendingQueue_.front()->wakeup();
-      commandSendingQueue_.pop();
+      sending_queue_.front()->wakeup();
+      sending_queue_.pop();
     }
-    while (!commandSentQueue_.empty())
+    while (!sent_queue_.empty())
     {
-      commandSentQueue_.front()->wakeup();
-      commandSentQueue_.pop();
-    }
-  }
-
-  void write(const MemcachedClient::ConnectionPtr& connectionPtr)
-  {
-    LockGuard guard(lock_);
-    while (!commandSendingQueue_.empty())
-    {
-      Buffer* buffer = new Buffer(0, 1024);
-      std::shared_ptr<Message>& messagePtr = commandSendingQueue_.front();
-      messagePtr->append(*buffer);
-      connectionPtr->sendBuffer(buffer);
-      commandSentQueue_.push(messagePtr); 
-      commandSendingQueue_.pop();
+      sent_queue_.front()->wakeup();
+      sent_queue_.pop();
     }
   }
 
-  void push(const std::shared_ptr<Message>& message)
+  void write(const MemcachedClient::ConnectionPtr& connection)
   {
     LockGuard guard(lock_);
-    commandSendingQueue_.push(message);
+    while (!sending_queue_.empty())
+    {
+      Buffer buffer(0, 1024);
+      std::shared_ptr<Caller>& caller = sending_queue_.front();
+      caller->append(buffer);
+      connection->sendBuffer(&buffer);
+      sent_queue_.push(caller); 
+      sending_queue_.pop();
+    }
+  }
+
+  void push(const std::shared_ptr<Caller>& message)
+  {
+    LockGuard guard(lock_);
+    sending_queue_.push(message);
   }
 
   bool parse(Buffer& input)
   {
     LockGuard guard(lock_);
-    if (commandSentQueue_.empty()){
+    if (sent_queue_.empty()){
       assert(input.readable() <= 0);// 多余数据
       return false;
     }
-    std::shared_ptr<Message>& messagePtr = commandSentQueue_.front();
-    if (messagePtr->parse(input))
+    std::shared_ptr<Caller>& caller = sent_queue_.front();
+    if (caller->parse(input))
     {
       LOG_DEBUG << "parse.wakup" ;
-      messagePtr->wakeup();
-      commandSentQueue_.pop();
+      caller->wakeup();
+      sent_queue_.pop();
       //todo
       return true;
     }
@@ -81,8 +81,8 @@ public:
 
 private:
   MutexLock lock_;
-  CommandQueue commandSendingQueue_;
-  CommandQueue commandSentQueue_;
+  CommandQueue sending_queue_;
+  CommandQueue sent_queue_;
 };
 
 void MemcachedClient::connect()
@@ -106,7 +106,7 @@ void MemcachedClient::onConnection(const ConnectionPtr& connection)
   }
 };
 
-void MemcachedClient::send(const std::shared_ptr<Message>& message)
+void MemcachedClient::send(const std::shared_ptr<Caller>& message)
 {
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->push(message);

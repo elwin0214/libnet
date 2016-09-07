@@ -27,7 +27,7 @@ void set(int count, const std::string& value)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    std::shared_ptr<Future> set = gClient->set(buf, 0, value);
+    std::shared_ptr<Future<bool>> set = gClient->set(buf, 0, value);
     set->wait();
     LOG_DEBUG << "set " << i ;
     if (set->code() == kSucc) 
@@ -43,7 +43,7 @@ void get(int count, const std::string& value)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    std::shared_ptr<Future> get = gClient->get(buf);
+    std::shared_ptr<Future<std::string>> get = gClient->get(buf);
     get->wait();
 
     if (get->code() == kSucc) 

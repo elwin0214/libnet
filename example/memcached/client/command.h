@@ -13,6 +13,7 @@ namespace client
 {
 using namespace libnet;
 
+template<typename T>
 class Command
 {
 public:
@@ -30,7 +31,7 @@ public:
   virtual bool parse(Buffer& buffer) = 0;
   Code code(){ return code_; }
   std::string desc() { return desc_; }
-  std::string result() { return result_; }
+  T result() { return result_; }
 
 protected:
   bool isError(Buffer& buffer, const char* crlf)
@@ -48,13 +49,13 @@ protected:
   std::string key_;
   Code code_;
   std::string desc_;
-  std::string result_;
+  T result_;
 };
 
 //req  : set|add|replace <key> <flags> <exptime> <bytes>\r\n<data block>\r\n
 //resp : STORED\r\n
 //resp : NOT_STORED\r\n
-class TextStoreCommand : public Command
+class TextStoreCommand : public Command<bool>
 {
 public:
   TextStoreCommand(const char* name, const std::string& key, int32_t exptime, const std::string& value)
@@ -71,15 +72,15 @@ public:
   virtual std::string getValue() {return value_; }
 
 protected:
-  uint32_t flags_;
-  int32_t exptime_;
-  int32_t bytes_;
+  uint16_t flags_;
+  uint32_t exptime_;
+  uint32_t bytes_;
   std::string value_;
 };
 
 //req  : get key\r\n
 //resp : VALUE <key> <flags> <bytes> [<cas unique>]\r\n<data block>\r\nEND\r\n  
-class GetCommand : public Command
+class GetCommand : public Command<std::string>
 {
 public:
   GetCommand(const std::string& key)
@@ -118,7 +119,7 @@ private:
 //req  : delete <key>\r\n
 //resp : DELETED\r\n
 //resp : NOT_FOUND\r\n
-class DeleteCommand : public Command
+class DeleteCommand : public Command<bool>
 {
 public:
   DeleteCommand(const std::string& key)
@@ -132,7 +133,7 @@ public:
 //req : incr|decr <key> <value>\r\n
 //resp: <value>\r\n
 //resp: NOT_FOUND\r\n
-class CountCommand : public Command
+class CountCommand : public Command<uint32_t>
 {
 public:
   CountCommand(const char* name, const std::string& key, uint32_t value)

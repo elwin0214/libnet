@@ -13,10 +13,18 @@ namespace memcached
 namespace client
 {
 
-class Message : public NoCopyable
+struct Caller
+{
+  virtual void append(Buffer& buffer) = 0;
+  virtual bool parse(Buffer& buffer) = 0; 
+  virtual void wakeup() = 0;
+};
+
+template<typename T>
+class Message : public NoCopyable, public Caller
 {
 public:
-  Message(Command* command, const std::shared_ptr<Future>& future)
+  Message(Command<T>* command, const std::shared_ptr<Future<T>>& future)
     : command_(command),
       future_(future)
   {
@@ -41,8 +49,8 @@ public:
 
 
 private:
-  std::unique_ptr<Command> command_;
-  std::shared_ptr<Future> future_;
+  std::shared_ptr<Command<T>> command_;  //can not use unique_ptr??
+  std::shared_ptr<Future<T>> future_;
 };
 
 }
