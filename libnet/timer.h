@@ -15,9 +15,13 @@ class Timer : public NoCopyable
 public:
   typedef std::function<void()>  TimerCallback;
 
-  Timer(Timestamp time, const TimerCallback &timerCallback);
+  Timer(Timestamp time, const TimerCallback &callback);
 
-  Timer(Timestamp time, int inervalMs, const TimerCallback &timerCallback);
+  Timer(Timestamp time, TimerCallback &&callback);
+
+  Timer(Timestamp time, int inerval, const TimerCallback& timerCallback);
+
+  Timer(Timestamp time, int inerval, TimerCallback&& timerCallback);
 
   ~Timer()
   {
@@ -36,7 +40,7 @@ public:
 
 private:
   Timestamp time_;
-  int intervalMs_;
+  int interval_; //ms
   const TimerCallback callback_;
   int64_t id_;
   static AtomicInt64 s_timerId_;

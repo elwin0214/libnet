@@ -9,13 +9,16 @@ using namespace libnet;
 class EchoServer
 {
 public:
-  EchoServer(EventLoop* loop, const char* host, int port, int threadNum);
+  typedef std::shared_ptr<Connection> ConnectionPtr;
+
+public:
+  EchoServer(EventLoop* loop, const char* host, int port, int threads);
 
   void start();
 
-  void onConnection(std::shared_ptr<Connection> conPtr);
+  void onConnection(const ConnectionPtr& connection);
 
-  void onMessage(std::shared_ptr<Connection> conPtr);
+  void onMessage(const ConnectionPtr& connection);
 
 private:
   EventLoop* loop_;

@@ -6,27 +6,43 @@ namespace libnet
 
 AtomicInt64 Timer::s_timerId_(0);
 
-Timer::Timer(Timestamp time, int inervalMs, const TimerCallback &timerCallback)
+Timer::Timer(Timestamp time, int interval, const TimerCallback& callback)
   : time_(time),
-    intervalMs_(inervalMs),
-    callback_(timerCallback),
+    interval_(interval),
+    callback_(callback),
     id_(s_timerId_.getAndAdd(1))
 {
 };
 
-Timer::Timer(Timestamp time, const TimerCallback &timerCallback)
+Timer::Timer(Timestamp time, int interval, TimerCallback&& callback)
   : time_(time),
-    intervalMs_(0),
-    callback_(timerCallback),
+    interval_(interval),
+    callback_(std::move(callback)),
+    id_(s_timerId_.getAndAdd(1))
+{
+};
+
+Timer::Timer(Timestamp time, const TimerCallback& callback)
+  : time_(time),
+    interval_(0),
+    callback_(callback),
+    id_(s_timerId_.getAndAdd(1))
+{
+};
+
+Timer::Timer(Timestamp time, TimerCallback&& callback)
+  : time_(time),
+    interval_(0),
+    callback_(std::move(callback)),
     id_(s_timerId_.getAndAdd(1))
 {
 };
 
 bool Timer::next()
 {
-  if (intervalMs_ <= 0)
+  if (interval_ <= 0)
     return false;
-  time_.add(intervalMs_);
+  time_.add(interval_);
   return true;
 };
 

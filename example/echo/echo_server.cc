@@ -7,9 +7,9 @@
 #include <libnet/cstring.h>
 #include "echo_server.h"
 
-EchoServer::EchoServer(EventLoop* loop, const char* host, int port, int threadNum)
+EchoServer::EchoServer(EventLoop* loop, const char* host, int port, int threads)
     : loop_(loop),
-      server_(loop, host, port, threadNum)
+      server_(loop, host, port, threads)
 {
 };
 
@@ -20,7 +20,7 @@ void EchoServer::start()
   server_.start();
 };
 
-void EchoServer::onConnection(std::shared_ptr<Connection> connection)
+void EchoServer::onConnection(const ConnectionPtr& connection)
 {
   LOG_INFO << "connection id=" << (connection->id())  <<" state=" << (connection->stateToString());
 
@@ -34,7 +34,7 @@ void EchoServer::onConnection(std::shared_ptr<Connection> connection)
   }
 };
 
-void EchoServer::onMessage(std::shared_ptr<Connection> connection)
+void EchoServer::onMessage(const ConnectionPtr& connection)
 {
   std::string str = connection->input().toString();
   int id = connection->id();
@@ -53,8 +53,6 @@ void EchoServer::onMessage(std::shared_ptr<Connection> connection)
     loop_->wakeup();
     return;
   }
-  //std::shared_ptr<Buffer> echo(new Buffer(1024));
-  //echo->append(conPtr->input());
   connection->input().clear();
   connection->sendWithLen(str.data(), str.size());
 };

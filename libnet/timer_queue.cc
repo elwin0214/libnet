@@ -10,32 +10,32 @@ TimerQueue::TimerQueue(EventLoop *loop):queue_(),loop_(loop)
 
 };
 
-TimerId TimerQueue::runAt(const Timestamp &timestamp, const Timer::TimerCallback &callback)
+TimerId TimerQueue::runAt(const Timestamp& timestamp, const Timer::TimerCallback& callback)
 {
   Timer *timer = new Timer(timestamp, callback);
   loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
-TimerId TimerQueue::runAt(const Timestamp &timestamp, int intervalMs, const Timer::TimerCallback &callback)
+TimerId TimerQueue::runAt(const Timestamp& timestamp, int interval, const Timer::TimerCallback& callback)
 {
-  Timer *timer = new Timer(timestamp, intervalMs, callback);
+  Timer *timer = new Timer(timestamp, interval, callback);
   loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
-TimerId TimerQueue::runAfter(int timeMs, const Timer::TimerCallback &callback)
+TimerId TimerQueue::runAt(const Timestamp& timestamp, Timer::TimerCallback&& callback)
 {
-  Timestamp ts = Timestamp::now();
-  ts.add(timeMs);
-  return runAt(ts, callback);
+  Timer *timer = new Timer(timestamp, std::move(callback));
+  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  return TimerId(timer, timer->id());
 };
 
-TimerId TimerQueue::runAfter(int timeMs, int intervalMs, const Timer::TimerCallback &callback)
+TimerId TimerQueue::runAt(const Timestamp& timestamp, int interval, Timer::TimerCallback&& callback)
 {
-  Timestamp ts = Timestamp::now();
-  ts.add(timeMs);
-  return runAt(ts, intervalMs, callback);
+  Timer *timer = new Timer(timestamp, interval, std::move(callback));
+  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  return TimerId(timer, timer->id());
 };
 
 

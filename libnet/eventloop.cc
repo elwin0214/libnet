@@ -45,8 +45,8 @@ EventLoop::~EventLoop()
 
 void EventLoop::handleRead()
 {   
-  char buf[100];
-  ssize_t n = sockets::read(wakeupFd_[0], buf, 100);
+  char buf[128];
+  ssize_t n = sockets::read(wakeupFd_[0], buf, 128);
   if (n < 0)
     LOG_ERROR << "read fd-" << wakeupFd_[0] << " ,size-" <<n << ", errno-" << errno ;
 };
@@ -84,7 +84,7 @@ void EventLoop::loop()
       LOG_DEBUG << "functors.size=" << functors_.size();
       while (!functors_.empty())
       {
-        Functor func = functors_.front();
+        Functor& func = functors_.front();
         func();
         functors_.pop();
       }
@@ -97,32 +97,48 @@ void EventLoop::loop()
   }
 };
 
-TimerId EventLoop::runAt(const Timestamp &timestamp, Functor functor)
+TimerId EventLoop::runAt(const Timestamp &timestamp, const Functor& functor)
 {
   return timerQueue_->runAt(timestamp, functor);
 };
 
-TimerId EventLoop::runAfter(int afterTimeMs, Functor functor)
+TimerId EventLoop::runAfter(int afterTimeMs, const Functor& functor)
 {
   Timestamp timestamp = Timestamp::now();
   timestamp.add(afterTimeMs);
   return timerQueue_->runAt(timestamp, functor);
 };
 
-TimerId EventLoop::runInterval(int afterTimeMs, int intervalMs, Functor functor)
+TimerId EventLoop::runInterval(int afterTimeMs, int intervalMs, const Functor& functor)
 {
   Timestamp timestamp = Timestamp::now();
   timestamp.add(afterTimeMs);
-  LOG_DEBUG << "runInterval timestamp at " <<timestamp.value();
+  LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
   return timerQueue_->runAt(timestamp, intervalMs, functor);
 };
 
-void EventLoop::runInLoop(Functor functor)
+TimerId EventLoop::runAt(const Timestamp &timestamp, Functor&& functor)
 {
-  // assertInLoopThread();
-  // functor();
- // LOG_INFO << (this) ;
- // LOG_TRACE << "inloop=" << inLoopThread() <<  " add functor ";
+  return timerQueue_->runAt(timestamp, std::move(functor));
+};
+
+TimerId EventLoop::runAfter(int afterTimeMs, Functor&& functor)
+{
+  Timestamp timestamp = Timestamp::now();
+  timestamp.add(afterTimeMs);
+  return timerQueue_->runAt(timestamp, std::move(functor));
+};
+
+TimerId EventLoop::runInterval(int afterTimeMs, int intervalMs, Functor&& functor)
+{
+  Timestamp timestamp = Timestamp::now();
+  timestamp.add(afterTimeMs);
+  LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
+  return timerQueue_->runAt(timestamp, intervalMs, std::move(functor));
+};
+
+void EventLoop::runInLoop(const Functor& functor)
+{
   if (inLoopThread())
   {
     functor();
@@ -133,18 +149,38 @@ void EventLoop::runInLoop(Functor functor)
   }
 };
 
-void EventLoop::queueInLoop(Functor functor)
+void EventLoop::queueInLoop(const Functor& functor)
 {  
   {
-        //LOG_DEBUG("%s", "runInQueue");
     LockGuard guard(lock_);
-    //functor();
     functors_.push(functor);
-        //LOG_DEBUG("%s", "push");
   }
   if (!inLoopThread())
     wakeup();
 };
+
+void EventLoop::runInLoop(Functor&& functor)
+{
+  if (inLoopThread())
+  {
+    functor();
+  }
+  else
+  {
+    queueInLoop(std::move(functor));
+  }
+};
+
+void EventLoop::queueInLoop(Functor&& functor)
+{  
+  {
+    LockGuard guard(lock_);
+    functors_.push(std::move(functor));
+  }
+  if (!inLoopThread())
+    wakeup();
+};
+
 
 bool EventLoop::inLoopThread()
 {

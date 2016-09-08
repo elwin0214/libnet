@@ -11,8 +11,6 @@
 namespace libnet
 {
 
-//void* thread_execute(void*);
-
 class Thread : public NoCopyable
 {
 public:
