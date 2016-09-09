@@ -98,6 +98,23 @@ struct TestBuffer
     assert("[13][10]" == buf.toAsciiString());
   }
 
+  void test_makeRoom_1()
+  {
+    Buffer buffer(4, 8);
+    buffer.append("12345678");
+    buffer.moveReadIndex(5);
+    buffer.makeRoom(4);
+    assert("678" == buffer.toString());
+  }
+
+  void test_makeRoom_2()
+  {
+    Buffer buffer(4, 8);
+    buffer.append("12345678");
+    buffer.makeRoom(4);
+    assert("12345678" == buffer.toString());
+  }
+
   TestBuffer()
   {
 
@@ -115,6 +132,8 @@ int main()
   tb.test_prepre();
   tb.test_startWiths();
   tb.test_ascii();
-
+  tb.test_makeRoom_1();
+  tb.test_makeRoom_2();
+  return 0;
 }
 

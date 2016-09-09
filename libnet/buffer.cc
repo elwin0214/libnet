@@ -104,6 +104,7 @@ void Buffer::makeRoom(size_t len)
 {
   if (writable() + prependable() < len + prepend_)
     data_.resize(writeIndex_ + len);
+
   else
     compact();
 };
@@ -119,9 +120,9 @@ void Buffer::compact()
   std::vector<char>::iterator start = data_.begin() + readIndex_; 
   std::vector<char>::iterator end = data_.begin() + writeIndex_;
   int distance = writeIndex_ - readIndex_;
-  std::copy(start, end , data_.begin()); 
+  std::copy(start, end , data_.begin() + prepend_); 
   readIndex_ = prepend_;
-  writeIndex_ = distance;
+  writeIndex_ = readIndex_ + distance;
 };
 
 std::string Buffer::toAsciiString()

@@ -18,7 +18,6 @@ public:
 
   PollSelector(EventLoop *loop);
   virtual ~PollSelector();
-  //virtual void addChannel(Channel *ch);
   virtual void updateChannel(Channel *ch);
   virtual void removeChannel(Channel *ch);
 

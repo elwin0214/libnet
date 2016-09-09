@@ -60,14 +60,12 @@ public:
   ~LoggerStream();
 
   self& operator << (const std::string &str);
-  //self& operator << (size_t v) {append("%d", v); return *this; }
-  //self& operator << (int64_t v) { append("%l", v); return *this; }
   self& operator << (int v) { append("%d", v); return *this; }
   self& operator << (unsigned int v) { append("%d", v); return *this; }
   self& operator << (long v) { append("%ld", v); return *this; }
   self& operator << (unsigned long v) { append("%ld", v); return *this; }
   self& operator << (long long v) { append("%lld", v); return *this; }
-  //self& operator << (unsigned long int v) {append("%ul", v); return *this; }
+  self& operator << (uint64_t v) {append("%lld", v); return *this; }
   self& operator << (void* p) { append("%x", p); return *this; }
 
   self& operator << (const char* str){ append("%s", str); return *this; }

@@ -9,6 +9,31 @@ namespace libnet
 {
 namespace digits
 {
+template<typename T>
+bool convert(const std::string& str, T& result) //error
+{
+  return convert<T>(str.c_str(), result);
+};
+
+template<typename T>
+bool convert(const char* str, T& result)
+{
+  int64_t value = 0; 
+  try
+  {
+    value = std::stoll(str, nullptr, 10);  
+  }
+  catch(...)
+  {
+    return false;
+  }
+  if (value < 0 || value > std::numeric_limits<T>::max())
+  {
+    return false;
+  }
+  result = static_cast<T>(value);
+  return true;
+};
 
 inline int stringToDigit(const char* str, size_t *num)
 {

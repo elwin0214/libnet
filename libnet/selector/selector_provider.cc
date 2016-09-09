@@ -20,6 +20,10 @@ Selector* SelectorProvider::provide(EventLoop *loop)
   if (NULL == env)
   {
     LOG_INFO << "can not find env, use default" ;
+    return new PollSelector(loop);
+  }
+  if (strcmp(env, "select") == 0)
+  {
     return new DefaultSelector(loop);
   }
   if (strcmp(env, "epoll") == 0)

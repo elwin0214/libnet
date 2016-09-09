@@ -7,7 +7,7 @@ using namespace libnet;
 void test_format()
 {
   Timestamp now = Timestamp::now();
-  fprintf(stdout, "now=%s\n", now.toString().c_str());
+  fprintf(stdout, "ts = %lld now = %s\n", now.value(), now.toString().c_str());
 };
 
 void test_map()

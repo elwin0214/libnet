@@ -90,12 +90,12 @@ void PollSelector::select(int timeoutMs, ChannelList& activeChannles)
   int num = ::poll(&(*(pollfds_.begin())), pollfds_.size(), timeoutMs);
   if (num < 0)
   {
-    LOG_ERROR << "timeout-" <<timeoutMs << ", errno-" << errno;
+    LOG_ERROR << "timeout = " <<timeoutMs ;
     return;
   }
   if (num == 0)
   {
-    LOG_DEBUG << "timeout-" << timeoutMs;
+    LOG_DEBUG << "timeout = " << timeoutMs;
     return;
   }
 

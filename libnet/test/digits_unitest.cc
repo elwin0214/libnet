@@ -7,6 +7,13 @@
 using namespace libnet::digits;
 using namespace std;
 
+void test_convert()
+{
+  std::string s = "12";
+  uint32_t value = 0;
+  convert<uint32_t>(s.c_str(), value);
+  assert(value == 12);
+};
 
 void test_string_digit()
 {
@@ -56,7 +63,7 @@ void test_digit_xstring()
 
 int main()
 {
-
+  test_convert();
   test_string_digit();
   test_string_digit_width();
   test_xstring_digit();

@@ -36,10 +36,11 @@ int Socket::read(Buffer &buffer)
   if (len <= 0) buffer.makeRoom(128); 
   len = buffer.writable();
   ssize_t n = sockets::read(fd_, buffer.beginWrite(), len);
-  LOG_TRACE << "read return=" << n ;
-  if (n <= 0) return n; //todo errno
-  if (n > 0) 
-    buffer.moveWriteIndex(n);
+  LOG_TRACE << "n = " << n << ", len = " << len  ;
+  if (n <= 0) 
+    return n; 
+  buffer.moveWriteIndex(n);
+  LOG_TRACE << "buffer = " << buffer.toString() ;
   return n;
 };
 
@@ -47,9 +48,12 @@ int Socket::write(Buffer &buffer)
 {
   int len = buffer.readable();
   ssize_t n = sockets::write(fd_, buffer.beginRead(), len);
-  if (n <= 0) return n; //todo errno
-  LOG_DEBUG << "buffer-" << buffer.toString() << ", len-" << len  ;
+  LOG_TRACE << "n = " << n << ", len = " << len  ;
+  if (n <= 0) 
+    return n; 
+  LOG_TRACE << "buffer = " << buffer.toString() << ", len = " << len  ;
   buffer.moveReadIndex(n);
+  LOG_TRACE << "buffer = " << buffer.toString() ;
   return n;
 };
 
@@ -64,9 +68,9 @@ int Socket::write(const CString &cstring)
 void Socket::shutdownWrite()
 {
   if(::shutdown(fd_, SHUT_WR) < 0)
-    LOG_SYSERROR << "sockfd=" << fd_ <<" close!" ;
+    LOG_SYSERROR << "sockfd = " << fd_ <<" close!" ;
   else
-    LOG_DEBUG << "sockfd=" << fd_ ;
+    LOG_DEBUG << "sockfd = " << fd_ ;
 };
 
 void Socket::setReuseAddr()

@@ -24,6 +24,11 @@ public:
     return microSeconds_;
   };
 
+  uint64_t secondsValue() const 
+  {
+    return microSeconds_ / kMicroSecondsPerSecond;
+  };
+
   bool operator< (const Timestamp& ts) const
   {
     return microSeconds_ < ts.microSeconds_;
