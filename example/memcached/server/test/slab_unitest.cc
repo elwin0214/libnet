@@ -14,8 +14,9 @@ void test_prealloc_slab()
   setLogLevel(logLevel);
   SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
   SlabArray slab_array(option);
-  slab_array.init();
-  Item* item = slab_array.pop(16);
+  //slab_array.init();
+  int item_index = -1;
+  Item* item = slab_array.pop(16, item_index);
   assert (NULL != item);
   cout << (item->size()) << endl;
   assert (item->size() == 16);
@@ -37,7 +38,6 @@ void test_slab_number()
   setLogLevel(logLevel);
   SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
   SlabArray slab_array(option);
-  slab_array.init();
 
   size_t slabs = slab_array.slabs();
   for (size_t i = 0 ; i < slabs; i++)
@@ -53,13 +53,12 @@ void test_slab_pop_push()
   setLogLevel(logLevel);
   SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
   SlabArray slab_array(option);
-  slab_array.init();
 
   Slab& slab = slab_array[0];
 
   std::vector<Item*> items;
-  //Item* item = slab.pop();
-  Item* item = slab_array.pop(16); //index = 0
+  int item_index = -1;
+  Item* item = slab_array.pop(16, item_index); //index = 0
 
   assert(NULL != item);
   items.push_back(item);// first 

@@ -84,13 +84,14 @@ void test_single_opt()
 {
   gProcessor.clear();
   process(" get key1\r\n" ,"END\r\n", kNo);
-  process(" get key1\r\n" ,"END\r\n", kNo);
 
   process(" set a 0 0 1\r\n1\r\n" ,"STORED\r\n", kNo);
   process(" get a\r\n" ,"VALUE a 0 1\r\n1\r\nEND\r\n", kNo);
 
   process(" incr a 1\r\n", "2\r\n", kNo);
   process(" decr a 1\r\n", "1\r\n", kNo);
+  process(" incr a 2\r\n", "3\r\n", kNo);
+  process(" decr a 200\r\n", "0\r\n", kNo);
 
   process(" replace b 0 0 2\r\n23\r\n" ,"NOT_STORED\r\n", kNo);
   process(" add b 0 0 2\r\n23\r\n" ,"STORED\r\n", kNo);
@@ -140,6 +141,31 @@ void test_fragement()
 };
 
 
+void test_incr()
+{
+  MemcachedContext context;
+  bool closed = false;
+  Buffer resp(0, 1024);
+  Buffer req(0, 1024);
+  context.set_send_func([&resp] (const char* str){ resp.append(str);});
+  context.set_close_func([&closed] (){ closed = true;});
+
+  req.append("set a 0 0 1\r\n1\r\n");
+  gProcessor.process(req, context);
+
+  assert("STORED\r\n" == resp.toString());
+  resp.clear();
+
+  req.append("incr a ");
+  gProcessor.process(req, context);
+  cout << "request = " << req.toString() << endl;
+  req.append("1\r\n");
+  gProcessor.process(req, context);
+  cout << "response = " << resp.toString() << endl;
+  assert("2\r\n" == resp.toString());
+
+}
+
 
 int main()
 {
@@ -148,5 +174,6 @@ int main()
   test_single_opt();
   test_multi_opt();
   test_fragement();
+  test_incr();
   return 0;
 }

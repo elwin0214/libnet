@@ -7,6 +7,7 @@
 #include "slab.h"
 #include "processor.h"
 #include "hashtable.h"
+#include "lru.h"
 
 namespace memcached
 {
@@ -32,11 +33,13 @@ public:
   size_t getNumConnections() { return num_connections_; }
 
 private:
-  void remove(Item* item)
-  {
-    hash_table_.removeItem(item);
-    slab_array_.push(item);
-  }
+
+  void remove(Item* item);
+  Item* find(const char* key, bool lru);
+  Item* alloc(size_t item_size);
+  void add(Item* item);
+  void refreshTime() { now_ = Timestamp::now().secondsValue(); };
+  uint64_t get_now() { return now_; }
 
 private:
   Server server_;
@@ -46,7 +49,8 @@ private:
   MemcachedProcessor processor_;
   HashTable hash_table_;
   SlabArray slab_array_;
-
+  LRUList lru_list_;
+  uint64_t now_;
 
 };
 

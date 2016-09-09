@@ -15,7 +15,7 @@ namespace server
 using namespace libnet;
 
 struct SlabOption
-{ //16, 128, 1.2, true, 1024 * 1024 * 2}
+{ 
   SlabOption(size_t item_min_size, 
       size_t item_max_size, 
       double factor, 
@@ -44,7 +44,7 @@ class Slab //: public NoCopyable
 {
 
 public:
-  Slab(size_t index, size_t item_size)
+  Slab(uint8_t index, size_t item_size)
     : number_(0),
       index_(index),
       item_size_(item_size),
@@ -64,11 +64,11 @@ public:
 
   size_t number() { return number_; }
   
-  size_t index() { return index_; }
+  uint8_t index() { return index_; }
 
 private:
   size_t number_;
-  size_t index_;
+  uint8_t index_;
   size_t item_size_;
   Item* head_;
   Item* tail_;
@@ -81,9 +81,7 @@ class SlabArray : public NoCopyable
 public:
   SlabArray(const SlabOption& option);
 
-  void init();
-
-  Item* pop(size_t item_size);
+  Item* pop(size_t item_size, int& index);
   
   void push(Item* item);
 
@@ -94,6 +92,7 @@ public:
   size_t max_item_size() const { return max_item_size_; }
   
 private:
+  void init();
   void doAlloc(Slab& slab, size_t item_entire_size);
 
 private:

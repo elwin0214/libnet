@@ -48,6 +48,7 @@ public:
       std::shared_ptr<Caller>& caller = sending_queue_.front();
       caller->append(buffer);
       connection->sendBuffer(&buffer);
+      LOG_TRACE << "write = " << buffer.toString() ;
       sent_queue_.push(caller); 
       sending_queue_.pop();
     }

@@ -3,34 +3,12 @@
 #include <libnet/digits.h>
 #include <assert.h>
 
+using namespace libnet;
 namespace memcached
 {
 namespace client
 {
 
-namespace digit
-{
-template<typename T>
-bool convert(const std::string& str, T& result)
-{
-  ssize_t value = 0; 
-  try
-  {
-    value = std::stoi(str.c_str(), nullptr, 10);  
-  }
-  catch(...)
-  {
-    return false;
-  }
-  if (value < 0 || value > std::numeric_limits<T>::max())
-  {
-    return false;
-  }
-  result = static_cast<T>(value);
-  return true;
-};
-
-}
 void TextStoreCommand::append(Buffer& buffer)
 {
   buffer.append(name_);
@@ -108,21 +86,7 @@ bool GetCommand::parseValueLine(Buffer& buffer, const char* crlf)
     {
       std::string flags = std::string(buffer.beginRead(), blank - buffer.beginRead());
       buffer.moveReadIndex(blank + 1 - buffer.beginRead());
-      // try
-      // {
-      //   int flags_int = std::stoi(flags.c_str(), nullptr, 10);  
-      // }
-      // catch(...)
-      // {
-      //    LOG_ERROR << "key = " << key << " error = convert " << flags << " to int fail!"; 
-      //    return false;
-      // }
-      // if (flags_int < 0 || flags_int > std::numeric_limits<uint16_t>::max())
-      // {
-      //   LOG_ERROR << "flags = " << flags << " error = overflow!"; 
-      //   return false;
-      // }
-      if (!digit::convert<uint32_t>(flags, flags_))
+      if (!digits::convert<uint32_t>(flags.c_str(), flags_))
       {
         return false;
       }
@@ -131,12 +95,10 @@ bool GetCommand::parseValueLine(Buffer& buffer, const char* crlf)
     {
       std::string bytes = std::string(buffer.beginRead(), crlf - buffer.beginRead());
       buffer.moveReadIndex(crlf + 1 - buffer.beginRead());
-      if (!digit::convert<uint32_t>(bytes, bytes_))
+      if (!digits::convert<uint32_t>(bytes.c_str(), bytes_))
       {
         return false;
       }
-
-      //digits::stringToDigit(bytes.c_str(), &bytes_);
     }
   }
 
@@ -151,7 +113,6 @@ bool GetCommand::parse(Buffer& buffer)
     const char* crlf = buffer.find("\r\n");
     if (NULL == crlf)
     {
-      //code_ = kNeedMore;
       break;
     }
     if (isError(buffer, crlf)) return true;
@@ -262,7 +223,7 @@ bool CountCommand::parse(Buffer& buffer)
   else
   {
     std::string value = std::string(buffer.beginRead(), crlf - buffer.beginRead());
-    if (digit::convert<uint32_t>(value, result_))
+    if (digits::convert<uint32_t>(value.c_str(), result_))
     {
       code_ = kSucc;
     }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <string>
 #include <libnet/digits.h>
+#include <libnet/timestamp.h>
 #include <libnet/logger.h>
 #include "processor.h"
 #include "item.h"
@@ -15,6 +16,8 @@ using namespace libnet::digits;
 using namespace std::placeholders;
 static const size_t kMaxKeySize = 255;
 static const size_t kMaxValueSize = 65535;
+static const size_t kSecondsOneMonth = 30 * 24 * 3600;
+//static const size_t 
 
 class GetProcessor : public Processor
 {
@@ -95,12 +98,13 @@ bool GetProcessor::process(Buffer& buffer, MemcachedContext& context)
 
   std::string key = std::string(pos, len);
   buffer.moveReadIndex(end + 2 - buffer.beginRead());
-  if (key.size() >= kMaxKeySize)
+  if (key.size() >= kMaxKeySize) // wont check more word
   {
     context.send("ERROR\r\n");
     return true;
   }
-  Item* item = item_find_func_(key.c_str());
+
+  Item* item = item_find_func_(key.c_str(), true);
   if (NULL == item)
   {
     context.send("END\r\n");
@@ -113,7 +117,6 @@ bool GetProcessor::process(Buffer& buffer, MemcachedContext& context)
   char buf[64]; 
   ::bzero(buf, sizeof(buf));
   ::sprintf(buf, " %d %d\r\n", item->get_flags(), item->get_bytes());
-  //std::to_string(item->get_flags())
   context.send(buf);
   context.send(item->value());
   context.send("\r\nEND\r\n");
@@ -144,7 +147,25 @@ bool CounterProcessor::process(Buffer& buffer, MemcachedContext& context)
     return true;
   }
 
-  Item* item = item_find_func_(key.c_str());
+  next = tokenizer.next(pos, len);
+  if (!next)
+  {
+    buffer.moveReadIndex(end + 2 - buffer.beginRead());
+    context.send("ERROR\r\n");
+    return true;
+  }
+
+  std::string step = std::string(pos, len);
+  uint32_t step_int = 0;
+  if (!digits::convert<uint32_t>(step.c_str(), step_int))
+  {
+    LOG_ERROR << "key = " << key << " error = convert " << step << " to uint32_t fail!"; 
+    buffer.moveReadIndex(end + 2 - buffer.beginRead());
+    context.send("ERROR\r\n");
+    return true;
+  }
+
+  Item* item = item_find_func_(key.c_str(), true);
   if (NULL == item)
   {
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -155,31 +176,27 @@ bool CounterProcessor::process(Buffer& buffer, MemcachedContext& context)
   if (!isDigit(item->value()))
   {
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
-    context.send("CLIENT_ERROR\r\n");
+    context.send("ERROR\r\n");
     return true;
   }
 
-  uint32_t value;
-  try 
+  uint32_t value = 0;
+  if (!digits::convert<uint32_t>(item->value(), value))
   {
-    value = std::stoi(item->value(), nullptr, 10);
-  }
-  catch(...)
-  { 
-    LOG_ERROR << "key = " << key << " error = convert value to int fail!"; 
+    LOG_ERROR << "key = " << key << " error = convert " << (item->value()) << " to uint32_t fail!"; 
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
     context.send("ERROR\r\n");
     return true;
   }
+
   buffer.moveReadIndex(end + 2 - buffer.beginRead());
-  if (opt_ == kIncr)
-    value++;
+  if (opt_ == kIncr) //todo check overflow
+    value += step_int;
   else
-    value--;
-  //if (value < 0) value = 0;
+    value = (value <= step_int ? 0 : value - step_int) ;
   
   std::string value_str = std::to_string(value);
-  item->set_value(value_str.c_str(), value_str.size()); // should keep the min item can save a uint32_t number
+  item->set_value(value_str.c_str(), value_str.size()); //todo should keep the minmum item can save a uint32_t number
   context.send(item->value());
   context.send("\r\n");
   
@@ -212,7 +229,7 @@ bool DeleteProcessor::process(Buffer& buffer, MemcachedContext& context)
     return true;
   }
 
-  Item* item = item_find_func_(key.c_str());
+  Item* item = item_find_func_(key.c_str(), false);
   if (NULL == item)
   {
     context.send("NOT_FOUND\r\n");
@@ -264,24 +281,16 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
 
     std::string flags = std::string(pos, len);
     buffer.moveReadIndex(pos + len - buffer.beginRead());
-    int flags_int = 0;
-    try
+
+    uint16_t flags_int = 0;
+    if (!digits::convert<uint16_t>(flags.c_str(), flags_int))
     {
-      flags_int = std::stoi(flags.c_str(), nullptr, 10);  
-    }
-    catch(...)
-    { 
-      LOG_ERROR << "key = " << key << " error = convert " << flags << " to int fail!"; 
+      LOG_ERROR << "key = " << key << " error = convert value " << flags <<" to uint16_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
       context.send("ERROR\r\n");
       return true;
     }
-    if (flags_int < 0 || flags_int > std::numeric_limits<uint16_t>::max())
-    {
-      LOG_ERROR << "flags = " << flags << " error = overflow!"; 
-      buffer.moveReadIndex(end + 2 - buffer.beginRead());
-      context.send("ERROR\r\n");
-    }
+
     //exptime
     if (!tokenizer.next(pos, len))
     {
@@ -291,21 +300,15 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
     }
     std::string exptime = std::string(pos, len);
     buffer.moveReadIndex(pos + len - buffer.beginRead());
-    uint32_t exptime_int = 0;
-    
-    try
+  
+    uint64_t exptime_int = 0;
+    if (!digits::convert<uint64_t>(exptime.c_str(), exptime_int))
     {
-      exptime_int = std::stoi(exptime.c_str(), nullptr, 10);
-    }
-    catch(...)
-    { 
-      LOG_ERROR << "exptime = " << exptime << " error = convert to int fail!"; 
+      LOG_ERROR << "key = " << key << " error = convert value " << flags <<" to uint16_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
       context.send("ERROR\r\n");
       return true;
     }
-
-    //todo
 
     //bytes
     if (!tokenizer.next(pos, len))
@@ -316,19 +319,16 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
     }
     std::string bytes = std::string(pos, len);
     buffer.moveReadIndex(pos + len - buffer.beginRead());
+
     uint32_t bytes_int = 0;
-    //digits::stringToDigit(bytes.c_str(), &bytes_int);
-    try
+    if (!digits::convert<uint32_t>(bytes.c_str(), bytes_int))
     {
-      bytes_int = std::stoi(bytes.c_str(), nullptr, 10);
-    }
-    catch(...)
-    { 
-      LOG_ERROR << "bytes = " << bytes << " error = convert to int fail!"; 
+      LOG_ERROR << "key = " << key << " error = convert value " << bytes <<" to uint32_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
       context.send("ERROR\r\n");
       return true;
     }
+
     if (bytes_int > kMaxValueSize)
     {
       LOG_ERROR << "key = " << key << " bytes = " << bytes_int << " greater than max value!"; 
@@ -336,6 +336,8 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
       context.send("ERROR\r\n");
       return true;
     }
+
+    //todo buffer.at(0) != \r
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
     context.set_key(std::move(key));
     context.set_flags(flags_int);
@@ -365,7 +367,7 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
       return true;
     }
     std::string& key = context.get_key();
-    Item* old_item = item_find_func_(key.c_str());
+    Item* old_item = item_find_func_(key.c_str(), false);
     if (NULL == old_item)
     {
       if (opt_ == kReplace)
@@ -398,10 +400,24 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
       return true;
     }
     item->set_flags(context.get_flags());
-    item->set_exptime(context.get_exptime());
-    
+
+    uint64_t now = Timestamp::now().secondsValue();
+    if (context.get_exptime() == 0)
+    {
+      item->set_exptime(0);
+    }
+    else if (context.get_exptime() <= kSecondsOneMonth)
+    {
+      item->set_exptime(now + context.get_exptime());
+    }
+    else
+    {
+      item->set_exptime(context.get_exptime());
+    }
+    item->set_time(now);
     item->set_key(key.c_str(), key.size());
     item->set_value(buffer.beginRead(), context.get_bytes());
+    LOG_TRACE << "key = " << (item->key()) << " exptime = " << (item->get_exptime()) << " time = " << (item->get_time()) ;
     item_add_func_(item); // not existed item
     context.send("STORED\r\n");
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -448,10 +464,11 @@ void MemcachedProcessor::process(Buffer& buffer, MemcachedContext& context)
         if (buffer.readable() > kMaxValueSize + 2)
         {
           LOG_ERROR << "buffer line too long, so to close!";
-          context.close();//todo
+          context.close(); //todo
         }
         return;
-      } 
+      }
+      LOG_TRACE << "parse " << std::string(buffer.beginRead(), end - buffer.beginRead()); 
       Tokenizer tokenizer(buffer.beginRead(), end, ' ');
       const char* pos = NULL;
       size_t len = 0;

@@ -36,7 +36,7 @@ public:
 protected:
   friend class MemcachedProcessor;
   Opt opt_;
-  std::function<Item*(const char*)> item_find_func_;
+  std::function<Item*(const char*, bool lru)> item_find_func_;
   std::function<void(Item*)> item_remove_func_;
   std::function<Item*(uint32_t)> item_alloc_func_;
   std::function<void(Item*)> item_add_func_;
@@ -53,7 +53,7 @@ public:
   
   void process(Buffer& buffer, MemcachedContext& context);
 
-  void set_item_find(std::function<Item*(const char*)> func) 
+  void set_item_find(std::function<Item*(const char*, bool)> func) 
   {
     item_find_func_ = func;
   }
@@ -76,7 +76,7 @@ public:
 private:
   std::vector<std::shared_ptr<Processor>> processors_; //virtual deconstrutor call
 
-  std::function<Item*(const char*)> item_find_func_;
+  std::function<Item*(const char*, bool)> item_find_func_;
   std::function<void(Item*)> item_remove_func_;
   std::function<Item*(uint32_t)> item_alloc_func_;
   std::function<void(Item*)> item_add_func_;

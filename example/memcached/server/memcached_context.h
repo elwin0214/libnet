@@ -54,7 +54,8 @@ public:
   uint32_t get_bytes() { return bytes_; }
 
   std::string& get_key(){ return key_; }
-  void set_key(std::string&& key) { key_ = key; }
+  void set_key(const std::string& key) { key_ = key; }
+  void set_key(std::string&& key) { key_ = std::move(key); }
 
   void set_exptime(uint32_t exptime)
   {
@@ -78,6 +79,7 @@ public:
 
   void send(const char* str)
   {
+    LOG_TRACE << "response = " << str ;
     send_func_(str);
   }
 

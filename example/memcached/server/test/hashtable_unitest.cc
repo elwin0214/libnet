@@ -12,10 +12,9 @@ void test_get_set()
 {
   SlabOption option(16, 32, 1.2, 1024, true, 1024 * 1024 * 2);
   SlabArray slab_array(option);
-  slab_array.init();
-
-  Item* item1 = slab_array.pop(16);
-  Item* item2 = slab_array.pop(16);
+  int index = -1;
+  Item* item1 = slab_array.pop(16, index);
+  Item* item2 = slab_array.pop(16, index);
 
   HashTable hashtable(2, 1.2);
   item1->set_key("1", 1);
@@ -40,12 +39,12 @@ void test_resize()
 {
   SlabOption option(16, 32, 1.2, 1024, true, 1024 * 1024 * 2);
   SlabArray slab_array(option);
-  slab_array.init();
   HashTable hashtable(2, 1.2);
 
   for (size_t index = 0; index < 2048; index++)
   {
-    Item* item = slab_array.pop(16);
+    int item_index = -1;
+    Item* item = slab_array.pop(16, item_index);
     std::string str = std::to_string(index);
     const char* key = str.c_str();
     item->set_key(key, ::strlen(key));

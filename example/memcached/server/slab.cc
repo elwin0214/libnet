@@ -11,6 +11,7 @@ namespace memcached
 {
 namespace server
 {
+static const size_t kMaxSlabs = 256;
 
 Item* Slab::pop()
 {
@@ -52,7 +53,7 @@ SlabArray::SlabArray(const SlabOption& option)
     slabs_(),
     allocator_(option.prealloc_, option.total_mem_size_)
 {
-
+  init();
 };
 
 void SlabArray::init()
@@ -76,22 +77,32 @@ void SlabArray::init()
   }
   if (last_size < max_size_)
   {
-    size = ALIGN(max_size_);
-    last_size = size;
-    sizes_.push_back(size);
+    //size = (max_size_);
+    last_size = max_size_;
+    sizes_.push_back(max_size_);
   }
   max_size_ = last_size;
-  slabs_.reserve(sizes_.size());
+  slabs_.reserve(kMaxSlabs);
 
-  int index = 0;
+  size_t index = 0;
+  bool need_max = false;
   for (std::list<int>::iterator itr = sizes_.begin();
       itr != sizes_.end();
       itr++)
   {
-    LOG_DEBUG << "index = " << index << " size = " << (*itr) ;
-    slabs_.push_back(Slab(index, *itr));
-    index++;
+    if (index < kMaxSlabs - 1)
+    {
+      LOG_DEBUG << "index = " << index << " size = " << (*itr) ;
+      slabs_.push_back(Slab(index, *itr));
+      index++;
+    }
+    else
+    {
+      need_max = true;
+      break;
+    }
   }
+  slabs_.push_back(Slab(index, max_size_));
   max_item_size_ = max_size_ - sizeof(Item);
 };
 
@@ -119,7 +130,7 @@ void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
 
 };
 
-Item* SlabArray::pop(size_t item_size)
+Item* SlabArray::pop(size_t item_size, int& index)
 { 
   size_t item_entire_size = ENTIRE_SIZE(item_size);
   if (item_entire_size > max_size_) return NULL;
@@ -135,9 +146,11 @@ Item* SlabArray::pop(size_t item_size)
         doAlloc(*itr, itr->item_size());
       }
       Item* item = itr->pop();
+      index = item->index();
       return item;
     }
   }
+  index = -1;
   //throw Exception("can not find matched item in the slab!");
   assert(false);
   return NULL;

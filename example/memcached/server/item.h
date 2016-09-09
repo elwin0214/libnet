@@ -17,8 +17,18 @@ class Item : public NoCopyable
 
 public:
   Item(uint8_t index, uint32_t size)
-    : index_(index),
-      size_(size)
+    : prev_(NULL),
+      next_(NULL),
+      //hash_prev_(NULL),
+      //hash_next_(NULL),
+      index_(index),
+      size_(size),
+      hash_(0),
+      flags_(0), 
+      time_(0),
+      exptime_(0), 
+      bytes_(0),
+      key_size_(0)
     {
       ::memset(data_, 0, size_);// the actual length of data is greater than size_
     }
@@ -32,15 +42,9 @@ public:
     exptime_ = 0;
   }
 
-  const char* key()
-  {
-    return data_;
-  }
+  const char* key(){ return data_; }
 
-  char* value()
-  {
-    return data_ + key_size_ + 1 ;
-  }
+  char* value(){ return data_ + key_size_ + 1; }
 
   void set_key(const char* key, uint8_t len)
   {
@@ -71,7 +75,22 @@ public:
   uint16_t get_flags() {return flags_; }
   
   uint32_t get_bytes() { return bytes_; }
-  void set_exptime(uint32_t exptime) { exptime_ = exptime; }
+
+  void set_exptime(uint64_t exptime) { exptime_ = exptime; }
+  uint64_t get_exptime() { return exptime_; }
+  bool expired(uint64_t now)
+  { 
+    if (exptime_ == 0)
+      return false;
+    if (now > exptime_)
+      return true;
+    exptime_ = exptime_ - time_ + now ;
+    time_ = now;
+    return false; 
+  }
+  void set_time(uint64_t time) { time_ = time; }
+  uint64_t get_time() {return time_; }
+
 
 private:
   ~Item(){} //can not be delete
@@ -79,17 +98,17 @@ private:
 public:
   Item* prev_;
   Item* next_;
-  Item* hash_prev_;
-  Item* hash_next_;
-
+  //Item* hash_prev_;
+  //Item* hash_next_;
   const uint8_t index_;  //const
   const uint32_t size_; // const
   size_t hash_;
   uint16_t flags_; 
-  uint32_t exptime_; 
+  uint64_t time_; 
+  uint64_t exptime_; 
   uint32_t bytes_;
   uint8_t key_size_;
-  char data_[0]; //align
+  char data_[0]; //align??
 
 };
 }
