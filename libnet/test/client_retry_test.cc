@@ -21,18 +21,15 @@ int main()
   Server server(gLoop, "127.0.0.1", 9999, 1);
   server.setConnectionCallBack([client_loop,&client](const ConnectionPtr& connection)
   {
-    
     if (connection->connected())
     {
-      LOG_INFO << "server :count = " << (gCount) << " connection = "<< (connection->get_name()) << " go to close!";
-      //connection->shutdown();
+      LOG_INFO << "server : count = " << (gCount) << " connection = "<< (connection->get_name()) << " go to close!";
       gLoop->runAfter(2000, std::bind(&Connection::shutdown, connection));
     }
     else
     {
       LOG_INFO << "server : connection = " << (connection->get_name()) << " closed!";
     }
-    
   });
 
   server.start();
@@ -44,23 +41,20 @@ int main()
     if (connection->connected())
     {
       LOG_INFO << "client : connection = "<< (connection->get_name()) << " connected!";
-
     }
     else
     {
-      LOG_INFO << "client : connection = " << (connection->get_name()) << " closed!";
+      LOG_INFO << "client : count = " << gCount << " connection = " << (connection->get_name()) << " closed!";
       gCount--;
       if (gCount == 0)
       {
-        LOG_INFO << "server : goto close server!";
-        gLoop->shutdown();
-        client_loop->shutdown();
+        LOG_INFO << "client : goto close client!";
         client.disconnect();
+        gLoop->shutdown();        
       }
     }
   });
   client.connect();
   gLoop->loop();
-
   return 0;
 }

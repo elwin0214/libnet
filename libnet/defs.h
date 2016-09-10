@@ -1,16 +1,13 @@
 #ifndef __LIBNET_SOCKET_DEF_H__
 #define __LIBNET_SOCKET_DEF_H__
-
+//#include "connection.h"
 
 namespace libnet
 {
-namespace socket
-{
-  
   class Connection;
-  typedef std::function<void(ConnectionPtr)> ConnectionCallBack;
-
-}
+  typedef std::shared_ptr<Connection> ConnectionPtr;
+  typedef std::function<void(const ConnectionPtr&)> ConnectionCallBack;
+  typedef std::weak_ptr<Connection> WeakConnectionPtr;
 }
 
 #endif

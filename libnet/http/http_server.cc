@@ -32,7 +32,7 @@ void HttpServer::onConnection(const ConnectionPtr& connection)
   {
     std::shared_ptr<HttpContext> context = std::make_shared<HttpContext>();
     connection->setContext(context);
-    context->getResponse().setSendCallback(std::bind(&Connection::sendString, connection.get(), std::placeholders::_1));
+    context->getResponse().setSendCallback(std::bind(&Connection::send, connection.get(), std::placeholders::_1));
   }  
 };
 

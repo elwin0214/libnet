@@ -26,6 +26,7 @@ SET (SRCS
  timer.cc
  timer_queue.cc
  timestamp.cc
+ timewheel.cc
  selector/selector_provider.cc
  selector/selector.cc
  selector/default_selector.cc
@@ -60,6 +61,7 @@ SET (HEADERS
   timer.h
   timer_queue.h
   timestamp.h
+  timewheel.h
 )
 
 message("PROJECT_SOURCE_DIR = " ${PROJECT_SOURCE_DIR})

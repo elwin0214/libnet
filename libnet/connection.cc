@@ -27,8 +27,8 @@ Connection::Connection(EventLoop* loop, int fd, /*InetAddress &addr, */int id)
     state_(kConnecting),
     channel_(new Channel(loop, fd)),
     socket_(new Socket(fd)),
-    inputBuffer_(4, 1024),
-    outputBuffer_(4, 1024),
+    input_(4, 1024),
+    output_(4, 1024),
     id_(id),
     name_()
 
@@ -39,14 +39,13 @@ Connection::Connection(EventLoop* loop, int fd, /*InetAddress &addr, */int id)
   channel_->setErrorCallback(std::bind(&Connection::handleError, this));
 };
 
-
 void Connection::establish()
 {
   LOG_INFO <<"connection Id = " << id_ << ", fd = " << (channel_->fd()) ;
   loop_->assertInLoopThread();
   state_ = kConnected;
-  if (connectionCallBack_)
-    connectionCallBack_(shared_from_this());
+  if (connection_callback_)
+    connection_callback_(shared_from_this());
   channel_->enableReading();
 };
 
@@ -58,14 +57,15 @@ void Connection::destroy()
   {
     state_ = kDisConnected;
     channel_->disableAll();
-    if (connectionCallBack_)
+    if (connection_callback_)
     {
-      connectionCallBack_(shared_from_this());
+      connection_callback_(shared_from_this());
     }
   }
   channel_->remove();
 };
-void Connection::sendString(const CString& cstring)
+
+void Connection::send(const CString& cstring)
 {
   if (state_ != kConnected) return;
   if (!loop_->inLoopThread())
@@ -87,7 +87,7 @@ void Connection::sendInLoop(const CString& cstring)
     return;
   }
   int n = 0;
-  if (!channel_->isWriting() && outputBuffer_.readable() == 0)
+  if (!channel_->isWriting() && output_.readable() == 0)
   {
     //LOG_
     n = socket_->write(cstring);
@@ -100,7 +100,7 @@ void Connection::sendInLoop(const CString& cstring)
   {
     if (n < cstring.length())
     {
-      outputBuffer_.append(cstring, n);
+      output_.append(cstring, n);
       channel_->enableWriting();
     }
   }
@@ -126,7 +126,7 @@ void Connection::shutdownInLoop()//当发起shutdown 最后执行时，前面已
 void Connection::handleRead()
 {
   loop_->assertInLoopThread();
-  int n = socket_->read(inputBuffer_);
+  int n = socket_->read(input_);
   if (n == 0)
   {
     handleClose();
@@ -145,8 +145,8 @@ void Connection::handleRead()
   }
   else
   {
-    if(readCallBack_)
-      readCallBack_(shared_from_this());
+    if(read_callback_)
+      read_callback_(shared_from_this());
   }
 };
 
@@ -155,10 +155,10 @@ void Connection::handleWrite()
   loop_->assertInLoopThread();
   if (channel_->isWriting())
   {
-    int n = socket_->write(outputBuffer_);
+    int n = socket_->write(output_);
     if (n >= 0)
     {
-      if(outputBuffer_.readable() == 0)
+      if(output_.readable() == 0)
       {
         channel_->disableWriting();
         if (state_ == kDisConnecting)
@@ -181,20 +181,20 @@ void Connection::handleClose()
 
   channel_->disableAll();
 
-  if (connectionCallBack_)
+  if (connection_callback_)
   {
-    connectionCallBack_(shared_from_this());  // 这里必须用 shared_ptr
+    connection_callback_(shared_from_this());  // 这里必须用 shared_ptr
   }
-  if (closeCallBack_)
+  if (close_callback_)
   {
-    closeCallBack_(shared_from_this());
+    close_callback_(shared_from_this());
   }
 };
 
 void Connection::handleError()
 {
   loop_->assertInLoopThread();
-  if (connectionCallBack_)
+  if (connection_callback_)
   {
     
   }

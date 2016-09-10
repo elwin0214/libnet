@@ -50,11 +50,21 @@ private:
 class TimerId
 {
 public:
+  TimerId():timer_(NULL),id_(-1)
+  {
+
+  }
+
   TimerId(Timer* timer, int64_t id):timer_(timer),id_(id)
   {
 
   }
-  
+
+  operator bool() const
+  {
+    return NULL != timer_;
+  }
+
   bool operator< (const TimerId& timerId) const
   {
     return id_ < timerId.id_;

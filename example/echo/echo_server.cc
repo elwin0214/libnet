@@ -38,11 +38,11 @@ void EchoServer::onMessage(const ConnectionPtr& connection)
 {
   std::string str = connection->input().toString();
   int id = connection->id();
-  LOG_INFO << "connection id="<< id << " message=" << str;
+  LOG_INFO << "connection id = "<< id << " message = " << str;
   
   if (str == "exit\r\n")
   {
-    LOG_INFO << "connection id="<< id << " go to close.";
+    LOG_INFO << "connection id = "<< id << " go to close.";
     connection->shutdown();
     return;
   }
@@ -54,5 +54,5 @@ void EchoServer::onMessage(const ConnectionPtr& connection)
     return;
   }
   connection->input().clear();
-  connection->sendWithLen(str.data(), str.size());
+  connection->send(str);
 };

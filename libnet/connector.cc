@@ -2,6 +2,7 @@
 #include "eventloop.h"
 #include "channel.h"
 #include "socket_ops.h"
+#include <assert.h>
 
 namespace libnet
 {
@@ -18,17 +19,22 @@ Connector::Connector(EventLoop* loop, const InetAddress& server_address)
 };
 
 Connector::~Connector()
-{
-  stop_ = true;
-  state_ = kDisConnected;
-  LockGuard guard(lock_);
+{ 
+  assert(!channel_);
   if (channel_)
   {
-    channel_->disableAll();
-    channel_->remove();
-    LOG_DEBUG << "close" ;
-    sockets::close(channel_->fd());
+    LOG_ERROR << "channel didn't destroy" ;
   }
+  // stop_ = true;
+  // state_ = kDisConnected;
+  // LockGuard guard(lock_);
+  // if (channel_)
+  // {
+  //   channel_->disableAll();
+  //   channel_->remove();
+  //   LOG_DEBUG << "close" ;
+  //   sockets::close(channel_->fd());
+  // }
 };
 
 void Connector::start()
@@ -122,7 +128,7 @@ void Connector::connectInLoop()
 void Connector::retry()
 { 
   loop_->assertInLoopThread();
-  LOG_DEBUG << "retry" ;
+  LOG_DEBUG << "retry to connect after 2000ms" ;
   loop_->runAfter(2000, std::bind(&Connector::startInLoop, shared_from_this()));
 };
 

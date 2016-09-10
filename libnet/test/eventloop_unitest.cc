@@ -17,8 +17,6 @@ int main()
   thread.start();
   EventLoop* loop = thread.getLoop();
   assert(NULL != loop);
-
-  loop->runInLoop(std::bind(f));
-     
-    return 0;
+  loop->runInLoop(std::bind(f));   
+  return 0;
 }

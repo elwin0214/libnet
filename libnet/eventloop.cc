@@ -67,10 +67,10 @@ void EventLoop::loop()
       Timestamp now = Timestamp::now();
       int timeoutMs = ((earliestTimeStamp->value() - now.value()) / 1000);
       timeoutMs = timeoutMs < loop::kSelectTimeMs ? timeoutMs : loop::kSelectTimeMs;
-      LOG_DEBUG << "loop now-" <<  (now.value()) << " ,early-" << (earliestTimeStamp->value()) << " ,timeout-" << timeoutMs;
+      timeoutMs = timeoutMs < 0 ? 0 : timeoutMs;
+      LOG_TRACE << "loop now = " <<  (now.value()) << " ,early=" << (earliestTimeStamp->value()) << " ,timeout=" << timeoutMs;
       selector_->select(timeoutMs, activeChannles);
     }
-        //if (activeChannles.size() <= 0) continue;
 
     if (activeChannles.size() > 0)
     {

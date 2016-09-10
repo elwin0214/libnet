@@ -103,7 +103,7 @@ void DefaultSelector::removeChannel(Channel *channel)
 {
   
   int fd = channel->fd();
-  LOG_DEBUG << "fd=" << fd;
+  LOG_TRACE << " fd = " << fd;
   FD_CLR(fd, &read_fs_);
   FD_CLR(fd, &write_fs_);
   FD_CLR(fd, &error_fs_);
@@ -112,42 +112,35 @@ void DefaultSelector::removeChannel(Channel *channel)
   {
     updateChannel(Channel::kNoneEvent, channel);
   }
-  //else if (channel->index() == 0)
   channel->setIndex(-1);
 };
 
 void DefaultSelector::updateChannel(int events, Channel *channel)
 {
   int fd = channel->fd();
-  LOG_DEBUG << "register event=" <<  events << "fd=" << fd;
+  LOG_TRACE << "register event = " <<  events << " fd = " << fd;
   if (events & Channel::kReadEvent)
   {
-    //LOG_DEBUG << "register read event, fd=" << fd;
     FD_SET(fd, &read_fs_);
   }
   else
   {
-    //LOG_TRACE << "remove read event, fd=" << fd;
     FD_CLR(fd, &read_fs_);
   }
   if (events & Channel::kWriteEvent)
   {
-    //LOG_DEBUG << "register write event, fd=" << fd;
     FD_SET(fd, &write_fs_);
   }
   else
   {
-    //LOG_TRACE << "remove write event, fd=" << fd;
     FD_CLR(fd, &write_fs_);
   }
   if (events & Channel::kErrorEvent)
   {
-    //LOG_DEBUG << "register error event, fd=" << fd;
     FD_SET(fd, &error_fs_);
   }
   else
   {
-    //LOG_TRACE << "remove error event, fd=" << fd;
     FD_CLR(fd, &error_fs_);
   }
 };
@@ -156,14 +149,14 @@ void DefaultSelector::updateChannel(Channel *channel)
 {
   int fd = channel->fd();
   int events = channel->events();
-  LOG_DEBUG << "fd=" << fd << " ,events=" << events;
+  LOG_TRACE << "fd = " << fd << " events=" << events;
 
   updateChannel(events, channel);
 
   if (channel->index() == -1)
   {
     max_fd_ = max_fd_ > fd ? max_fd_ : fd;
-    LOG_DEBUG << "fd=" << fd << " ,max_fd=" << max_fd_;
+    LOG_TRACE << "fd = " << fd << " max_fd = " << max_fd_;
     channels_.insert(std::map<int, Channel*>::value_type(fd, channel));
     //channel->setIndex(1);
   }
@@ -171,7 +164,7 @@ void DefaultSelector::updateChannel(Channel *channel)
   {
     if (events == Channel::kNoneEvent)
     {
-      LOG_DEBUG << "fd=" << fd << " ,update no event" ;
+      LOG_TRACE << "fd = " << fd << " update no event" ;
     }
     //if (events == Channel::kNoneEvent)
      // LOG_WARN("update fd:%d with no event", fd);
