@@ -1,0 +1,55 @@
+events in poll()
+
+POLLIN There is data to read.
+
+POLLPRI
+       There is urgent data to read (e.g., out-of-band data on TCP socket; pseudoterminal master in packet mode has seen state change in slave).
+
+POLLOUT
+       Writing now will not block.
+
+POLLRDHUP (since Linux 2.6.17)
+       Stream socket peer closed connection, or shut down writing half of connection.  The _GNU_SOURCE feature test macro must be defined (before including any header files) in order to obtain this defini‐
+       tion.
+
+POLLERR
+       Error condition (output only).
+
+POLLHUP
+       Hang up (output only).
+       http://stackoverflow.com/questions/25147181/pollhup-vs-pollnval-or-what-is-pollhup
+       http://stackoverflow.com/questions/24791625/linux-socket-handling-revents-pollerr-pollhup-pollnval?noredirect=1&lq=1
+
+POLLNVAL
+       Invalid request: fd not open (output only).
+
+POLLRDBAND     Priority data may be read without blocking.
+
+POLLRDNORM     Normal data may be read without blocking.
+
+POLLWRBAND     Priority data may be written without blocking.
+
+POLLWRNORM     Normal data may be written without blocking.
+
+//redis ae_epoll.c
+if (e->events & EPOLLIN) mask |= AE_READABLE;
+if (e->events & EPOLLOUT) mask |= AE_WRITABLE;
+if (e->events & EPOLLERR) mask |= AE_WRITABLE;
+if (e->events & EPOLLHUP) mask |= AE_WRITABLE;
+
+
+//unp
+1. 向已经收到RST的socket写数据，会收到SIGPIPE信号，会终止进程，同时写操作会返回EPIPE错误
+2. server崩溃，client没有收到FIN，client 先write后read，tcp会重传，最后返回ETIMEDOUT，或者EHOSTUNREACH/ENETUNREACH（路由器判断主机不可达）
+3. 2的情况下，server崩溃后重启，返回 ECONNRESET （p115）
+4. select 返回的就绪条件，如果有一个错误，即可读也可写，读写返回-1，同时设置errno为错误条件，也可以通过SO_ERROR 调用获取并清除。（p130）
+
+
+//
+poll/epoll对于 socket异常事件的处理。
+如果由handleRead()处理，在connector中有可能刚连上server，server写数据，导致读到了应用的数据。
+如果由handleWrite()处理，Loop中并不会一直关注write事件
+所以还是单独触发handleError()
+
+
+
