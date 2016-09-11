@@ -50,7 +50,6 @@ void EchoServer::onMessage(const ConnectionPtr& connection)
   {
     LOG_INFO << "server goto close.";
     loop_->shutdown();
-    loop_->wakeup();
     return;
   }
   connection->input().clear();

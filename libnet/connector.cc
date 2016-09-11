@@ -53,6 +53,7 @@ void Connector::restart()
 
 void Connector::startInLoop()
 {
+  LOG_TRACE << "startInLoop";
   loop_->assertInLoopThread();
   if (state_ == kDisConnected)
   {
@@ -75,6 +76,7 @@ void Connector::stop()
 
 void Connector::stopInLoop()
 {
+
   loop_->assertInLoopThread();
   if (state_ == kConnecting)
   {
@@ -135,15 +137,18 @@ void Connector::retry()
 void Connector::handleWrite(int fd)
 {
   loop_->assertInLoopThread();
-  LOG_DEBUG << "fd=" << fd ;
+  if (state_ != kConnecting)
+    return;
+  LOG_DEBUG << "fd = " << fd ;
   LockGuard guard(lock_);
   channel_->disableAll();
   channel_->remove();
 
   int err = sockets::getSocketError(fd);//the fd is readable and writeable when error
-  
+  LOG_ERROR << "err = " << err << " error = " << log::Error(err);
   if (err)
   {
+    state_ = kDisConnected;
     sockets::close(fd); 
     // handleWrite is excuted inside the Channle::handleEvent
     loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
@@ -165,10 +170,14 @@ void Connector::handleWrite(int fd)
   }
 };
 
-void Connector::handleError(int fd)
+void Connector::handleError(int fd)// trigger handleWrite and handleError at the same time??
 {  
   loop_->assertInLoopThread();
-  LOG_DEBUG << "fd=" << fd ;
+  int err = sockets::getSocketError(fd); 
+  LOG_ERROR << "err = " << err << " error = " << log::Error(err);
+  if (state_ != kConnecting)
+    return;
+  state_ = kDisConnected;
   LockGuard guard(lock_);
   channel_->disableAll();
   channel_->remove();

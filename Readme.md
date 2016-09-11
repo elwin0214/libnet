@@ -3,7 +3,7 @@ A simple noblocking TCP Server imitate muduo.
 ### environment
 
 * g++
-* c++11
+* c++11 (function、shared_ptr、unique_ptr、move)
 
 ### build
 
@@ -21,5 +21,7 @@ make test
 
 
 ### example
-* echo
+* echo server
+* idle server
 * memcached client imitate xmemcached-client
+* memcached server

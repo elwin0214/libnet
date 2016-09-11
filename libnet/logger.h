@@ -13,6 +13,17 @@ namespace log
 
 struct Error 
 {
+  Error():err_(errno)
+  {
+
+  }
+
+  Error(int err):err_(err)
+  {
+
+  }
+  
+  int err_;
 };
 
 template<int SIZE>
@@ -70,15 +81,15 @@ public:
 
   self& operator << (const char* str){ append("%s", str); return *this; }
 
-  self& operator << (const Error&) 
+  self& operator << (const Error& e) 
   {
     char buf[100];
     ::bzero(buf, sizeof(buf));
     #ifdef __APPLE__
-      strerror_r(errno, buf, 100);
+      strerror_r(e.err_, buf, 100);
       return append("%s", buf);
     #else
-      return append("%s", strerror_r(errno, buf, 100));// should use the returned pointer
+      return append("%s", strerror_r(e.err_, buf, 100));// should use the returned pointer
     #endif
   }
   Buffer<1024>& buffer() {return buffer_; }

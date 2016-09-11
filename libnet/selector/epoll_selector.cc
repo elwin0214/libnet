@@ -42,12 +42,12 @@ void EpollSelector::select(int timeoutMs, ChannelList& activeChannles)
   int num = ::epoll_wait(epfd_, &*epollEvents_.begin(), epollEvents_.size(), timeoutMs);
   if (num < 0)
   {
-    LOG_SYSERROR << "timeout="<< timeoutMs ;
+    LOG_SYSERROR << "timeout = "<< timeoutMs ;
     return;
   }
   if (num == 0)
   {
-    LOG_TRACE << "timeout="<< timeoutMs;
+    LOG_TRACE << "timeout = "<< timeoutMs;
     return;
   }
   
@@ -56,15 +56,24 @@ void EpollSelector::select(int timeoutMs, ChannelList& activeChannles)
     Channel* channel = static_cast<Channel*>(epollEvents_[i].data.ptr);
     int events = epollEvents_[i].events;
     int revents = 0;
-    if (events & EPOLLIN)
+
+    if (events & (POLLNVAL | POLLERR | POLLHUP))
+    {
+      revents |= Channel::kErrorEvent;
+    }
+    #ifdef __APPLE__
+    if (events & (POLLIN | POLLPRI))
+    #else
+    if (events & (POLLIN | POLLPRI | POLLRDHUP))
+    #endif
     {
       revents |= Channel::kReadEvent;
     }
-    if (events & EPOLLOUT)
+    if (events & POLLOUT)
     {
       revents |= Channel::kWriteEvent;
     }
-
+    LOG_TRACE << "fd = " << fd << " revents = " << revents << " epoll_revents = " << events;
     channel->setRevents(revents);
     activeChannles.push_back(channel);
   }

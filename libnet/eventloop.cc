@@ -210,6 +210,8 @@ void EventLoop::removeChannel(Channel* channel)
 void EventLoop::shutdown()
 {
   stop_ = true;
+  if (!inLoopThread())
+    wakeup();
 };
 
 void EventLoop::wakeup()

@@ -83,7 +83,7 @@ void Connection::sendInLoop(const CString& cstring)
   loop_->assertInLoopThread();
   if (state_ == kDisConnected)
   {
-    LOG_ERROR <<"connection Id=" << id_ << ", fd=" << (channel_->fd()) << ", error=disconnected";
+    LOG_ERROR <<"connection Id = " << id_ << " fd = " << (channel_->fd()) << " error = disconnected";
     return;
   }
   int n = 0;
@@ -194,9 +194,13 @@ void Connection::handleClose()
 void Connection::handleError()
 {
   loop_->assertInLoopThread();
-  if (connection_callback_)
+
+  int err = sockets::getSocketError(socket_->fd());
+  LOG_ERROR << "err = " << err << " error = " << log::Error(err);
+  if (err & (ETIMEDOUT | EHOSTUNREACH | ENETUNREACH | EPIPE | ECONNRESET))
   {
-    
+    if (state_ != kDisConnected)
+      handleClose();
   }
 };
 const char* Connection::stateToString()

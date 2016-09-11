@@ -87,24 +87,35 @@ void PollSelector::select(ChannelList& activeChannles)
 
 void PollSelector::select(int timeoutMs, ChannelList& activeChannles)
 {
+  
   int num = ::poll(&(*(pollfds_.begin())), pollfds_.size(), timeoutMs);
+  LOG_TRACE << "timeout = " << timeoutMs  << " num = " << num;
   if (num < 0)
   {
-    LOG_ERROR << "timeout = " <<timeoutMs ;
+    LOG_ERROR << "timeout = " << timeoutMs ;
     return;
   }
   if (num == 0)
   {
-    LOG_DEBUG << "timeout = " << timeoutMs;
     return;
   }
 
-  for (PollFds::iterator itr = pollfds_.begin(); itr != pollfds_.end(); itr++)
+  for (PollFds::iterator itr = pollfds_.begin(); itr != pollfds_.end() && num > 0; itr++)
   {
+
     int fd = itr->fd;
     int events = itr->revents;
+    if (events <= 0) continue;
     int revents = 0;
-    if (events & POLLIN)
+    if (events & (POLLNVAL | POLLERR | POLLHUP))
+    {
+      revents |= Channel::kErrorEvent;
+    }
+    #ifdef __APPLE__
+    if (events & (POLLIN | POLLPRI))
+    #else
+    if (events & (POLLIN | POLLPRI | POLLRDHUP))
+    #endif
     {
       revents |= Channel::kReadEvent;
     }
@@ -112,9 +123,11 @@ void PollSelector::select(int timeoutMs, ChannelList& activeChannles)
     {
       revents |= Channel::kWriteEvent;
     }
+    LOG_TRACE << "fd = " << fd << " revents = " << revents << " poll_revents = " << events;
     Channel* channel = channels_[fd];
     channel->setRevents(revents);
     activeChannles.push_back(channel);
+    num--;
   }
 };
 
