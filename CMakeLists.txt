@@ -22,6 +22,14 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} BUILD_TYPE)
 message(STATUS " CMAKE_CXX_FLAGS = " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_${BUILD_TYPE}})
 
 
+find_path(GTEST_INCLUDE_DIR gtest/gtest.h)
+message(STATUS "found GTEST_INCLUDE_DIR " ${GTEST_INCLUDE_DIR})
+include_directories(${GTEST_INCLUDE_DIR})
+find_library(GTEST_LIBRARY NAMES gtest)
+message(STATUS "found GTEST_LIBRARY " ${GTEST_LIBRARY})
+
+include_directories(${GTEST_INCLUDE_DIR})
+
 find_path(PROFILER_INCLUDE_DIR gperftools/profiler.h)
 find_library(PROFILER_LIBRARY NAMES profiler)
 find_path(TCMALLOC_INCLUDE_DIR gperftools/heap-profiler.h)
@@ -39,4 +47,3 @@ endif()
 
 add_subdirectory(libnet)
 add_subdirectory(example)
- 

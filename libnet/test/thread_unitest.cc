@@ -7,6 +7,7 @@
 #include <libnet/thread.h>
 #include <libnet/current_thread.h>
 #include <iostream>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace libnet;
@@ -16,7 +17,7 @@ pid_t gettid()
      return syscall(SYS_gettid);  
 };
 int gInited = 0;
-struct Test
+struct TestThread
 {
   pthread_t tid_;
 
@@ -32,21 +33,21 @@ struct Test
 };
 
 
-void test_tid()
+TEST(Thread, init)
 {
-  Test t;
-  Thread::registerInitCallback(std::bind(&Test::init, &t));
+  TestThread t;
+  Thread::registerInitCallback(std::bind(&TestThread::init, &t));
 
-  Thread thread(std::bind(&Test::f, &t), "test");
+  Thread thread(std::bind(&TestThread::f, &t), "test");
   thread.start();
   thread.join();
   cout << t.tid_  << " "  << thread.tid() ;
-  assert(t.tid_ == thread.tid());
-  assert(gInited == 1);
+  ASSERT_EQ(t.tid_, thread.tid());
+  ASSERT_EQ(gInited, 1);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-  test_tid();
-  return 0;
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

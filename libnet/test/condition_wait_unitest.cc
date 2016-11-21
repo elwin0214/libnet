@@ -2,6 +2,7 @@
 #include <libnet/condition.h>
 #include <libnet/thread.h>
 #include <libnet/logger.h>
+#include <gtest/gtest.h>
 #include <assert.h>
 #include <unistd.h>
 
@@ -18,7 +19,7 @@ void waitForGet()
   g_condition.wait(3000);
 }
 
-void set()
+void setValue()
 {
   sleep(1);
   LockGuard guard(g_Lock);
@@ -26,18 +27,21 @@ void set()
   g_condition.notifyAll();
 }
 
-int main()
+TEST(Condition, wait)
 {
-  LOG_INFO << " begin to wait 3s " ;
   waitForGet();
-  LOG_INFO << " value = " << g_value ;
-  assert (g_value == 0);
+  ASSERT_EQ(g_value, 0);
 
-  Thread thread(std::bind(set));
+  Thread thread(std::bind(setValue));
   thread.start();
   waitForGet();
-  LOG_INFO << " value = " << g_value ;
-  assert (g_value == 1);
+  ASSERT_EQ(g_value, 1);
 
   thread.join();
+}
+
+int main(int argc, char **argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

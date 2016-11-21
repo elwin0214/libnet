@@ -55,13 +55,15 @@ void LRUList::add(Item* item)
   nums_list_[index]++;
 };
 
+// Find and remove the item which is expired. 
+// If can not find, remove the last item. 
 Item* LRUList::recycle(size_t index, uint64_t now)
 {
   Item* item = tail_item_list_[index];
   if (NULL == item) return NULL;
-  for (; NULL != item; item = item->prev_)
+  for (; NULL != item; item = item->prev_) 
   {
-    if (item->exptime_ == 0) continue;
+    if (item->exptime_ == 0) continue; // dont remove the item whose exptime is 0
     if (item->exptime_ < now)
     {
       remove(item);

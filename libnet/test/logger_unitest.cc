@@ -1,4 +1,5 @@
 #include <libnet/logger.h>
+#include <gtest/gtest.h>
 #include <assert.h>
 
 using namespace libnet;

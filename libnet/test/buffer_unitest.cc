@@ -3,137 +3,113 @@
 #include <libnet/logger.h>
 #include <libnet/buffer.h>
 #include <assert.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace libnet;
 
-struct TestBuffer
+
+TEST(Buffer, append)
 {
-  void test_append()
-  {
-    Buffer buf(0, 10);
-    buf.append("abc", 3);
-    assert(string(buf.cur(), buf.readable()) == "abc");
-  }
+  Buffer buf(0, 10);
+  buf.append("abc", 3);
+  ASSERT_EQ(string(buf.cur(), buf.readable()) , "abc");
+}
 
-  void test_appendOver()
-  {
-    Buffer buf(0, 2);
-    buf.append("abc", 3);
-    assert((string(buf.cur(), buf.readable()) == "abc"));
+TEST(Buffer, appendOver)
+{
+  Buffer buf(0, 2);
+  buf.append("abc", 3);
+  ASSERT_EQ(string(buf.cur(), buf.readable()) , "abc");
+  ASSERT_TRUE(buf.capcity() >= 3);
+}
 
-    assert(buf.capcity() >= 3);
-    vector<char> vec;
-    vec.resize(2);
-    vec.resize(3); //4
-    //cout << "vec.capcity = " << vec.capacity() << endl;
-  }
+TEST(Buffer, move)
+{
+  Buffer buf(0, 2);
+  buf.append("abc", 3);
+  buf.moveReadIndex(2);
+  ASSERT_EQ(string(buf.cur(), buf.readable()), "c");
 
-  void test_move()
-  {
-    Buffer buf(0, 2);
-    buf.append("abc", 3);
-    buf.moveReadIndex(2);
-    assert((string(buf.cur(), buf.readable()) == "c"));
+  buf.append("de", 2);
+  ASSERT_EQ(string(buf.cur(), buf.readable()), "cde");
 
-    buf.append("de", 2);
-    assert(string(buf.cur(), buf.readable()) == "cde");
+  ASSERT_TRUE((buf.readIndex()) == 0);
+}
 
-    assert((buf.readIndex()) == 0);
-  }
+TEST(Buffer, equal)
+{
+  Buffer buf(0, 2);
+  buf.append("exit\r\n", 6);
 
-  void test_equal()
-  {
-    Buffer buf(0, 2);
-    buf.append("exit\r\n", 6);
+  ASSERT_TRUE(buf.equals("exit\r\n"));
+  ASSERT_TRUE(!buf.equals("abcd"));
+  ASSERT_TRUE(!buf.equals("ab"));
+}
 
-    assert(buf.equals("exit\r\n"));
-    assert(!buf.equals("abcd"));
-    assert(!buf.equals("ab"));
-  }
-  
-  void test_find()
-  {
-    Buffer buf(0, 100);
-    const char *s = "GET /index HTTP/1.1\r\n";
-    buf.append(s, strlen(s));
-    const char *p = buf.find("\r\n");
-    assert((*p == '\r'));
-  }
+TEST(Buffer, find)
+{
+  Buffer buf(0, 100);
+  const char *s = "GET /index HTTP/1.1\r\n";
+  buf.append(s, strlen(s));
+  const char *p = buf.find("\r\n");
+  ASSERT_TRUE((*p == '\r'));
+}
 
-  void test_find_from()
-  {
-    Buffer buf(0, 100);
-    const char *s = "abc\r\n123\r\n";
-    buf.append(s, strlen(s));
-    const char *p = buf.find(5, "\r\n");
-    assert((*p == '\r'));
-  }
+TEST(Buffer, find_from)
+{
+  Buffer buf(0, 100);
+  const char *s = "abc\r\n123\r\n";
+  buf.append(s, strlen(s));
+  const char *p = buf.find(5, "\r\n");
+  ASSERT_TRUE((*p == '\r'));
+}
 
+TEST(Buffer, prepare)
+{
+  Buffer buf(16, 1024);
+  buf.append("0123456789", 10);
+  buf.prepare("abc", 3);
+  ASSERT_TRUE(("abc0123456789" == buf.toString()));
+}
 
-  void test_prepre()
-  {
-    Buffer buf(16, 1024);
-    buf.append("0123456789", 10);
-    buf.prepare("abc", 3);
-    assert(("abc0123456789" == buf.toString()));
-  }
+TEST(Buffer, startWiths)
+{
+  Buffer buf(16, 1024);
+  buf.append("0123456789", 10);
 
+  ASSERT_TRUE(buf.startWiths("0123", 4));
+  ASSERT_TRUE(buf.startWiths("0123", 2));
+  ASSERT_TRUE(!buf.startWiths("2123", 2));
+}
 
-  void test_startWiths()
-  {
-    Buffer buf(16, 1024);
-    buf.append("0123456789", 10);
+TEST(Buffer, ascii)
+{
+  Buffer buf(16, 1024);
+  buf.append("\r\n");
+  ASSERT_EQ("[13][10]", buf.toAsciiString());
+}
 
-    assert(buf.startWiths("0123", 4));
-    assert(buf.startWiths("0123", 2));
-    assert(!buf.startWiths("2123", 2));
-  }
+TEST(Buffer, makeRoom1)
+{
+  Buffer buffer(4, 8);
+  buffer.append("12345678");
+  buffer.moveReadIndex(5);
+  buffer.makeRoom(4);
+  ASSERT_EQ("678", buffer.toString());
+}
 
-
-  void test_ascii()
-  {
-    Buffer buf(16, 1024);
-    buf.append("\r\n");
-    assert("[13][10]" == buf.toAsciiString());
-  }
-
-  void test_makeRoom_1()
-  {
-    Buffer buffer(4, 8);
-    buffer.append("12345678");
-    buffer.moveReadIndex(5);
-    buffer.makeRoom(4);
-    assert("678" == buffer.toString());
-  }
-
-  void test_makeRoom_2()
-  {
-    Buffer buffer(4, 8);
-    buffer.append("12345678");
-    buffer.makeRoom(4);
-    assert("12345678" == buffer.toString());
-  }
-
-  TestBuffer()
-  {
-
-  }
-};
+TEST(Buffer, makeRoom2)
+{
+  Buffer buffer(4, 8);
+  buffer.append("12345678");
+  buffer.makeRoom(4);
+  ASSERT_EQ("12345678", buffer.toString());
+}
  
-int main()
+int main(int argc, char **argv)
 {
-  TestBuffer tb;
-  tb.test_append();
-  tb.test_appendOver();
-  tb.test_move();
-  tb.test_equal();
-  tb.test_find();
-  tb.test_prepre();
-  tb.test_startWiths();
-  tb.test_ascii();
-  tb.test_makeRoom_1();
-  tb.test_makeRoom_2();
-  return 0;
+  ::testing::InitGoogleTest( &argc, argv );
+  return RUN_ALL_TESTS();
 }
 

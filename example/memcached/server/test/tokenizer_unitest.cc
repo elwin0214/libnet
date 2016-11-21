@@ -1,5 +1,6 @@
 #include "../tokenizer.h"
 #include <libnet/buffer.h>
+#include <gtest/gtest.h>
 #include <string>
 #include <assert.h>
 
@@ -7,8 +8,7 @@ using namespace std;
 using namespace libnet;
 using namespace memcached::server;
 
-
-void test_incr()
+TEST(Tokenizer, incr)
 {
   Buffer buffer;
   buffer.append("  incr key 1\r\n");
@@ -20,11 +20,11 @@ void test_incr()
   bool next = tokenizer.next(pos, len);
   if (next)
   {
-    assert(std::string(pos, len) == "incr");
+    ASSERT_EQ(std::string(pos, len), "incr");
   }
-};
+}
 
-void test_no_next()
+TEST(Tokenizer, nonext)
 {
   Buffer buffer;
   buffer.append(" \r\n");
@@ -34,11 +34,10 @@ void test_no_next()
   const char* pos = NULL;
   size_t len = 0;
   bool next = tokenizer.next(pos, len);
-  assert(!next);
+  ASSERT_TRUE(!next);
+}
 
-};
-
-void test_set()
+TEST(Tokenizer, set)
 {
   Buffer buffer;
   buffer.append(" set a 0 0 1\r\n");
@@ -49,19 +48,17 @@ void test_set()
   size_t len = 0;
   bool next = false;
   next = tokenizer.next(pos, len);
-  assert(std::string(pos, len) == "set");
+  ASSERT_EQ(std::string(pos, len), "set");
 
   next = tokenizer.next(pos, len);
-  assert(std::string(pos, len) == "a");
+  ASSERT_EQ(std::string(pos, len), "a");
 
   next = tokenizer.next(pos, len);
-  assert(std::string(pos, len) == "0");
-};
+  ASSERT_EQ(std::string(pos, len), "0");
+}
 
-int main()
+int main(int argc, char **argv)
 {
-  test_incr();
-  test_no_next();
-  test_set();
-  return 0;
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

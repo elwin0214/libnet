@@ -5,13 +5,13 @@
 #add_executable(digits_test digits_test.cc)
 
 add_executable(httpprocessor_req_unitest httpprocessor_req_unitest.cc)
-target_link_libraries(httpprocessor_req_unitest libnet_http)
+target_link_libraries(httpprocessor_req_unitest libnet_http ${GTEST_LIBRARY})
 
 add_executable(httpprocessor_keepalive_unitest httpprocessor_keepalive_unitest.cc)
-target_link_libraries(httpprocessor_keepalive_unitest libnet_http)
+target_link_libraries(httpprocessor_keepalive_unitest libnet_http ${GTEST_LIBRARY})
 
 add_executable(httpprocessor_chunked_req_unitest httpprocessor_chunked_req_unitest.cc)
-target_link_libraries(httpprocessor_chunked_req_unitest libnet_http)
+target_link_libraries(httpprocessor_chunked_req_unitest libnet_http ${GTEST_LIBRARY})
 
 
 

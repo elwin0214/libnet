@@ -1,14 +1,14 @@
 add_executable(buffer_unitest buffer_unitest.cc)
-target_link_libraries(buffer_unitest libnet)
+target_link_libraries(buffer_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(endian_unitest endian_unitest.cc)
-target_link_libraries(endian_unitest libnet)
+target_link_libraries(endian_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(inet_address_unitest inet_address_unitest.cc)
-target_link_libraries(inet_address_unitest libnet)
+target_link_libraries(inet_address_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(logger_stream_unitest logger_stream_unitest.cc)
-target_link_libraries(logger_stream_unitest libnet)
+target_link_libraries(logger_stream_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(logger_unitest logger_unitest.cc)
 target_link_libraries(logger_unitest libnet)
@@ -21,7 +21,7 @@ target_link_libraries(timerqueue_unitest libnet)
 
 
 add_executable(thread_unitest thread_unitest.cc)
-target_link_libraries(thread_unitest libnet)
+target_link_libraries(thread_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(timestamp_unitest timestamp_unitest.cc)
 target_link_libraries(timestamp_unitest libnet)
@@ -42,13 +42,13 @@ add_executable(countdown_latch_unitest countdown_latch_unitest.cc)
 target_link_libraries(countdown_latch_unitest libnet)
 
 add_executable(digits_unitest digits_unitest.cc)
-target_link_libraries(digits_unitest libnet)
+target_link_libraries(digits_unitest libnet  ${GTEST_LIBRARY})
 
 add_executable(condition_unitest condition_unitest.cc)
-target_link_libraries(condition_unitest libnet)
+target_link_libraries(condition_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(condition_wait_unitest condition_wait_unitest.cc)
-target_link_libraries(condition_wait_unitest libnet)
+target_link_libraries(condition_wait_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(eventloop_unitest eventloop_unitest.cc)
 target_link_libraries(eventloop_unitest libnet)

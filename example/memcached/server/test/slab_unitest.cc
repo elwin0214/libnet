@@ -1,14 +1,13 @@
 #include <iostream>
 #include <libnet/logger.h>
-#include "assert.h"
+#include <gtest/gtest.h>
 #include "../slab.h"
-
 
 using namespace std;
 using namespace libnet;
 using namespace memcached::server;
 
-void test_prealloc_slab()
+TEST(Slab, prealloc_slab)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
@@ -17,22 +16,19 @@ void test_prealloc_slab()
   //slab_array.init();
   int item_index = -1;
   Item* item = slab_array.pop(16, item_index);
-  assert (NULL != item);
-  cout << (item->size()) << endl;
-  assert (item->size() == 16);
+  ASSERT_TRUE(NULL != item);
+  ASSERT_EQ(item->size(), 16);
   const char* k = "abcdefg";
   const char* v = "1234567";
 
   item->set_key(k, 7);
   item->set_value(v, 7);
 
-  assert(::strcmp(k, item->key()) == 0);
-  assert(::strcmp(v, item->value()) == 0);
-  
+  ASSERT_STREQ(k, item->key());
+  ASSERT_STREQ(v, item->value());
 }
 
-
-void test_slab_number()
+TEST(Slab, slab_number)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
@@ -47,7 +43,7 @@ void test_slab_number()
   }
 }
 
-void test_slab_pop_push()
+TEST(Slab, pop_push)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
@@ -60,35 +56,33 @@ void test_slab_pop_push()
   int item_index = -1;
   Item* item = slab_array.pop(16, item_index); //index = 0
 
-  assert(NULL != item);
+  ASSERT_TRUE(NULL != item);
   items.push_back(item);// first 
   size_t number = slab.number();
 
   for (int i = 0; i < number; i++)
   {
-    assert(number - i == slab.number());
+    ASSERT_EQ(number - i, slab.number());
     Item* item = slab.pop();
-    assert(NULL != item);
+    ASSERT_TRUE(NULL != item);
 
     items.push_back(item);
   }
-  assert(0 == slab.number());
+  ASSERT_EQ(0, slab.number());
 
   int index = 0;
   for (auto item : items)
   {
     index++;
     slab.push(item);
-    assert(index == slab.number());
+    ASSERT_EQ(index, slab.number());
   }
 
-  assert(number + 1 == slab.number());
-
+  ASSERT_EQ(number + 1, slab.number());
 }
-
-int main()
+ 
+int main(int argc, char **argv)
 {
-  test_prealloc_slab();
-  test_slab_number();
-  test_slab_pop_push();
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

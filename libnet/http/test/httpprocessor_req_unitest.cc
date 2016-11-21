@@ -8,110 +8,56 @@
 #include <libnet/http/http_context.h>
 #include <libnet/digits.h>
 #include <libnet/http/http_processor.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace libnet;
 using namespace libnet::http;
 using namespace std::placeholders;
 
-
-HttpProcessor* gHttpProcessor = NULL;
-HttpContext* gContext = NULL;
-
-Buffer* gRequestBodyBuffer = NULL;
-Buffer* gResponseBuffer = NULL;
-
-bool gClose = false;
-
-// process request
-struct ProxyHandler
+TEST(HttpProcessor, Post)
 {
-  size_t handleBody(const Buffer& buffer, size_t allowed, HttpContext& context)
-  {
-    gRequestBodyBuffer->append(buffer.beginRead(), allowed);
-    return allowed;
-  }
+  HttpProcessor processor;
+  HttpContext context;
+  Buffer reqBuffer;
 
-  void handleRequest(const Buffer& buffer, HttpContext& context)
-  {
-    HttpResponse& response = context.getResponse();
+  processor.setBodyReaderCallBack([&reqBuffer](const Buffer& buffer, size_t allowed, HttpContext& ctx){
+    reqBuffer.append(buffer.beginRead(), allowed);
+    return allowed;
+  });
+
+  processor.setRequestHandlerCallBack([](const Buffer& buffer, HttpContext& ctx){
+    HttpResponse& response = ctx.getResponse();
     response.setStatus(HttpResponse::OK);
-    //response.setClose(gClose);
     response.send("hello world", 11);
     response.flush();
-  }
-};
+  });
 
-//mock connection
-struct ProxyConnection
+  Buffer respBuffer;
+  context.getResponse().setSendCallback([&respBuffer](const CString& cstring){
+    respBuffer.append(cstring.data(), cstring.length());
+  });
+
+  Buffer buffer(1024);
+  buffer.append("POST / HTTP/1.1\r\n");
+  buffer.append("Content-Length: 3\r\n");
+  buffer.append("\r\n");
+  ASSERT_TRUE(processor.process(buffer, context));
+  ASSERT_TRUE(context.getState() == HttpContext::kBodySending);
+  buffer.append("12");
+
+  processor.process(buffer, context);
+  ASSERT_TRUE(context.getState() == HttpContext::kBodySending);
+
+  buffer.append("3");
+  processor.process(buffer, context);
+  ASSERT_TRUE(context.getState() == HttpContext::kBodySent);
+
+  ASSERT_EQ("123", reqBuffer.toString());
+}
+
+int main(int argc, char **argv)
 {
-  void sendString(CString cstring)
-  {
-    gResponseBuffer->append(cstring.data(), cstring.length());
-  }
-
-};
-
-ProxyHandler proxyHandler;
-ProxyConnection proxyConnection;
-
-
-
-struct TestHttpProcessor 
-{
-  void setup()
-  {
-    gHttpProcessor = new HttpProcessor();
-    gContext = new HttpContext();
-
-    gRequestBodyBuffer = new Buffer();
-    gResponseBuffer = new Buffer();
-
-    gHttpProcessor->setBodyReaderCallBack(std::bind(&ProxyHandler::handleBody, &proxyHandler, _1, _2, _3));
-    gHttpProcessor->setRequestHandlerCallBack(std::bind(&ProxyHandler::handleRequest, &proxyHandler, _1, _2));
-    gContext->getResponse().setSendCallback(std::bind(&ProxyConnection::sendString, &proxyConnection, _1));
-  
-  } 
-
-  void tear_down()
-  {
-    delete gHttpProcessor;
-    delete gContext;
-    delete gRequestBodyBuffer;
-    delete gResponseBuffer;
-  }  
-
-  void test_post()
-  {
- 
- 
-    Buffer buffer(1024);
-    buffer.append("POST / HTTP/1.1\r\n");
-    buffer.append("Content-Length: 3\r\n");
-    buffer.append("\r\n");
-    assert(gHttpProcessor->process(buffer, *gContext));
-    assert(gContext->getState() == HttpContext::kBodySending);
-    buffer.append("12");
-
-   
-    gHttpProcessor->process(buffer, *gContext);
-    assert(gContext->getState() == HttpContext::kBodySending);
-
-    buffer.append("3");
-    gHttpProcessor->process(buffer, *gContext);
-    assert(gContext->getState() == HttpContext::kBodySent);
-
-    assert ("123" == gRequestBodyBuffer->toString());//
-    cout << "request body=" << gResponseBuffer->toString() << endl;
-  }
-
-
-};
- 
-int main()
-{
-  TestHttpProcessor th;
-  th.setup();
-  th.test_post();
-  th.tear_down();
+  ::testing::InitGoogleTest( &argc, argv );
+  return RUN_ALL_TESTS();
 }

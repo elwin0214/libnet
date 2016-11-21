@@ -1,5 +1,6 @@
 #include <iostream>
 #include <libnet/logger.h>
+#include <gtest/gtest.h>
 #include "assert.h"
 #include "../hashtable.h"
 #include "../item.h"
@@ -8,7 +9,7 @@
 using namespace memcached::server;
 using namespace std;
 
-void test_get_set()
+TEST(HashTable, get_set)
 {
   SlabOption option(16, 32, 1.2, 1024, true, 1024 * 1024 * 2);
   SlabArray slab_array(option);
@@ -22,20 +23,20 @@ void test_get_set()
 
   item2->set_key("2", 1);
   item2->set_value("b", 1);
-  assert(strcmp("2", item2->key()) == 0);
+  ASSERT_STREQ("2", item2->key());
 
   hashtable.setItem(item1);
   hashtable.setItem(item2);
 
-  assert(2 == hashtable.size());
+  ASSERT_EQ(2, hashtable.size());
   Item* item = hashtable.get("1");
 
   Item* remove_item = hashtable.remove("2");
-  assert(1 == hashtable.size());
-  assert(strcmp("2", remove_item->key()) == 0);
+  ASSERT_EQ(1, hashtable.size());
+  ASSERT_STREQ("2", remove_item->key());
 }
 
-void test_resize()
+TEST(HashTable, resize)
 {
   SlabOption option(16, 32, 1.2, 1024, true, 1024 * 1024 * 2);
   SlabArray slab_array(option);
@@ -54,27 +55,29 @@ void test_resize()
 
     Item* get_item = hashtable.get(key);
 
-    assert(NULL != get_item );
+    ASSERT_TRUE(NULL != get_item );
     cout << (get_item->key()) << " " << (get_item->value() ) << endl ;
-    assert(::strcmp(get_item->key(), key) == 0 && ::strcmp(get_item->value(), key) == 0);
+
+    ASSERT_STREQ(key, get_item->key());
+    ASSERT_STREQ(key, get_item->value());
+    //assert(::strcmp(get_item->key(), key) == 0 && ::strcmp(get_item->value(), key) == 0);
 
     if (index % 3 == 0)
     {
       Item* remove_item = hashtable.remove(key);
-      assert(::strcmp(remove_item->key(), key) == 0 && ::strcmp(remove_item->value(), key) == 0);
+      //assert(::strcmp(remove_item->key(), key) == 0 && ::strcmp(remove_item->value(), key) == 0);
+      ASSERT_STREQ(key, remove_item->key());
+      ASSERT_STREQ(key, remove_item->value());
+
       get_item = hashtable.get(key);
-      assert(NULL == get_item);
+      ASSERT_TRUE(NULL == get_item);
     }
     
   }
-
-
-
 }
 
-int main()
+int main(int argc, char **argv)
 {
-  test_get_set();
-  test_resize();
-  return 0;
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

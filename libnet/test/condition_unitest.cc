@@ -1,6 +1,7 @@
 #include <libnet/mutexlock.h>
 #include <libnet/condition.h>
 #include <libnet/thread.h>
+#include <gtest/gtest.h>
 #include <queue>
 #include <vector>
 #include <assert.h>
@@ -18,11 +19,11 @@ class ProducerAndConsumer
 
 public:
   ProducerAndConsumer(int capcity)
-   : lock_(),
-     noempty_(lock_),
-     nofull_(lock_),
-     capcity_(capcity),
-     queue_()
+    : lock_(),
+      noempty_(lock_),
+      nofull_(lock_),
+      capcity_(capcity),
+      queue_()
   {
 
   }
@@ -65,9 +66,6 @@ public:
     }
   }
 
- 
-
-
 private:
   MutexLock lock_;
   Condition noempty_;
@@ -77,17 +75,11 @@ private:
 
 };
 
-int main()
+TEST(Condition, test)
 {
   ProducerAndConsumer pc(1);
-
-  // auto func = std::bind(&ProducerAndConsumer::produce, &pc, 1);
-  // func();
-
   vector<shared_ptr<Thread>> producers;
   vector<shared_ptr<Thread>> consumers;
-
-
   for (int i = 0; i < 10; i++)
   {
     shared_ptr<Thread> p = shared_ptr<Thread>(new Thread(std::bind(&ProducerAndConsumer::produce,  &pc, 1)));
@@ -97,10 +89,8 @@ int main()
     p->start();
     c->start();
   }
-
   for (auto thread : producers)
   {
-
     thread->join();
   }
 
@@ -108,7 +98,11 @@ int main()
   {
     thread->join();
   }
-  cout << g_consume << endl;
-  assert (g_consume == 10);
+  ASSERT_EQ(g_consume, 10);
 }
 
+int main(int argc, char **argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

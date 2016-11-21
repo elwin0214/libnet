@@ -1,20 +1,20 @@
 #include <libnet/inet_address.h>
+#include <gtest/gtest.h>
 #include <iostream>
 #include <assert.h>
 
 using namespace std;
 using namespace libnet;
 
-void test_setter()
+TEST(Address, convert)
 {
   InetAddress addr("127.0.0.1", 9999);
-  assert(addr.getIp() == "127.0.0.1");
-  assert(addr.getPort() == 9999);
+  ASSERT_EQ(addr.getIp(), "127.0.0.1");
+  ASSERT_EQ(addr.getPort(), 9999);
 }
 
-int main()
+int main(int argc, char **argv)
 {
-  test_setter();
-  return 0;
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
-
