@@ -90,7 +90,12 @@ bool HttpProcessor::processHeaders(HttpContext &context)
   if (length.size() > 0)
   {
     size_t len;
-    digits::stringToDigit(length.c_str(), &len);  //fix error
+    bool r = digits::convert(length.c_str(), len, 10);
+    if (!r){
+      LOG_ERROR << "length = " << length << " parse error!";
+      return false;
+    }
+    //digits::stringToDigit(length.c_str(), &len);  //fix error
     request.body.chunked_ = false;
     request.body.size_ = len;
     return true;
@@ -260,7 +265,12 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
         const char* start = input.beginRead();
         std::string length = std::string(start, pos - start);
         size_t len;
-        digits::xstringToDigit(length.c_str(), &(len));
+        //digits::xstringToDigit(length.c_str(), &(len));
+        bool r = digits::convert<size_t>(length.c_str(), len, 16);
+        if (!r){
+          LOG_ERROR << "length = " << length << " error = parse fail";
+          return false;
+        }
         request.body.size_ = len;
         input.moveReadIndex(pos + 2 - input.beginRead());
 

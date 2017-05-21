@@ -76,7 +76,9 @@ public:
   self& operator << (long v) { append("%ld", v); return *this; }
   self& operator << (unsigned long v) { append("%ld", v); return *this; }
   self& operator << (long long v) { append("%lld", v); return *this; }
-  self& operator << (uint64_t v) {append("%lld", v); return *this; }
+  self& operator << (unsigned long long v) { append("%lld", v); return *this; }
+
+  //self& operator << (uint64_t v) {append("%lld", v); return *this; }
   self& operator << (void* p) { append("%x", p); return *this; }
 
   self& operator << (const char* str){ append("%s", str); return *this; }

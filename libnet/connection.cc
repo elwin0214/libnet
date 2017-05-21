@@ -196,7 +196,7 @@ void Connection::handleError()
   loop_->assertInLoopThread();
 
   int err = sockets::getSocketError(socket_->fd());
-  LOG_ERROR << "err = " << err << " error = " << log::Error(err);
+  LOG_ERROR <<"fd = "<< socket_->fd() <<" err = " << err << " error = " << log::Error(err);
   if (err & (ETIMEDOUT | EHOSTUNREACH | ENETUNREACH | EPIPE | ECONNRESET))
   {
     if (state_ != kDisConnected)

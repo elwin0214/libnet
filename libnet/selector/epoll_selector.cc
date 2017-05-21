@@ -1,5 +1,7 @@
 #include <strings.h>
 #include <unistd.h>
+#include <poll.h>
+#include <assert.h>
 #include "../logger.h"
 #include "../channel.h"
 #include "epoll_selector.h"
@@ -14,12 +16,18 @@ static int kAdded = 0;
 static int kDeleted = 1;
 static int kDefaultEvents = 1;
 
+
 EpollSelector::EpollSelector(EventLoop* loop)
     : Selector(loop),
       epfd_(::epoll_create1(0)),
       epollEvents_(kDefaultEvents)
 {
-
+  assert(EPOLLIN == POLLIN);
+  assert(EPOLLPRI == POLLPRI);
+  assert(EPOLLOUT == POLLOUT);
+  assert(EPOLLRDHUP == POLLRDHUP);
+  assert(EPOLLERR == POLLERR);
+  assert(EPOLLHUP == POLLHUP);
 };
 
 EpollSelector::~EpollSelector()
@@ -73,7 +81,7 @@ void EpollSelector::select(int timeoutMs, ChannelList& activeChannles)
     {
       revents |= Channel::kWriteEvent;
     }
-    LOG_TRACE << "fd = " << fd << " revents = " << revents << " epoll_revents = " << events;
+    LOG_TRACE << "fd = " << channel->fd() << " revents = " << revents << " epoll_revents = " << events;
     channel->setRevents(revents);
     activeChannles.push_back(channel);
   }

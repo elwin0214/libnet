@@ -64,7 +64,7 @@ public:
   {
     LockGuard guard(lock_);
     if (sent_queue_.empty()){
-      assert(input.readable() <= 0);// 多余数据
+      assert(input.readable() <= 0);// 收到了server发来的多余数据
       return false;
     }
     std::shared_ptr<Caller>& caller = sent_queue_.front();

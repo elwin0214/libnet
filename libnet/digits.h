@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits>
 #include "logger.h"
 
 namespace libnet
@@ -10,18 +11,18 @@ namespace libnet
 namespace digits
 {
 template<typename T>
-bool convert(const std::string& str, T& result) //error
+bool convert(const std::string& str, T& result, int base) //error
 {
-  return convert<T>(str.c_str(), result);
+  return convert<T>(str.c_str(), result, base);
 };
 
 template<typename T>
-bool convert(const char* str, T& result)
+bool convert(const char* str, T& result, int base)
 {
   int64_t value = 0; 
   try
   {
-    value = std::stoll(str, nullptr, 10);  
+    value = std::stoll(str, nullptr, base);  
   }
   catch(...)
   {
@@ -35,14 +36,16 @@ bool convert(const char* str, T& result)
   return true;
 };
 
-inline int stringToDigit(const char* str, size_t *num)
-{
-  int r = sscanf(str,"%zd", num);
-  if (r < 0)
-    LOG_SYSERROR << "str=" << str ;
-  return r;
-};
 
+
+// inline int stringToDigit(const char* str, size_t *num)
+// {
+//   int r = sscanf(str,"%zd", num);
+//   if (r < 0)
+//     LOG_SYSERROR << "str=" << str ;
+//   return r;
+// };
+/*
 inline int stringToDigit(const char* str, uint16_t *num)
 {
   int r = sscanf(str,"%hd", num);
@@ -66,7 +69,8 @@ inline int stringToDigit(const char* str, uint64_t *num)
     LOG_SYSERROR << "str=" << str ;
   return r;
 };
-
+*/
+/*
 inline int xstringToDigit(const char* str, uint32_t *num)
 {
   int r = sscanf(str,"%x", num);
@@ -91,7 +95,15 @@ inline int xstringToDigit(const char* str, unsigned long *num)
     LOG_SYSERROR << "str=" << str ;
   return r;
 };
-
+*/
+inline int digitToXstring(size_t num, char* str)
+{
+  int r = sprintf(str,"%zx", num);
+  if (r < 0)
+     LOG_SYSERROR << "num=" << num ;
+  return r;
+};
+/*
 inline int digitToString(uint16_t num, char* str)
 {
   int r = sprintf(str,"%d", num);
@@ -106,15 +118,8 @@ inline int digitToString(uint32_t num, char* str)
   if (r < 0)
     LOG_SYSERROR << "num=" << num ;
   return r;
-};
+};*/
 
-inline int digitToXstring(size_t num, char* str)
-{
-  int r = sprintf(str,"%zx", num);
-  if (r < 0)
-     LOG_SYSERROR << "num=" << num ;
-  return r;
-};
 
 }
 }

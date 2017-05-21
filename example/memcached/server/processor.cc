@@ -157,7 +157,7 @@ bool CounterProcessor::process(Buffer& buffer, MemcachedContext& context)
 
   std::string step = std::string(pos, len);
   uint32_t step_int = 0;
-  if (!digits::convert<uint32_t>(step.c_str(), step_int))
+  if (!digits::convert<uint32_t>(step.c_str(), step_int, 10))
   {
     LOG_ERROR << "key = " << key << " error = convert " << step << " to uint32_t fail!"; 
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -181,7 +181,7 @@ bool CounterProcessor::process(Buffer& buffer, MemcachedContext& context)
   }
 
   uint32_t value = 0;
-  if (!digits::convert<uint32_t>(item->value(), value))
+  if (!digits::convert<uint32_t>(item->value(), value, 10))
   {
     LOG_ERROR << "key = " << key << " error = convert " << (item->value()) << " to uint32_t fail!"; 
     buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -283,7 +283,7 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
     buffer.moveReadIndex(pos + len - buffer.beginRead());
 
     uint16_t flags_int = 0;
-    if (!digits::convert<uint16_t>(flags.c_str(), flags_int))
+    if (!digits::convert<uint16_t>(flags.c_str(), flags_int, 10))
     {
       LOG_ERROR << "key = " << key << " error = convert value " << flags <<" to uint16_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -302,7 +302,7 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
     buffer.moveReadIndex(pos + len - buffer.beginRead());
   
     uint64_t exptime_int = 0;
-    if (!digits::convert<uint64_t>(exptime.c_str(), exptime_int))
+    if (!digits::convert<uint64_t>(exptime.c_str(), exptime_int, 10))
     {
       LOG_ERROR << "key = " << key << " error = convert value " << flags <<" to uint16_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -321,7 +321,7 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
     buffer.moveReadIndex(pos + len - buffer.beginRead());
 
     uint32_t bytes_int = 0;
-    if (!digits::convert<uint32_t>(bytes.c_str(), bytes_int))
+    if (!digits::convert<uint32_t>(bytes.c_str(), bytes_int, 10))
     {
       LOG_ERROR << "key = " << key << " error = convert value " << bytes <<" to uint32_t fail!"; 
       buffer.moveReadIndex(end + 2 - buffer.beginRead());
@@ -352,7 +352,7 @@ bool TextStoreProcessor::process(Buffer& buffer, MemcachedContext& context)
       LOG_TRACE << "need " << (context.get_bytes()) << " bytes for the value!";
       return false;
     }
-    LOG_INFO << buffer.toString() << "process";
+    //LOG_INFO << buffer.toString() << "process";
 
     const char* end = buffer.find(context.get_bytes(), "\r\n");
     if (NULL == end)

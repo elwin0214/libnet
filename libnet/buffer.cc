@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <vector>
+#include <algorithm>
 #include "buffer.h"
 #include "logger.h"
 

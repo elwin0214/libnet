@@ -86,7 +86,7 @@ bool GetCommand::parseValueLine(Buffer& buffer, const char* crlf)
     {
       std::string flags = std::string(buffer.beginRead(), blank - buffer.beginRead());
       buffer.moveReadIndex(blank + 1 - buffer.beginRead());
-      if (!digits::convert<uint32_t>(flags.c_str(), flags_))
+      if (!digits::convert<uint32_t>(flags.c_str(), flags_, 10))
       {
         return false;
       }
@@ -95,7 +95,7 @@ bool GetCommand::parseValueLine(Buffer& buffer, const char* crlf)
     {
       std::string bytes = std::string(buffer.beginRead(), crlf - buffer.beginRead());
       buffer.moveReadIndex(crlf + 1 - buffer.beginRead());
-      if (!digits::convert<uint32_t>(bytes.c_str(), bytes_))
+      if (!digits::convert<uint32_t>(bytes.c_str(), bytes_, 10))
       {
         return false;
       }
@@ -223,7 +223,7 @@ bool CountCommand::parse(Buffer& buffer)
   else
   {
     std::string value = std::string(buffer.beginRead(), crlf - buffer.beginRead());
-    if (digits::convert<uint32_t>(value.c_str(), result_))
+    if (digits::convert<uint32_t>(value.c_str(), result_, 10))
     {
       code_ = kSucc;
     }
