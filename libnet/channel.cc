@@ -6,9 +6,9 @@ namespace libnet
 {
 
 const int Channel::kNoneEvent = 0;
-const int Channel::kReadEvent = 1 << 1;
-const int Channel::kWriteEvent = 1 << 2;
-const int Channel::kErrorEvent = 1 << 3;
+const int Channel::kReadEvent = 1;
+const int Channel::kWriteEvent = 1 << 1;
+const int Channel::kErrorEvent = 1 << 2;
 
 Channel::Channel(EventLoop *loop, int fd)
     : fd_(fd), 

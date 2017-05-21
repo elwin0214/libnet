@@ -30,13 +30,16 @@ void PollSelector::updateChannel(Channel *channel)
   int pevents = 0;
   if (events & Channel::kReadEvent)
   {
-    pevents |= POLLIN;
+    pevents |= POLLIN | POLLPRI;
   }
   if (events & Channel::kWriteEvent)
   {
     pevents |= POLLOUT;
   }
   int index = channel->index();
+
+  LOG_TRACE << "index=" << index << " fd=" << fd << " events=" << events << " pevents=" << pevents;
+
   if (index < 0)
   {
     struct pollfd pfd;

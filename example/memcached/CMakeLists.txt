@@ -33,8 +33,18 @@ TARGET_LINK_LIBRARIES(processor_unitest libnet ${GTEST_LIBRARY})
 add_executable(lru_unitest server/lru.cc server/test/lru_unitest.cc)
 TARGET_LINK_LIBRARIES(lru_unitest libnet ${GTEST_LIBRARY})
 
-add_executable(memcached_server_test server/allocator.cc server/slab.cc server/lru.cc server/tokenizer.cc server/processor.cc server/hashtable.cc server/memcached_server.cc server/test/memcached_server_test.cc)
-TARGET_LINK_LIBRARIES(memcached_server_test libnet)
+
+if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
+set_source_files_properties(server/test/memcached_server_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
+endif()
+
+add_executable(memcached_server_bench server/allocator.cc server/slab.cc server/lru.cc server/tokenizer.cc server/processor.cc server/hashtable.cc server/memcached_server.cc server/test/memcached_server_bench.cc)
+
+if(TCMALLOC_INCLUDE_DIR AND TCMALLOC_LIBRARY AND PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
+TARGET_LINK_LIBRARIES(memcached_server_bench libnet tcmalloc profiler)
+else()
+TARGET_LINK_LIBRARIES(memcached_server_bench libnet)
+endif()
 
 add_test(NAME command_unitest COMMAND command_unitest)
 add_test(NAME hashtable_unitest COMMAND hashtable_unitest)

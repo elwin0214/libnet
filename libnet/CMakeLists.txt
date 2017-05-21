@@ -2,7 +2,7 @@ INCLUDE(CheckFunctionExists)
 check_function_exists(epoll_create HAVE_EPOLL)
 
 if(HAVE_EPOLL)
-  set_source_files_properties(selector/selector_provider.cc PROPERTIES COMPILE_FLAGS "-DHAVE_POLL")
+  set_source_files_properties(selector/selector_provider.cc PROPERTIES COMPILE_FLAGS "-DHAVE_EPOLL")
 endif()
 
 SET (SRCS

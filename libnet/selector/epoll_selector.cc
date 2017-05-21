@@ -103,7 +103,7 @@ void EpollSelector::updateChannel(int op, Channel* channel)
   int events = channel->events();
   if (events & Channel::kReadEvent)
   {
-    epollEvent.events |= EPOLLIN;
+    epollEvent.events |= EPOLLIN | POLLPRI;
   }
   if (events & Channel::kWriteEvent)
   {
@@ -111,6 +111,7 @@ void EpollSelector::updateChannel(int op, Channel* channel)
   }
   epollEvent.data.fd = fd;
   epollEvent.data.ptr = channel;
+  LOG_TRACE << "op=" << op << " fd=" << fd << " events=" << events <<" pevents=" << epollEvent.events;
   int r = ::epoll_ctl(epfd_, op, fd, &epollEvent);
   if (r < 0)
   {

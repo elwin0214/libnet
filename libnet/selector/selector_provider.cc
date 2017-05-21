@@ -17,11 +17,13 @@ namespace selector
 Selector* SelectorProvider::provide(EventLoop *loop)
 {
   const char* env = ::getenv("SELECTOR");
+
   if (NULL == env)
   {
     LOG_INFO << "can not find env, use default" ;
     return new PollSelector(loop);
   }
+  LOG_INFO << "select = " << env ;
   if (strcmp(env, "select") == 0)
   {
     return new DefaultSelector(loop);
