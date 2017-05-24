@@ -7,6 +7,7 @@
 #include <memory>
 #include <libnet/buffer.h>
 #include <libnet/digits.h>
+#include <libnet/nocopyable.h>
 #include "item.h"
 #include "tokenizer.h"
 #include "memcached_context.h"
@@ -20,7 +21,7 @@ using namespace libnet;
 class Item;
 class MemcachedProcessor;
 
-class Processor
+class Processor : public libnet::NoCopyable
 {
 public:
   Processor(Opt opt)

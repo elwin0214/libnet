@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <functional>
+#include <assert.h>
 #include <libnet/digits.h>
 #include <libnet/nocopyable.h>
 
@@ -108,7 +109,7 @@ public:
   uint64_t exptime_; 
   uint32_t bytes_;  // the length of value
   uint8_t key_size_; // the length of key
-  char data_[0]; //align??
+  char data_[0]; //store the key and value, <key>\0<value>\0//align??
 
 };
 }

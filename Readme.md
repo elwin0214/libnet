@@ -26,3 +26,27 @@ make test
 * idle server
 * memcached client imitate xmemcached-client
 * memcached server
+
+### dependent libraries
+* gperftools
+```
+https://github.com/gperftools/gperftools.git
+git checkout gperftools-2.5
+./autogen.sh
+./configure 
+make 
+make install
+```
+* google test 
+```
+todo
+```
+* google benchmark
+```
+git clone https://github.com/google/benchmark.git
+git checkout v1.1.0
+mkdir build
+cmake ..
+make 
+make install
+```

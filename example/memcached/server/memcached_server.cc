@@ -4,6 +4,7 @@
 #include <libnet/server.h>
 #include <libnet/buffer.h>
 #include <libnet/logger.h>
+#include "item.h"
 #include "memcached_server.h"
 #include "memcached_context.h"
 
@@ -17,35 +18,19 @@ MemcachedServer::MemcachedServer(EventLoop* loop, const char* ip, int port, size
   : server_(loop, ip, port, 1), //single thread server
     kMaxConnecitons_(max_connections),
     num_connections_(0),
-    processor_(),
-    hash_table_(32, 1.2),
-    slab_array_(SlabOption(16, 1024, 1.2, 1024 * 1024, true, 1024 * 1024 * 64)), //64M
-    lru_list_(slab_array_.slabs()),
-    now_(Timestamp::now().secondsValue())
+    processor_()
 {
-
-};
-
-MemcachedServer::MemcachedServer(EventLoop* loop, const char* ip, int port, size_t max_connections, const SlabOption& option)
-  : server_(loop, ip, port, 1), //single thread server
-    kMaxConnecitons_(max_connections),
-    num_connections_(0),
-    processor_(),
-    hash_table_(32, 1.2),
-    slab_array_(option),
-    lru_list_(slab_array_.slabs())
-{
-
 };
 
 void MemcachedServer::start()
 {
   //slab_array_.init();
+  /*
   processor_.set_item_find(std::bind(&MemcachedServer::find, this, _1, _2));
   processor_.set_item_alloc(std::bind(&MemcachedServer::alloc, this, _1));
   processor_.set_item_add(std::bind(&MemcachedServer::add, this, _1));
   processor_.set_item_remove(std::bind(&MemcachedServer::remove, this, _1));
-  
+  */
 
   processor_.init();
   server_.setConnectionCallBack(std::bind(&MemcachedServer::onConnection, this, std::placeholders::_1));
@@ -81,7 +66,7 @@ void MemcachedServer::onMessage(const ConnectionPtr& connection)
   LOG_TRACE << "request = " << buffer.toString() ;
   processor_.process(buffer, *context);
 };
-
+/*
 void MemcachedServer::remove(Item* item)
 {
   hash_table_.removeItem(item);
@@ -133,6 +118,7 @@ void MemcachedServer::add(Item* item)
   hash_table_.addItem(item);
   lru_list_.add(item);
 };
+*/
 
 }
 }

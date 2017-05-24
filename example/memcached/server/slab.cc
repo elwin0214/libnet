@@ -114,10 +114,10 @@ void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
 
   if (ptr != NULL)
   {
-    Item* item = NULL;
     size_t offset = 0;
     for(; offset + item_entire_size <= batch_alloc_size_; )
     {
+
       void* item_ptr = static_cast<void*>(ptr + offset);
       Item* item = new (item_ptr)Item(slab.index(), item_entire_size - sizeof(Item));
       offset += item_entire_size;
@@ -126,12 +126,13 @@ void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
     }
   }
   else
-    LOG_ERROR << "can not alloc " << batch_alloc_size_ << "bytes memory";
+    LOG_ERROR << "can not alloc " << batch_alloc_size_ << " bytes memory";
 
 };
 
 Item* SlabArray::pop(size_t item_size, int& index)
 { 
+
   size_t item_entire_size = ENTIRE_SIZE(item_size);
   if (item_entire_size > max_size_) return NULL;
 
@@ -146,6 +147,10 @@ Item* SlabArray::pop(size_t item_size, int& index)
         doAlloc(*itr, itr->item_size());
       }
       Item* item = itr->pop();
+      if (NULL == item)
+      {
+        return NULL;
+      }
       index = item->index();
       return item;
     }

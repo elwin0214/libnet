@@ -8,6 +8,7 @@
 #include <list>
 #include <string>
 #include <assert.h>
+#include <libnet/nocopyable.h>
 #include "item.h"
 
 namespace memcached
@@ -15,7 +16,7 @@ namespace memcached
 namespace server
 {
 
-class HashTable
+class HashTable : public libnet::NoCopyable
 {
 public:
   typedef Item* ItemPtr;

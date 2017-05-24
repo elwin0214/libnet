@@ -160,7 +160,7 @@ void HashTable::resize()
   {
     for (auto item : moving_bucket)
     {
-      const char* key = item->key();
+      //const char* key = item->key();
       size_t new_index = item->hash_ & ((1 << new_hashpower_) - 1);
       new_buckets_[new_index].push_back(item);
     }

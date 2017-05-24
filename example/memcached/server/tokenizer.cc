@@ -47,9 +47,9 @@ Tokenizer::Tokenizer(const char* start, const char* end, char ch)
 
 bool Tokenizer::next(const char* &pos, size_t &len)
 {
-  const char* start = std::find_if(start_, end_, CharNotEqual(' '));
+  const char* start = std::find_if(start_, end_, CharNotEqual(ch_));
   if (start == end_) return false;
-  const char* end = std::find_if(start, end_, CharEqual(' '));
+  const char* end = std::find_if(start, end_, CharEqual(ch_));
   pos = start;
   len = (end - start);
   start_ = end;
