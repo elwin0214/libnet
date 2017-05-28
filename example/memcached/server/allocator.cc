@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "allocator.h"
 #define ALIGN(size) (((size) + ((8) - 1)) & ~ ((8) -1))
 
@@ -32,6 +33,10 @@ void* MemoryAllocator::allocate(size_t size)//align before
   if (ptr_ == NULL)
   {
     ptr_ = static_cast<char*>(::malloc(total_));
+    if (NULL == ptr_)
+    {
+      ::fprintf(stderr, "can not allocate %zub memory\n",total_);
+    }
   }
   if (current_ + size > total_)
     return NULL;

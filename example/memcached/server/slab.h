@@ -16,14 +16,14 @@ using namespace libnet;
 
 struct SlabOption
 { 
-  SlabOption(size_t item_min_size, 
-      size_t item_max_size, 
+  SlabOption(size_t min_size, 
+      size_t max_size, 
       double factor, 
       size_t batch_alloc_size, 
       bool prealloc,
       size_t total_mem_size)
-    : item_min_size_(item_min_size),
-      item_max_size_(item_max_size),
+    : min_size_(min_size),
+      max_size_(max_size),
       factor_(factor),
       batch_alloc_size_(batch_alloc_size),
       prealloc_(prealloc),
@@ -32,8 +32,8 @@ struct SlabOption
 
   };
 
-  size_t item_min_size_;  // item最小值
-  size_t item_max_size_; //item最大值
+  size_t min_size_;  // item最小值
+  size_t max_size_; //item最大值
   double factor_;  //增长因子
   size_t batch_alloc_size_;
   bool prealloc_;  //是否预先分配内存
@@ -81,16 +81,14 @@ class SlabArray : public NoCopyable
 public:
   SlabArray(const SlabOption& option);
 
-  Item* pop(size_t item_size, int& index);
+  Item* pop(size_t data_size, int& index);
   
   void push(Item* item);
 
   Slab& operator[](size_t index) { return slabs_[index]; }
 
   size_t slabs() { return slabs_.size(); }
-  
-  size_t max_item_size() const { return max_item_size_; }
-  
+    
 private:
   void init();
   void doAlloc(Slab& slab, size_t item_entire_size);
@@ -99,7 +97,6 @@ private:
   double factor_;
   size_t min_size_;
   size_t max_size_;
-  size_t max_item_size_;
   size_t batch_alloc_size_;
   std::vector<size_t> sizes_;
   std::vector<Slab> slabs_;

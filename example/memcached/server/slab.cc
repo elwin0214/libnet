@@ -47,8 +47,8 @@ void Slab::push(Item* item)
 
 SlabArray::SlabArray(const SlabOption& option)
   : factor_(option.factor_),
-    min_size_(option.item_min_size_),
-    max_size_(option.item_max_size_),
+    min_size_(option.min_size_),
+    max_size_(option.max_size_),
     batch_alloc_size_(option.batch_alloc_size_),
     slabs_(),
     allocator_(option.prealloc_, option.total_mem_size_)
@@ -65,7 +65,8 @@ void SlabArray::init()
   }
   min_size_ = ALIGN(ENTIRE_SIZE(min_size_));
   max_size_ = ALIGN(ENTIRE_SIZE(max_size_));
-  std::list<int> sizes_;
+  LOG_DEBUG << "min_size_ = " << min_size_ << " max_size_ = " << max_size_ ;
+  //std::list<int> sizes_;
   size_t size;
   size_t last_size;
   for (size = min_size_; size <= max_size_; )
@@ -86,14 +87,12 @@ void SlabArray::init()
 
   size_t index = 0;
   bool need_max = false;
-  for (std::list<int>::iterator itr = sizes_.begin();
-      itr != sizes_.end();
-      itr++)
+  for (auto size : sizes_)
   {
     if (index < kMaxSlabs - 1)
     {
-      LOG_DEBUG << "index = " << index << " size = " << (*itr) ;
-      slabs_.push_back(Slab(index, *itr));
+      LOG_DEBUG << "index = " << index << " size = " << size ;
+      slabs_.push_back(Slab(index, size));
       index++;
     }
     else
@@ -102,25 +101,28 @@ void SlabArray::init()
       break;
     }
   }
-  slabs_.push_back(Slab(index, max_size_));
-  max_item_size_ = max_size_ - sizeof(Item);
+  if (need_max){
+    sizes_.push_back(max_size_);
+    slabs_.push_back(Slab(index, max_size_));
+    LOG_DEBUG << "index = " << index << " size = " << max_size_ ;
+  }
+  //max_data_size_ = max_size_ - sizeof(Item);
 };
 
-void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
+void SlabArray::doAlloc(Slab& slab, size_t item_size)
 {
-  assert(item_entire_size <= max_size_);
+  assert(item_size <= max_size_);
 
   char* ptr = static_cast<char*>(allocator_.allocate(batch_alloc_size_));
 
   if (ptr != NULL)
   {
     size_t offset = 0;
-    for(; offset + item_entire_size <= batch_alloc_size_; )
+    for(; offset + item_size <= batch_alloc_size_; )
     {
-
       void* item_ptr = static_cast<void*>(ptr + offset);
-      Item* item = new (item_ptr)Item(slab.index(), item_entire_size - sizeof(Item));
-      offset += item_entire_size;
+      Item* item = new (item_ptr)Item(slab.index(), item_size - sizeof(Item));
+      offset += item_size;
       LOG_TRACE << "slab.index = " << (slab.index()) << "item->size()= " << (item->size()) << " " << (item->size_) ;
       slab.push(item);
     }
@@ -130,35 +132,36 @@ void SlabArray::doAlloc(Slab& slab, size_t item_entire_size)
 
 };
 
-Item* SlabArray::pop(size_t item_size, int& index)
+Item* SlabArray::pop(size_t data_size, int& index)
 { 
 
-  size_t item_entire_size = ENTIRE_SIZE(item_size);
-  if (item_entire_size > max_size_) return NULL;
-
-  for (std::vector<Slab>::iterator itr = slabs_.begin();
-      itr != slabs_.end();
-      itr++)
+  size_t item_size = ENTIRE_SIZE(data_size);
+  int i = -1;
+  bool hit = false;
+  for (int size : sizes_)
   {
-    if (itr->item_size() >= item_entire_size)
+    i++;
+    if (size >= item_size)
     {
-      if (itr->number() == 0)
-      {
-        doAlloc(*itr, itr->item_size());
-      }
-      Item* item = itr->pop();
-      if (NULL == item)
-      {
-        return NULL;
-      }
-      index = item->index();
-      return item;
+      item_size = size;
+      hit = true;
+      break;
     }
   }
-  index = -1;
-  //throw Exception("can not find matched item in the slab!");
-  assert(false);
-  return NULL;
+  if (!hit)
+  {
+    index = -1;
+    return NULL;
+  }
+  
+  Slab& slab = slabs_[i];
+  if (slab.number() == 0)
+  {
+    doAlloc(slab, item_size);
+  }
+  Item* item = slab.pop();
+  index = i;
+  return item;
 };
   
 void SlabArray::push(Item* item)

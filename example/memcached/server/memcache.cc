@@ -33,11 +33,11 @@ Item* MemCache::find(const char* key, bool lru)
   return item;
 };
 
-Item* MemCache::alloc(size_t item_size)
+Item* MemCache::alloc(size_t data_size)
 {
   int index = -1; 
   uint64_t now = Timestamp::now().secondsValue();
-  Item* item = slab_array_.pop(item_size, index);
+  Item* item = slab_array_.pop(data_size, index);
   if (item != NULL) 
     return item;
 
@@ -49,6 +49,8 @@ Item* MemCache::alloc(size_t item_size)
       hash_table_.removeItem(item);
     item->set_time(0);
     item->set_exptime(0);
+  }else{
+    LOG_ERROR << "data_size = " << data_size << " error = can not find";
   }
   return item;
 };

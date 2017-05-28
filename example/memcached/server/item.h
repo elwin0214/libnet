@@ -98,7 +98,7 @@ private:
 
 public:
   Item* prev_;
-  Item* next_;
+  Item* next_;    
   //Item* hash_prev_;
   //Item* hash_next_;
   const uint8_t index_;  //const

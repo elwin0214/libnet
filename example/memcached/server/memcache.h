@@ -30,7 +30,7 @@ public:
   
   void remove(Item* item);
   Item* find(const char* key, bool lru);
-  Item* alloc(size_t item_size); 
+  Item* alloc(size_t data_size); 
   void add(Item* item);
 
 private:

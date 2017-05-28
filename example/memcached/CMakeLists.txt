@@ -6,8 +6,9 @@ TARGET_LINK_LIBRARIES(memcached_client_test libnet)
 
 
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
+message("add PROFILE")
 set_source_files_properties(client/test/memcached_client_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
-set_source_files_properties(server/test/memcache_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
+#set_source_files_properties(server/test/memcache_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
 set_source_files_properties(server/test/memcached_server_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
 set_source_files_properties(server/test/memcache_prof.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
 endif()
@@ -58,7 +59,8 @@ TARGET_LINK_LIBRARIES(slab_unitest libnet ${GTEST_LIBRARY})
 add_executable(tokenizer_unitest server/tokenizer.cc server/test/tokenizer_unitest.cc ${GTEST_LIBRARY})
 TARGET_LINK_LIBRARIES(tokenizer_unitest libnet ${GTEST_LIBRARY})
 
- 
+add_executable(allocator_unitest server/allocator.cc server/test/allocator_unitest.cc ${GTEST_LIBRARY})
+TARGET_LINK_LIBRARIES(allocator_unitest libnet ${GTEST_LIBRARY})
 
 
 add_test(NAME command_unitest COMMAND command_unitest)
@@ -68,4 +70,4 @@ add_test(NAME processor_unitest COMMAND processor_unitest)
 add_test(NAME slab_unitest COMMAND slab_unitest)
 add_test(NAME tokenizer_unitest COMMAND tokenizer_unitest)
 add_test(NAME memcache_unitest COMMAND memcache_unitest)
-
+add_test(NAME allocator_unitest COMMAND allocator_unitest)

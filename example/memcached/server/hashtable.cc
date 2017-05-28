@@ -5,44 +5,6 @@ namespace memcached
 namespace server
 {
 
-// class Bucket
-// {
-// public:
-//   void add(Item* item)
-//   {
-//     if (NULL == head_)
-//     {
-//       head_ = item;
-//       head_->hash_next_ = NULL;
-//       head_->hash_prev_ = NULL;
-//       return;
-//     }
-
-//     item->hash_next_ = head_;
-//     item->hash_prev_ = NULL;
-//     head_->hash_prev_ = item;
-//     head_ = item;
-//   }
-
-//   Item* find(const char* key)
-//   {
-//     if (NULL ==  head_) return NULL;
-//     Item* item = head_;
-//     while (NULL != item)
-//     {
-//       if (::strcmp(item->key(), key) == 0)
-//         return item;
-//       item = item->hash_next_;
-//     }
-//     return NULL;
-//   }
-
-// private:
-//   Item* head_;
-//   size_t size_;
-
-// };
-
 static const size_t kMaxHashPower = 30;
 // a hashtable moving one bucket every time when resizing
 Item* HashTable::get(const char* key)
