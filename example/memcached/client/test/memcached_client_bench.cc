@@ -4,6 +4,7 @@
 #include <libnet/thread.h>
 #include <memory>
 #include <string.h>
+#include <iostream>
 #include "../memcached_client.h"
 #include "../message.h"
 #ifdef PROFILE
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
   int clients = atoi(argv[6]);
   int number = atoi(argv[7]);
 
-  int numberPerClient = number / clients;
+  //int numberPerClient = number / clients;
 
 
   EventLoopThread loopThread("loop");
@@ -116,9 +117,9 @@ int main(int argc, char *argv[])
   MemcacheOpt mo;
   std::function<void()> func ;
   if (isSet)
-    func = std::bind(&MemcacheOpt::set, &mo, numberPerClient, value);
+    func = std::bind(&MemcacheOpt::set, &mo, number, value);
   else
-    func = std::bind(&MemcacheOpt::get, &mo, numberPerClient, value);
+    func = std::bind(&MemcacheOpt::get, &mo, number, value);
 
   for (int i = 0; i < clients; i++)
   {
@@ -131,9 +132,10 @@ int main(int argc, char *argv[])
   }
 
   Timestamp start = Timestamp::now();
-  //#ifdef PROFILER
-  //ProfilerStart("memcached_bench.prof");
-  //#endif
+  #ifdef PROFILE
+  ::ProfilerStart("cpu.out");
+  cout << "profile start" << endl;
+  #endif
   for (int i = 0; i < clients; i++)
   {
      threads[i]->start();
@@ -144,9 +146,9 @@ int main(int argc, char *argv[])
     threads[i]->join();
   }
   Timestamp end = Timestamp::now();
-  //#ifdef PROFILER
-  //ProfilerStop();
-  //#endif
+  #ifdef PROFILE
+  ::ProfilerStop();
+  #endif
   int64_t time = end.value() - start.value();
   LOG_INFO << "clients = "  << clients << " number = " << number  << " succ = " << (gCounter.getValue()) << " time = " << (time/1000) << "ms";
   

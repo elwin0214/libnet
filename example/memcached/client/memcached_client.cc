@@ -19,50 +19,69 @@ class Context : public NoCopyable
 public:
   typedef std::queue<std::shared_ptr<Caller>> CommandQueue;
 
-  Context():lock_()
+  Context():sending_lock_(),sent_lock_()
   {
     
   }
 
   ~Context()
   {
-    LockGuard guard(lock_);
-    while (!sending_queue_.empty())
     {
-      sending_queue_.front()->wakeup();
-      sending_queue_.pop();
+      LockGuard guard(sending_lock_);
+      while (!sending_queue_.empty())
+      {
+        sending_queue_.front()->wakeup();
+        sending_queue_.pop();
+      }
     }
-    while (!sent_queue_.empty())
+
     {
-      sent_queue_.front()->wakeup();
-      sent_queue_.pop();
+      LockGuard guard(sent_lock_);
+      while (!sent_queue_.empty())
+      {
+        sent_queue_.front()->wakeup();
+        sent_queue_.pop();
+      }
     }
   }
 
   void write(const MemcachedClient::ConnectionPtr& connection)
-  {
-    LockGuard guard(lock_);
-    while (!sending_queue_.empty())
+  {    
+    Buffer buffer(0, 2048);
+    for (int i = 0; i < 10; i++)
     {
-      Buffer buffer(0, 1024);
-      std::shared_ptr<Caller>& caller = sending_queue_.front();
+      std::shared_ptr<Caller> caller;
+      {
+        LockGuard guard(sending_lock_);
+        if (sending_queue_.empty())
+          break;
+        caller = sending_queue_.front();
+        sending_queue_.pop();
+      }
       caller->append(buffer);
-      connection->sendBuffer(&buffer);
-      LOG_TRACE << "write = " << buffer.toString() ;
-      sent_queue_.push(caller); 
-      sending_queue_.pop();
+      {
+        LockGuard guard(sent_lock_);
+        sent_queue_.push(caller);
+      }
     }
+    if (log::Logger::getLogLevel() <= libnet::log::TRACE)
+    {
+      LOG_TRACE << "write = " << buffer.toString() ;
+    }
+    if (buffer.readable() > 0)
+      connection->sendBuffer(&buffer);
   }
 
   void push(const std::shared_ptr<Caller>& message)
   {
-    LockGuard guard(lock_);
+    LockGuard guard(sending_lock_);
     sending_queue_.push(message);
   }
 
   bool parse(Buffer& input)
   {
-    LockGuard guard(lock_);
+    //LockGuard guard(lock_);
+    LockGuard guard(sent_lock_);
     if (sent_queue_.empty()){
       assert(input.readable() <= 0);// 收到了server发来的多余数据
       return false;
@@ -81,7 +100,8 @@ public:
   }
 
 private:
-  MutexLock lock_;
+  MutexLock sending_lock_;
+  MutexLock sent_lock_;
   CommandQueue sending_queue_;
   CommandQueue sent_queue_;
 };
@@ -115,12 +135,11 @@ void MemcachedClient::send(const std::shared_ptr<Caller>& message)
 };
 
 void MemcachedClient::onMessage(const ConnectionPtr& connection)
-{
+{ 
+  connection_->loop()->assertInLoopThread();
   Buffer& input = connection->input();
   LOG_TRACE << "read=" << input.toString() ;
-
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection->getContext());
-
   while(context->parse(input))// more response
   {
   }
@@ -129,7 +148,7 @@ void MemcachedClient::onMessage(const ConnectionPtr& connection)
 
 void MemcachedClient::write()
 {
-  (connection_->loop()->assertInLoopThread());
+  connection_->loop()->assertInLoopThread();
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->write(connection_);
 };

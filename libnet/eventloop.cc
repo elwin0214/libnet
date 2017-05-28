@@ -79,16 +79,20 @@ void EventLoop::loop()
         (*itr)->handleEvent();
       }
     }
+    std::queue<Functor>  functors;
     {//functor 要放在后面，loop停止的时候 仍然会执行queue中的 functor
       LockGuard guard(lock_);
       LOG_DEBUG << "functors.size=" << functors_.size();
-      while (!functors_.empty())
-      {
-        Functor& func = functors_.front();
-        func();
-        functors_.pop();
-      }
+      functors.swap(functors_);
     }
+
+    while (!functors.empty())
+    {
+      Functor& func = functors.front();
+      func();
+      functors.pop();
+    }
+
     if (!stop_)
     {
       Timestamp now = Timestamp::now();

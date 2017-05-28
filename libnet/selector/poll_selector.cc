@@ -93,9 +93,10 @@ void PollSelector::select(int timeoutMs, ChannelList& activeChannles)
   
   int num = ::poll(&(*(pollfds_.begin())), pollfds_.size(), timeoutMs);
   LOG_TRACE << "timeout = " << timeoutMs  << " num = " << num;
+  //poll() returns the number of descriptors that are ready for I/O, or -1 if an error occurred.  
   if (num < 0)
   {
-    LOG_ERROR << "timeout = " << timeoutMs ;
+    LOG_ERROR << "timeout = " << timeoutMs << " error = " << log::Error();
     return;
   }
   if (num == 0)
