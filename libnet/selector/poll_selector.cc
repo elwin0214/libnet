@@ -111,7 +111,11 @@ void PollSelector::select(int timeoutMs, ChannelList& activeChannles)
     int events = itr->revents;
     if (events <= 0) continue;
     int revents = 0;
-    if (events & (POLLNVAL | POLLERR | POLLHUP))
+    if ((events & POLLHUP) && !(events & POLLIN)) // will get POLLHUP event after shutdownWrite
+    {
+      revents |= Channel::kErrorEvent;
+    }
+    if (events & (POLLNVAL | POLLERR))
     {
       revents |= Channel::kErrorEvent;
     }

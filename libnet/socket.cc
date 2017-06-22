@@ -36,7 +36,7 @@ int Socket::read(Buffer &buffer)
   if (len <= 0) buffer.makeRoom(128); 
   len = buffer.writable();
   ssize_t n = sockets::read(fd_, buffer.beginWrite(), len);
-  LOG_TRACE << "n = " << n << ", len = " << len  ;
+  LOG_TRACE << "fd = " << fd_ << " n = " << n << ", len = " << len  ;
   if (n <= 0) 
     return n; 
   buffer.moveWriteIndex(n);

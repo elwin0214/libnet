@@ -48,8 +48,8 @@ int main(int argc, char *argv[])
   }
   char *host = static_cast<char *>(argv[1]);
   int port = atoi(argv[2]); 
-  int level = atoi(argv[3]);
-  int threads = atoi(argv[4]);
+  int threads = atoi(argv[3]);
+  int level = atoi(argv[4]);
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
   EventLoop loop;

@@ -54,7 +54,7 @@ int bind(int fd, const struct sockaddr_in &addr)
   int ret = ::bind(fd, (const struct sockaddr*)(&addr), static_cast<socklen_t>(sizeof addr));
   if (ret < 0)
   {
-    LOG_SYSFATAL << "fd=" << fd  << "bind!" ;
+    LOG_SYSFATAL << "fd=" << fd  << " bind!" ;
   }
   return ret;
 };
@@ -63,9 +63,9 @@ int listen(int fd, int backlog)
 {
   int ret = ::listen(fd, backlog);
   if (ret < 0)
-    LOG_SYSFATAL << "fd=" << fd <<"setResuseAddr!" ;
+    LOG_SYSFATAL << " fd = " << fd <<"setResuseAddr!" ;
   else
-    LOG_TRACE << "fd=" << fd;
+    LOG_TRACE << " fd = " << fd;
   return ret;
 };
 

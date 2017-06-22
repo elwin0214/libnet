@@ -64,8 +64,11 @@ void EpollSelector::select(int timeoutMs, ChannelList& activeChannles)
     Channel* channel = static_cast<Channel*>(epollEvents_[i].data.ptr);
     int events = epollEvents_[i].events;
     int revents = 0;
-
-    if (events & (POLLNVAL | POLLERR | POLLHUP))
+    if ((events & POLLHUP) && !(events & POLLIN))  // will get POLLHUP event after shutdownWrite
+    {
+      revents |= Channel::kErrorEvent;
+    }
+    if (events & (POLLNVAL | POLLERR))
     {
       revents |= Channel::kErrorEvent;
     }
