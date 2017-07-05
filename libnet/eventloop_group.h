@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include "nocopyable.h"
+#include "logger.h"
 
 namespace libnet
 {
@@ -24,6 +25,11 @@ public:
   void start();
 
   EventLoop* getNextLoop(); 
+
+  ~EventLoopGroup()
+  {
+    LOG_TRACE  << "~EventLoopGroup()" ;
+  }
 
 private:
   EventLoop* baseLoop_;

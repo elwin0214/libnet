@@ -3,16 +3,70 @@
 
 #include <libnet/buffer.h>
 #include <libnet/countdown_latch.h>
-#include <libnet/logger.h>
 #include <string>
-#include "code.h"
+#include <future>
+#include "../message/mcode.h"
+#include "../message/request.h"
+#include "../message/response.h"
+#include "../message/request_codec.h"
+#include "../message/response_codec.h"
+
 
 namespace memcached
 {
 namespace client
 {
 using namespace libnet;
+using namespace std;
+using namespace memcached::message;
+class Command
+{
+public:
+  Command(Request&& request,CountDownLatch& latch)
+    : request_(std::move(request)),
+      response_(new Response(request.op())),
+      reqc_(),
+      respc_(),
+      latch_(latch)
+  {
 
+  }
+
+  void encode(Buffer& buffer) 
+  { 
+    reqc_.encode(request_, buffer);
+  }
+
+  bool decode(Buffer& buffer) 
+  {
+    bool r = respc_.decode(*response_, buffer);
+    if (r)
+      latch_.countDown();
+    return r;
+  }
+
+  void wakeup()
+  {
+    latch_.countDown();
+  }
+
+  const unique_ptr<Response>& response()
+  {
+    return response_;
+  }
+  
+private:
+  Request request_;
+  unique_ptr<Response> response_;
+  RequestCodec reqc_;
+  ResponseCodec respc_;
+  CountDownLatch& latch_;
+};
+
+
+
+
+/*
 template<typename T>
 class Command
 {
@@ -148,6 +202,7 @@ public:
 private:
   uint32_t value_;
 };
+*/
 
 }
 }

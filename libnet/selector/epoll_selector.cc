@@ -32,6 +32,7 @@ EpollSelector::EpollSelector(EventLoop* loop)
 
 EpollSelector::~EpollSelector()
 {
+  LOG_TRACE << "~EpollSelector()" ;
   ::close(epfd_);
 };
 

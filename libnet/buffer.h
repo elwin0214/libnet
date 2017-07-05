@@ -50,6 +50,8 @@ public:
       clear();
   };
 
+  void skip(size_t len){ moveReadIndex(len); }
+  
   void moveWriteIndex(size_t len)
   {
     if (len <= writable())
@@ -111,6 +113,14 @@ public:
   const char* find(const char* str)
   {
     return find(0, str);
+  }
+
+  size_t trim()
+  {
+    size_t i = 0;
+    while(at(i) == ' ' && i < readable()) i++;
+    if (i > 0) skip(i);
+    return i;
   }
 
   const char* find(size_t pos, const char* str);

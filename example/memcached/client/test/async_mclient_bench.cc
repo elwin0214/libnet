@@ -5,8 +5,7 @@
 #include <memory>
 #include <string.h>
 #include <iostream>
-#include "../memcached_client.h"
-#include "../message.h"
+#include "../async_client.h"
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif
@@ -15,7 +14,7 @@ using namespace std;
 using namespace libnet;
 using namespace memcached::client;
 
-MemcachedClient* gClient;
+AsyncClient* gClient;
 EventLoop* gLoop;
 AtomicInt32 gCounter(0);
 
@@ -28,10 +27,7 @@ void set(int count, const std::string& value)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    std::shared_ptr<Future<bool>> set = gClient->set(buf, 0, value);
-    set->wait();
-    LOG_DEBUG << "set " << i ;
-    if (set->code() == kSucc) 
+    if (gClient->set(buf, 0, value)) 
       succ++;
   }
   gCounter.addAndGet(succ);
@@ -44,10 +40,7 @@ void get(int count, const std::string& value)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    std::shared_ptr<Future<std::string>> get = gClient->get(buf);
-    get->wait();
-
-    if (get->code() == kSucc) 
+    if ("" != gClient->get(buf)) 
       succ++;
   }
   gCounter.addAndGet(succ);
@@ -88,7 +81,7 @@ int main(int argc, char *argv[])
 
   int bytes = atoi(argv[5]);
   int clients = atoi(argv[6]);
-  int number = atoi(argv[7]);
+  int reqs = atoi(argv[7]);
 
   //int numberPerClient = number / clients;
 
@@ -97,14 +90,14 @@ int main(int argc, char *argv[])
   loopThread.start();
   CountDownLatch latch(1);
   gLoop = loopThread.getLoop();
-  MemcachedClient client(gLoop, host, port, latch);
+  AsyncClient client(gLoop, host, port, latch);
  
   gClient = &client;
   client.connect();
   latch.wait();
 
 
-  char buf[1024];
+  char buf[4096];
   for (int i = 0; i < bytes; i++)
   {
     buf[i] = '1';
@@ -117,9 +110,9 @@ int main(int argc, char *argv[])
   MemcacheOpt mo;
   std::function<void()> func ;
   if (isSet)
-    func = std::bind(&MemcacheOpt::set, &mo, number, value);
+    func = std::bind(&MemcacheOpt::set, &mo, reqs/clients, value);
   else
-    func = std::bind(&MemcacheOpt::get, &mo, number, value);
+    func = std::bind(&MemcacheOpt::get, &mo, reqs/clients, value);
 
   for (int i = 0; i < clients; i++)
   {
@@ -150,7 +143,7 @@ int main(int argc, char *argv[])
   ::ProfilerStop();
   #endif
   int64_t time = end.value() - start.value();
-  LOG_INFO << "clients = "  << clients << " number = " << number  << " succ = " << (gCounter.getValue()) << " time = " << (time/1000) << "ms";
+  LOG_INFO << "clients = "  << clients << " reqs = " << reqs << " bytes = " << bytes << " succ = " << (gCounter.getValue()) << " time = " << (time/1000) << "ms";
   
   //g_loop->runAfter(20000, std::bind(&EventLoop::shutdown, g_loop));
   return 0;

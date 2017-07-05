@@ -40,7 +40,7 @@ struct SlabOption
   size_t total_mem_size_; //所需的总内存大小
 };
 
-class Slab //: public NoCopyable
+class Slab// : public NoCopyable
 {
 
 public:
@@ -91,7 +91,7 @@ public:
     
 private:
   void init();
-  void doAlloc(Slab& slab, size_t item_entire_size);
+  void doAlloc(Slab& slab);
 
 private:
   double factor_;

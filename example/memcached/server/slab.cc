@@ -92,7 +92,7 @@ void SlabArray::init()
     if (index < kMaxSlabs - 1)
     {
       LOG_DEBUG << "index = " << index << " size = " << size ;
-      slabs_.push_back(Slab(index, size));
+      slabs_.emplace_back(index, size);
       index++;
     }
     else
@@ -103,14 +103,20 @@ void SlabArray::init()
   }
   if (need_max){
     sizes_.push_back(max_size_);
-    slabs_.push_back(Slab(index, max_size_));
+    slabs_.emplace_back(index, max_size_);
     LOG_DEBUG << "index = " << index << " size = " << max_size_ ;
+  }
+
+  for (auto& slab : slabs_)
+  {
+    doAlloc(slab);
   }
   //max_data_size_ = max_size_ - sizeof(Item);
 };
 
-void SlabArray::doAlloc(Slab& slab, size_t item_size)
+void SlabArray::doAlloc(Slab& slab)
 {
+  size_t item_size = slab.item_size();
   assert(item_size <= max_size_);
 
   char* ptr = static_cast<char*>(allocator_.allocate(batch_alloc_size_));
@@ -157,7 +163,7 @@ Item* SlabArray::pop(size_t data_size, int& index)
   Slab& slab = slabs_[i];
   if (slab.number() == 0)
   {
-    doAlloc(slab, item_size);
+    doAlloc(slab);
   }
   Item* item = slab.pop();
   index = i;

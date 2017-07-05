@@ -1,6 +1,7 @@
 #include "eventloop.h"
 #include "eventloop_thread.h"
 #include "thread.h"
+#include "logger.h"
 
 namespace libnet
 {
@@ -48,6 +49,7 @@ EventLoop* EventLoopThread::getLoop()
 
 EventLoopThread::~EventLoopThread()
 {
+  LOG_TRACE << "~EventLoopThread()" ;
   if (loop_)
   {
     loop_->shutdown();

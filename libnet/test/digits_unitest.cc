@@ -16,42 +16,15 @@ TEST(digits, convert)
   convert<uint32_t>(s.c_str(), value, 10);
   ASSERT_EQ(value, 12);
 }
- /*
-TEST(digits, string2digit)
-{
-  size_t num;
-  stringToDigit("16", &num);
-  ASSERT_EQ(16, num);
-}
-
-TEST(digits, string2digit16)
-{
-  uint16_t num;
-  uint32_t value  = 1 << 20;
-  char buf[32];
-  sprintf(buf, "%d", value);
-  int r = stringToDigit(buf, &num);
-  ASSERT_EQ(0, num);
-
-}
-*/
 /*
-TEST(digits, xstring2digit)
+TEST(digits, convert_string)// error
 {
-  size_t num;
-  xstringToDigit("10", &num);
-  ASSERT_EQ(16, num);
-}
-*/
-/*
-TEST(digits, digit2string)
-{
-  char buf[100];
-  bzero(buf, sizeof(buf));
-  digitToString(static_cast<uint32_t>(16), buf);
-  ASSERT_EQ("16", std::string(buf, 2));
-}
-*/
+  std::string s = "12";
+  uint32_t value = 0;
+  convert<uint32_t>(s, value, 10);
+  ASSERT_EQ(value, 12);
+}*/
+   
 TEST(digits, digit2xstring)
 {
   char buf[100];

@@ -37,6 +37,7 @@ public:
 
   int count()
   {
+    LockGuard guard(lock_);
     return count_;
   };
 

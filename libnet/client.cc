@@ -23,9 +23,11 @@ Client::~Client()
 {
   LOG_DEBUG << "~Client()" ;
   LockGuard guard(lock_);
-  if (connection_)
+  if (connection_) //a
   {
+    LOG_DEBUG << "~Client runInLoop b " << connection_.use_count() ;
     loop_->runInLoop(std::bind(&Connection::destroy, connection_));
+    LOG_DEBUG << "~Client runInLoop a " << connection_.use_count() ;
     connection_.reset();
   }
 };
@@ -68,9 +70,16 @@ void Client::newConnection(int fd)
 
 void Client::removeConnection(const ConnectionPtr& connection)
 {
-  loop_->queueInLoop(std::bind(&Connection::destroy, connection));
+  LOG_TRACE << "removeConnection " << connection.use_count();
   LockGuard guard(lock_);
-  connection_.reset();
+  if (connection_) //b 与a处 竞争，有可能2处都会调用，因为外部还存在shared_ptr
+  {
+    LOG_TRACE << "removeConnection b " << connection_.use_count() ;
+    loop_->queueInLoop(std::bind(&Connection::destroy, connection));
+    LOG_TRACE << "removeConnection a " << connection_.use_count() ;
+    connection_.reset();
+  }
+
   if (!stop_ && retry_)
   {
     connector_->restart();

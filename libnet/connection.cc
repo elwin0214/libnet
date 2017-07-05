@@ -174,7 +174,7 @@ void Connection::handleWrite()
   }
 };
 
-void Connection::handleClose()
+void Connection::handleClose()// 内部触发
 {
   loop_->assertInLoopThread();
   state_ = kDisConnected;
@@ -183,12 +183,18 @@ void Connection::handleClose()
 
   if (connection_callback_)
   {
-    connection_callback_(shared_from_this());  // 这里必须用 shared_ptr
+    auto sp = shared_from_this();
+    LOG_TRACE << "handleClose p1 " << sp.use_count();
+    connection_callback_(sp);  // 这里必须用 shared_ptr
   }
   if (close_callback_)
   {
-    close_callback_(shared_from_this());
+    auto sp = shared_from_this();
+    LOG_TRACE << "handleClose p2 " << sp.use_count();
+    close_callback_(shared_from_this());// 外部注入的调用，connection关闭时候触发
   }
+  auto sp = shared_from_this();
+  LOG_TRACE << "handleClose p3 " << sp.use_count();
 };
 
 void Connection::handleError()

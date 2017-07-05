@@ -1,8 +1,8 @@
 #ifndef __LIBNET_MEMCACHED_CLIENT_FUTURE_H__
 #define __LIBNET_MEMCACHED_CLIENT_FUTURE_H__
-#include <libnet/countdown_latch.h>
+#include <libnet/mutexlock.h>
+#include <libnet/condition.h>
 #include <libnet/nocopyable.h>
-#include "code.h"
 
 namespace memcached
 {
@@ -14,28 +14,44 @@ class Future : public NoCopyable
 {  
 public:
   Future()
-    : code_(kInit),
-      latch_(1)
+    : value_()
+      lock_()
+      condition_(lock_)
   {
 
   }
 
-  void wait() { latch_.wait(); }
-  void wakeup() {latch_.countDown(); }
-   
-  void set(Code code, const T& result)
+  T&& get()
   {
-    code_ = code;
-    result_ = result;
+    LockGuard guard(lock_); 
+    while(!inited_)
+    {
+      condition_.wait();
+    }
+    return std::move(value_);
   }
 
-  Code code() { return code_; }
-  T result() { return result_; }
+  void wait(int timeoutMs)
+  {
+    LockGuard guard(lock_); 
+    if (inited_) return;
+    if (timeoutMs <= 0) condition_.wait();
+    else condition_.wait(timeoutMs);
+  }
+
+  void set_value(T&& value)
+  {
+    LockGuard guard(lock_); 
+    value_ = std::move(value);
+    inited_ = true;
+    condition_.notifyAll();
+  }
 
 private:
-  Code code_;
-  T result_;
-  CountDownLatch latch_;
+  T value_;
+  bool inited_;
+  MutexLock lock_;
+  Condition condition_;
 
 };
 

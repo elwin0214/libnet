@@ -36,6 +36,7 @@ EventLoop::EventLoop()
 
 EventLoop::~EventLoop()
 {
+  LOG_TRACE << "~EventLoop()" ;
   wakeupChannel_->disableAll();
   wakeupChannel_->remove();
   delete wakeupChannel_;

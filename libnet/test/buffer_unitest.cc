@@ -77,7 +77,7 @@ TEST(Buffer, startWiths)
 {
   Buffer buf(16, 1024);
   buf.append("0123456789", 10);
-
+  ASSERT_TRUE(buf.startWiths("0123"));
   ASSERT_TRUE(buf.startWiths("0123", 4));
   ASSERT_TRUE(buf.startWiths("0123", 2));
   ASSERT_TRUE(!buf.startWiths("2123", 2));
@@ -106,6 +106,9 @@ TEST(Buffer, makeRoom2)
   buffer.makeRoom(4);
   ASSERT_EQ("12345678", buffer.toString());
 }
+
+
+
  
 int main(int argc, char **argv)
 {

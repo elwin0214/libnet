@@ -19,7 +19,7 @@ PollSelector::PollSelector(EventLoop* loop)
 
 PollSelector::~PollSelector()
 {
-
+  LOG_TRACE << "~PollSelector()" ;
 };
 
 void PollSelector::updateChannel(Channel *channel)

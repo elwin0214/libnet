@@ -5,8 +5,7 @@
 #include <libnet/mutexlock.h>
 #include <libnet/logger.h>
 #include "command.h"
-#include "message.h"
-#include "memcached_client.h"
+#include "async_client.h"
 
 namespace memcached
 {
@@ -17,7 +16,7 @@ using namespace libnet;
 class Context : public NoCopyable
 {
 public:
-  typedef std::queue<std::shared_ptr<Caller>> CommandQueue;
+  typedef std::queue<std::shared_ptr<Command>> CommandQueue;
 
   Context():sending_lock_(),sent_lock_()
   {
@@ -45,23 +44,23 @@ public:
     }
   }
 
-  void write(const MemcachedClient::ConnectionPtr& connection)
+  void write(const AsyncClient::ConnectionPtr& connection)
   {    
-    Buffer buffer(0, 2048);
+    Buffer buffer(0, 4096);
     for (int i = 0; i < 10; i++)
     {
-      std::shared_ptr<Caller> caller;
+      std::shared_ptr<Command> cmd;
       {
         LockGuard guard(sending_lock_);
         if (sending_queue_.empty())
           break;
-        caller = sending_queue_.front();
+        cmd = sending_queue_.front();
         sending_queue_.pop();
       }
-      caller->append(buffer);
+      cmd->encode(buffer);
       {
         LockGuard guard(sent_lock_);
-        sent_queue_.push(caller);
+        sent_queue_.push(cmd);
       }
     }
     if (log::Logger::getLogLevel() <= libnet::log::TRACE)
@@ -72,10 +71,10 @@ public:
       connection->sendBuffer(&buffer);
   }
 
-  void push(const std::shared_ptr<Caller>& message)
+  void push(const std::shared_ptr<Command>& cmd)
   {
     LockGuard guard(sending_lock_);
-    sending_queue_.push(message);
+    sending_queue_.push(cmd);
   }
 
   bool parse(Buffer& input)
@@ -86,16 +85,13 @@ public:
       assert(input.readable() <= 0);// 收到了server发来的多余数据
       return false;
     }
-    std::shared_ptr<Caller>& caller = sent_queue_.front();
-    if (caller->parse(input))
+    std::shared_ptr<Command>& cmd = sent_queue_.front();
+    if (cmd->decode(input))
     {
       LOG_DEBUG << "parse.wakup" ;
-      caller->wakeup();
       sent_queue_.pop();
-      //todo
       return true;
     }
-
     return false;
   }
 
@@ -106,14 +102,14 @@ private:
   CommandQueue sent_queue_;
 };
 
-void MemcachedClient::connect()
+void AsyncClient::connect()
 {
-  client_.setConnectionCallBack(std::bind(&MemcachedClient::onConnection, this, std::placeholders::_1));
-  client_.setMessageCallBack(std::bind(&MemcachedClient::onMessage, this, std::placeholders::_1));
+  client_.setConnectionCallBack(std::bind(&AsyncClient::onConnection, this, std::placeholders::_1));
+  client_.setMessageCallBack(std::bind(&AsyncClient::onMessage, this, std::placeholders::_1));
   client_.connect();
 };
 
-void MemcachedClient::onConnection(const ConnectionPtr& connection)
+void AsyncClient::onConnection(const ConnectionPtr& connection)
 {
   if (connection->connected())
   {
@@ -124,17 +120,18 @@ void MemcachedClient::onConnection(const ConnectionPtr& connection)
   }
   else if (connection->disconnected())
   {
+    
   }
 };
 
-void MemcachedClient::send(const std::shared_ptr<Caller>& message)
+void AsyncClient::send(const std::shared_ptr<Command>& message)
 {
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->push(message);
   notify();
 };
 
-void MemcachedClient::onMessage(const ConnectionPtr& connection)
+void AsyncClient::onMessage(const ConnectionPtr& connection)
 { 
   connection_->loop()->assertInLoopThread();
   Buffer& input = connection->input();
@@ -146,16 +143,16 @@ void MemcachedClient::onMessage(const ConnectionPtr& connection)
 
 };
 
-void MemcachedClient::write()
+void AsyncClient::write()
 {
   connection_->loop()->assertInLoopThread();
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->write(connection_);
 };
 
-void MemcachedClient::notify()
+void AsyncClient::notify()
 {
-  connection_->loop()->runInLoop(std::bind(&MemcachedClient::write, this));
+  connection_->loop()->runInLoop(std::bind(&AsyncClient::write, this));
 };
 
 }
