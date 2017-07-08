@@ -10,7 +10,7 @@
 #include <vector>
 #include <memory>
 #include "../../message/mcode.h"
-#include "../../message/response.h"
+#include "../../message/message.h"
 #include "../../message/response_codec.h"
 
 #ifdef PROFILE
@@ -53,7 +53,7 @@ public:
       op_(op),
       bytes_(bytes),
       value_(string(bytes, 'a')),
-      response_(new Response(op)),
+      response_(op),
       index_(index),
       req_(0),
       sum_(sum)
@@ -114,8 +114,10 @@ public:
   
   void receive()
   {
-    if (respc_.decode(*response_, conn_->input()))
+    if (respc_.decode(response_, conn_->input()))
     {
+      response_.reset();
+      response_.data_.op_ = op_;
       if(++req_ <= sum_)
         send();
       else
@@ -136,7 +138,7 @@ private:
   Opt op_;
   int bytes_;
   string value_;
-  unique_ptr<Response> response_;
+  Message response_;
   int index_;
   int req_;
   int sum_;
@@ -156,9 +158,11 @@ int main(int argc, char *argv[])
   int level = atoi(argv[3]);
   char *opt = static_cast<char *>(argv[4]);
   Opt op = kSet;
+  string opname = "set";
   if (string("get") == opt)
   {
     op = Opt::kGet;
+    opname = "get";
   }
   int bytes = atoi(argv[5]);
   int clients = atoi(argv[6]);
@@ -199,7 +203,13 @@ int main(int argc, char *argv[])
   // ~Client() 与 client handleClose(server 关闭连接) 两个线程都会触发对 Connection的调用，保证执行到这里时候，即使持有conn的shared_ptr 调用Connection的函数，也不会访问析构过的内存。
   Timestamp end = Timestamp::now();
   int64_t time = end.value() - start.value();
-  LOG_INFO << "clients = "  << clients << " reqs = " << reqs << " bytes = " << bytes << " time = " << (time/1000) << "ms";
+  LOG_INFO << "op = "<< opname 
+           << " clients = "  << clients 
+           << " threads = " << threads
+           << " reqs = " << reqs 
+           << " bytes = " << bytes 
+           << " time = " << (time/1000) << "ms" 
+           << " qps = " << reqs * 1.0 / time / 1000;
   
   #ifdef PROFILE
   ::ProfilerStop();

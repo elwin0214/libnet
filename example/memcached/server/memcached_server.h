@@ -32,14 +32,14 @@ public:
 
   size_t getNumConnections() { return num_connections_; }
 
-  void set_handler(function<void(Request&, Response&)> func) { handler_ = func; }
+  void set_handler(function<void(Message&, Message&)> func) { handler_ = func; }
 
 
 private:
   Server server_;
   const size_t kMaxConnecitons_;
   size_t num_connections_;
-  function<void(Request&, Response&)> handler_;
+  function<void(Message&, Message&)> handler_;
   RequestCodec requestCodec_;
   ResponseCodec responseCodec_;
 

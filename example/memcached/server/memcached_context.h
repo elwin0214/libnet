@@ -3,7 +3,7 @@
 #include <functional>
 #include <string>
 #include <libnet/nocopyable.h>
-#include "../message/request.h"
+#include "../message/message.h"
 
 namespace memcached
 {
@@ -18,9 +18,9 @@ public:
   {
   };
 
-  Request& request() { return request_; }
+  Message& request() { return request_; }
 private:
-  Request request_;
+  Message request_;
 
 };
 

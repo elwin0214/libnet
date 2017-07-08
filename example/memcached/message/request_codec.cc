@@ -13,11 +13,12 @@ using namespace libnet;
 using namespace std;
 static const size_t kMaxKeySize = 255;
 static const size_t kMaxValueSize = 65535;
-void RequestCodec::encode(Request& request, Buffer& buffer)
+void RequestCodec::encode(Message& message, Buffer& buffer)
 {
+  Data& request = message.data_;
   if (request.op() == Opt::kSet || request.op() == Opt::kAdd || request.op() == Opt::kReplace)
   {
-    buffer.append(OpName[request.op_]);
+    buffer.append(request.op_name());
     buffer.append(" ");
     buffer.append(request.key_);
     char buf[128];
@@ -30,21 +31,21 @@ void RequestCodec::encode(Request& request, Buffer& buffer)
   }
   else if(request.op() == Opt::kGet)
   { 
-    buffer.append(OpName[Opt::kGet]);
+    buffer.append(request.op_name());
     buffer.append(" ");
     buffer.append(request.key_);
     buffer.append(CRLF);
   }
   else if(request.op() == Opt::kDelete)
   {
-    buffer.append(OpName[Opt::kDelete]);
+    buffer.append(request.op_name());
     buffer.append(" ");
     buffer.append(request.key_);
     buffer.append(CRLF);
   }
   else if(request.op() == Opt::kIncr || request.op() == Opt::kDecr)
   {
-    buffer.append(OpName[request.op()]);
+    buffer.append(request.op_name());
     buffer.append(" ");
     buffer.append(request.key_);
     buffer.append(" ");
@@ -61,36 +62,38 @@ void RequestCodec::encode(Request& request, Buffer& buffer)
 };
 
 
-bool RequestCodec::decode(Request& request, Buffer& buffer)
+bool RequestCodec::decode(Message& message, Buffer& buffer)
 { 
-  
-  if (request.op_ == kNo)
+  Stat& stat = message.stat_;
+  Data& data = message.data_;
+
+  if (data.op() == kNo)
   {
     const char* end = buffer.find(CRLF);
     if (NULL == end) return false; 
     buffer.trim();
-    if (buffer.startWiths("get")) request.op_ = kGet;
-    else if (buffer.startWiths("set")) { request.op_ = kSet; request.state_ = kLineCmd; }
-    else if (buffer.startWiths("replace")) { request.op_ = kReplace; request.state_ = kLineCmd; }
-    else if (buffer.startWiths("add")) { request.op_ = kAdd; request.state_ = kLineCmd; }
-    else if (buffer.startWiths("delete")) request.op_ = kDelete;
-    else if (buffer.startWiths("incr")) request.op_ = kIncr;
-    else if (buffer.startWiths("decr")) request.op_ = kDecr;
+    if (buffer.startWiths("get")) data.op_ = kGet;
+    else if (buffer.startWiths("set")) { data.op_ = kSet; stat.line_ = kLineCmd; }
+    else if (buffer.startWiths("replace")) { data.op_ = kReplace; stat.line_ = kLineCmd; }
+    else if (buffer.startWiths("add")) { data.op_ = kAdd; stat.line_ = kLineCmd; }
+    else if (buffer.startWiths("delete")) data.op_ = kDelete;
+    else if (buffer.startWiths("incr")) data.op_ = kIncr;
+    else if (buffer.startWiths("decr")) data.op_ = kDecr;
     else
     {
       buffer.skip(end - buffer.beginRead() + 2);
-      request.code_ = kError;
+      stat.code_ = kError;
       return true;
     }
-    LOG_TRACE << "op = " << request.op_ ;
+    LOG_TRACE << "op = " << data.op_ ;
   }
 
-  if (request.op_ == kGet) return decodeSimple(request, buffer);
-  if (request.op_ == kSet) return decodeStore(request, buffer);
-  if (request.op_ == kReplace) return decodeStore(request, buffer);
-  if (request.op_ == kAdd) return decodeStore(request, buffer);
-  if (request.op_ == kDelete) return decodeSimple(request, buffer);
-  if (request.op_ == kIncr || request.op_ == kDecr) return decodeCount(request, buffer);
+  if (data.op_ == kGet) return decodeSimple(message, buffer);
+  if (data.op_ == kSet) return decodeStore(message, buffer);
+  if (data.op_ == kReplace) return decodeStore(message, buffer);
+  if (data.op_ == kAdd) return decodeStore(message, buffer);
+  if (data.op_ == kDelete) return decodeSimple(message, buffer);
+  if (data.op_ == kIncr || data.op_ == kDecr) return decodeCount(message, buffer);
   else
   {
     LOG_ERROR << "unknow op!"; 
@@ -98,52 +101,60 @@ bool RequestCodec::decode(Request& request, Buffer& buffer)
   }
 };
 
-bool RequestCodec::decodeSimple(Request& request, Buffer& buffer)
+bool RequestCodec::decodeSimple(Message& message, Buffer& buffer)
 {
+  Stat& stat = message.stat_;
+  Data& data = message.data_;
   const char* end = buffer.find(CRLF);
   if (NULL == end) return false;
   const char* start = buffer.beginRead();
   Reader reader(start, end, ' ');
   string word;
-  if (!(reader.read(word)))request.code_ = kError;
-  if (!reader.read(word)) request.code_ = kError;
+  if (!(reader.read(word))) stat.code_ = kError;
+  if (!reader.read(word)) stat.code_ = kError;
 
-  if (request.code_ != kError)
+  if (stat.code_ != kError)
   {
-    request.code_ = kSucc;
-    request.key_ = word;
+    stat.code_ = kSucc;
+    data.key_ = word;
   }
   buffer.skip(end - start + 2);
   return true;  
 };
 
-bool RequestCodec::decodeCount(Request& request, Buffer& buffer)
+bool RequestCodec::decodeCount(Message& message, Buffer& buffer)
 {
+  Stat& stat = message.stat_;
+  Data& data = message.data_;
+
   const char* end = buffer.find(CRLF);
   if (NULL == end) return false;
   const char* start = buffer.beginRead();
   Reader reader(start, end, ' ');
   string word;
   uint32_t count;
-  if (!(reader.read(word)))request.code_ = kError;
-  if (!reader.read(word)) request.code_ = kError;
-  if (!(reader.read(word) && digits::convert<uint32_t>(word.c_str(), count, 10)))request.code_ = kError;
+  if (!(reader.read(word))) stat.code_ = kError;
+  if (!reader.read(word)) stat.code_ = kError;
+  if (!(reader.read(word) && digits::convert<uint32_t>(word.c_str(), count, 10)))stat.code_ = kError;
 
-  if (request.code_ != kError)
+  if (stat.code_ != kError)
   {
-    request.code_ = kSucc;
-    request.key_ = word;
-    request.count_ = count;
+    stat.code_ = kSucc;
+    data.key_ = word;
+    data.count_ = count;
   }
   buffer.skip(end - start + 2);
   return true; 
 };
 
-bool RequestCodec::decodeStore(Request& request, Buffer& buffer)
+bool RequestCodec::decodeStore(Message& message, Buffer& buffer)
 {
-  while (request.code_ == kInit)
+  Data& data = message.data_;
+  Stat& stat = message.stat_;
+
+  while (stat.code_ == kInit)
   {
-    switch(request.state_)
+    switch(stat.line_)
     {
       case kLineCmd:
       {
@@ -156,54 +167,54 @@ bool RequestCodec::decodeStore(Request& request, Buffer& buffer)
         uint32_t exptime;
         string key;
         string word;
-        if (!reader.read(word)) request.code_ = kError;
-        if (!(reader.read(key) && key.size() <= kMaxKeySize)) request.code_ = kError;
-        if (!(reader.read(word) && word.size() >0 && digits::convert<uint16_t>(word.c_str(), flags, 10))) request.code_ = kError;
-        if (!(reader.read(word) && word.size() >0 && digits::convert<uint32_t>(word.c_str(), exptime, 10))) request.code_ = kError;
-        if (!(reader.read(word) && word.size() >0 && digits::convert<uint32_t>(word.c_str(), bytes, 10) && bytes < kMaxValueSize)) request.code_ = kError;
+        if (!reader.read(word)) stat.code_ = kError;
+        if (!(reader.read(key) && key.size() <= kMaxKeySize)) stat.code_ = kError;
+        if (!(reader.read(word) && word.size() >0 && digits::convert<uint16_t>(word.c_str(), flags, 10))) stat.code_ = kError;
+        if (!(reader.read(word) && word.size() >0 && digits::convert<uint32_t>(word.c_str(), exptime, 10))) stat.code_ = kError;
+        if (!(reader.read(word) && word.size() >0 && digits::convert<uint32_t>(word.c_str(), bytes, 10) && bytes < kMaxValueSize)) stat.code_ = kError;
 
         buffer.skip(end - start + 2);
-        if (request.code_ != kError)  //todo overflow
+        if (stat.code_ != kError)  //todo overflow
         {
           //request.code_ = kSucc;
-          request.key_ = key;
-          request.flags_ = flags;
-          request.exptime_ = exptime;
-          request.bytes_ = bytes;
-          request.state_ = kLineData;
+          data.key_ = key;
+          data.flags_ = flags;
+          data.exptime_ = exptime;
+          data.bytes_ = bytes;
+          stat.line_ = kLineData;
           break;
         }
         else
         {
-          request.state_ = kLineInit;
+          stat.line_ = kLineInit;
           return true;
         }
       }
       case kLineData:
       {
         
-        if (buffer.readable() < request.bytes_ + 2) return false;
-        const char* end = buffer.find(request.bytes_, CRLF);
+        if (buffer.readable() < data.bytes_ + 2) return false;
+        const char* end = buffer.find(data.bytes_, CRLF);
         if (NULL == end) return false;
-        if (end - buffer.beginRead() != request.bytes_)  //todo overflow
+        if (end - buffer.beginRead() != data.bytes_)  //todo overflow
         {
           buffer.skip(end - buffer.beginRead() + 2);
-          request.code_ = kError;
-          request.state_ = kLineInit;
+          stat.code_ = kError;
+          stat.line_ = kLineInit;
           return true;
         }
         else
         {
-          request.value_ = string(buffer.beginRead(), end - buffer.beginRead()); //move
+          data.value_ = string(buffer.beginRead(), end - buffer.beginRead()); //move
           buffer.skip(end - buffer.beginRead() + 2);
-          request.code_ = kSucc;
-          request.state_ = kLineInit;
+          stat.code_ = kSucc;
+          stat.line_ = kLineInit;
           return true;
         }
       }
       default:
       {
-        LOG_ERROR << "wont run here! state = " << request.state_ ;
+        LOG_ERROR << "wont run here! state = " << stat.line_ ;
         return true;
       }
     }

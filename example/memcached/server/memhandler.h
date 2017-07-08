@@ -2,8 +2,7 @@
 #define __LIBNET_MEMCACHED_SERVER_HANDLER_H__
 #include <libnet/nocopyable.h>
 #include "memcache.h"
-#include "../message/request.h"
-#include "../message/response.h"
+#include "../message/message.h"
 
 namespace memcached
 {
@@ -27,7 +26,7 @@ public:
 
   }
 
-  void handle(Request& request, Response& response);
+  void handle(Message& request, Message& response);
 
 private:
   MemCache cache_;

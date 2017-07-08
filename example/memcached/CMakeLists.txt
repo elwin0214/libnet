@@ -66,8 +66,6 @@ TARGET_LINK_LIBRARIES(hashtable_unitest libnet ${GTEST_LIBRARY})
 add_executable(lru_unitest server/lru.cc server/test/lru_unitest.cc)
 TARGET_LINK_LIBRARIES(lru_unitest libnet ${GTEST_LIBRARY})
 
-#add_executable(processor_unitest server/tokenizer.cc server/processor.cc server/test/processor_unitest.cc)
-#TARGET_LINK_LIBRARIES(processor_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(slab_unitest server/allocator.cc server/slab.cc server/test/slab_unitest.cc)
 TARGET_LINK_LIBRARIES(slab_unitest libnet ${GTEST_LIBRARY})
@@ -85,7 +83,6 @@ add_test(NAME codec_unitest COMMAND codec_unitest)
 
 add_test(NAME hashtable_unitest COMMAND hashtable_unitest)
 add_test(NAME lru_unitest COMMAND lru_unitest)
-add_test(NAME processor_unitest COMMAND processor_unitest)
 add_test(NAME slab_unitest COMMAND slab_unitest)
 add_test(NAME tokenizer_unitest COMMAND tokenizer_unitest)
 add_test(NAME memcache_unitest COMMAND memcache_unitest)

@@ -29,7 +29,7 @@ public:
       LockGuard guard(sending_lock_);
       while (!sending_queue_.empty())
       {
-        sending_queue_.front()->wakeup();
+        sending_queue_.front()->call();
         sending_queue_.pop();
       }
     }
@@ -38,13 +38,13 @@ public:
       LockGuard guard(sent_lock_);
       while (!sent_queue_.empty())
       {
-        sent_queue_.front()->wakeup();
+        sent_queue_.front()->call();
         sent_queue_.pop();
       }
     }
   }
 
-  void write(const AsyncClient::ConnectionPtr& connection)
+  void writeRequest(const AsyncClient::ConnectionPtr& connection)
   {    
     Buffer buffer(0, 4096);
     for (int i = 0; i < 10; i++)
@@ -77,9 +77,8 @@ public:
     sending_queue_.push(cmd);
   }
 
-  bool parse(Buffer& input)
+  bool readResponse(Buffer& input)
   {
-    //LockGuard guard(lock_);
     LockGuard guard(sent_lock_);
     if (sent_queue_.empty()){
       assert(input.readable() <= 0);// 收到了server发来的多余数据
@@ -88,7 +87,7 @@ public:
     std::shared_ptr<Command>& cmd = sent_queue_.front();
     if (cmd->decode(input))
     {
-      LOG_DEBUG << "parse.wakup" ;
+      LOG_DEBUG << "read.wakup" ;
       sent_queue_.pop();
       return true;
     }
@@ -128,7 +127,7 @@ void AsyncClient::send(const std::shared_ptr<Command>& message)
 {
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
   context->push(message);
-  notify();
+  notifyWrite();
 };
 
 void AsyncClient::onMessage(const ConnectionPtr& connection)
@@ -137,22 +136,22 @@ void AsyncClient::onMessage(const ConnectionPtr& connection)
   Buffer& input = connection->input();
   LOG_TRACE << "read=" << input.toString() ;
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection->getContext());
-  while(context->parse(input))// more response
+  while(context->readResponse(input))// more response
   {
   }
 
 };
 
-void AsyncClient::write()
+void AsyncClient::writeRequest()
 {
   connection_->loop()->assertInLoopThread();
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(connection_->getContext());
-  context->write(connection_);
+  context->writeRequest(connection_);
 };
 
-void AsyncClient::notify()
+void AsyncClient::notifyWrite()
 {
-  connection_->loop()->runInLoop(std::bind(&AsyncClient::write, this));
+  connection_->loop()->runInLoop(std::bind(&AsyncClient::writeRequest, this));
 };
 
 }

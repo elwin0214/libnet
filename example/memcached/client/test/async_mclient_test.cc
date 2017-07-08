@@ -2,6 +2,7 @@
 #include <libnet/eventloop.h>
 #include <libnet/eventloop_thread.h>
 #include <libnet/thread.h>
+#include <string>
 #include "../async_client.h"
 
 using namespace libnet;
@@ -15,7 +16,10 @@ void test_set()
 {
   assert(gClient->set("a", 2000, "cc"));
   assert(gClient->set("b", 2000, "cc"));
-  assert("cc" == gClient->get("b"));
+  string result;
+  assert(gClient->get("b", result));
+  assert("cc" == result);
+
 }
 
 void test_rem()
@@ -33,20 +37,23 @@ void test_add()
   assert(!(gClient->remove("a")));
   assert(gClient->add("a", 2000, "1"));
   assert(!(gClient->add("a", 2000, "999")));
-  assert(2 == (gClient->incr("a", 1)));
-  assert(3 == (gClient->incr("a", 1)));
+  uint32_t result;
+  assert(gClient->incr("a", 1, result));
+  assert(2 == result);
+  assert(gClient->incr("a", 1, result));
+  assert(3 == result);
 
   uint32_t last_incr;
   for (int i = 0 ; i < 100 ; i++)
-  {
-    last_incr = gClient->incr("a", 1);
+  { 
+    assert(gClient->incr("a", 1, last_incr));
   }
   assert( last_incr == 103);
 
 
   for (int i = 0 ; i < 100 ; i++)
   {
-    last_incr = gClient->decr("a", 1);
+    assert(gClient->decr("a", 1, last_incr));
   }
   assert( last_incr == 3);
 }

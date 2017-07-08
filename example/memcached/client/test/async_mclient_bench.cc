@@ -40,7 +40,8 @@ void get(int count, const std::string& value)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    if ("" != gClient->get(buf)) 
+    string result;
+    if (gClient->get(buf, result)) 
       succ++;
   }
   gCounter.addAndGet(succ);
@@ -143,8 +144,13 @@ int main(int argc, char *argv[])
   ::ProfilerStop();
   #endif
   int64_t time = end.value() - start.value();
-  LOG_INFO << "clients = "  << clients << " reqs = " << reqs << " bytes = " << bytes << " succ = " << (gCounter.getValue()) << " time = " << (time/1000) << "ms";
-  
+  LOG_INFO << " opname = " << (isSet ? "set" : "get")
+           << " clients = "  << clients 
+           << " reqs = " << reqs 
+           << " bytes = " << bytes 
+           << " reqs = " << (gCounter.getValue()) 
+           << " time = " << (time/1000) << "ms"
+           << " qps = " << (reqs * 1.0 / time / 1000);
   //g_loop->runAfter(20000, std::bind(&EventLoop::shutdown, g_loop));
   return 0;
 }

@@ -1,8 +1,7 @@
 #ifndef __LIBNET_MEMCACHED_MESSAGE_REQUESTCODEC_H__
 #define __LIBNET_MEMCACHED_MESSAGE_REQUESTCODEC_H__
 #include <libnet/buffer.h>
-#include "request.h"
-#include "response.h"
+#include "message.h"
  
 namespace memcached
 {
@@ -12,13 +11,13 @@ using namespace libnet;
 
 struct ResponseCodec
 {
-  void encode(Response& response, Buffer& buffer);
-  bool decode(Response& response, Buffer& buffer);
+  void encode(Message& message, Buffer& buffer);
+  bool decode(Message& message, Buffer& buffer);
 
-  bool decodeStore(Response& response, Buffer& buffer);
-  bool decodeGet(Response& response, Buffer& buffer);
-  bool decodeDelete(Response& response, Buffer& buffer);
-  bool decodeCount(Response& response, Buffer& buffer);
+  bool decodeStore(Message& message, Buffer& buffer);
+  bool decodeGet(Message& message, Buffer& buffer);
+  bool decodeDelete(Message& message, Buffer& buffer);
+  bool decodeCount(Message& message, Buffer& buffer);
 };
 
 }
