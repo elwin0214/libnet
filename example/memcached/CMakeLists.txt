@@ -7,7 +7,7 @@ TARGET_LINK_LIBRARIES(reader_unitest libnet ${GTEST_LIBRARY})
 #add_executable(command_unitest client/test/command_unitest.cc)
 #TARGET_LINK_LIBRARIES(command_unitest libnet ${GTEST_LIBRARY}) 
 
-add_executable(async_mclient_test message/reader.cc message/request_codec.cc message/response_codec.cc client/async_client.cc client/test/async_mclient_test.cc)
+add_executable(async_mclient_test message/reader.cc message/request_codec.cc message/response_codec.cc client/async_client.cc client/test/async_client_test.cc)
 TARGET_LINK_LIBRARIES(async_mclient_test libnet)
 
 
@@ -21,15 +21,15 @@ set_source_files_properties(server/test/memcached_server_bench.cc PROPERTIES COM
 set_source_files_properties(server/test/memcache_prof.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
 endif()
 
-add_executable(async_mclient_bench message/reader.cc message/request_codec.cc message/response_codec.cc client/async_client.cc client/test/async_mclient_bench.cc)
+#add_executable(async_mclient_bench message/reader.cc message/request_codec.cc message/response_codec.cc client/async_client.cc client/test/async_mclient_bench.cc)
 
-if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
-TARGET_LINK_LIBRARIES(async_mclient_bench libnet profiler)
-else()
-TARGET_LINK_LIBRARIES(async_mclient_bench libnet)
-endif()
+#if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
+#TARGET_LINK_LIBRARIES(async_mclient_bench libnet profiler)
+#else()
+#TARGET_LINK_LIBRARIES(async_mclient_bench libnet)
+#endif()
 
-add_executable(mclient_bench message/reader.cc message/response_codec.cc client/test/mclient_bench.cc)
+add_executable(mclient_bench message/reader.cc message/response_codec.cc client/test/client_bench.cc)
 
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
 TARGET_LINK_LIBRARIES(mclient_bench libnet profiler)
@@ -79,7 +79,6 @@ TARGET_LINK_LIBRARIES(allocator_unitest libnet ${GTEST_LIBRARY})
 
 add_test(NAME reader_unitest COMMAND reader_unitest)
 add_test(NAME codec_unitest COMMAND codec_unitest)
-#add_test(NAME command_unitest COMMAND command_unitest)
 
 add_test(NAME hashtable_unitest COMMAND hashtable_unitest)
 add_test(NAME lru_unitest COMMAND lru_unitest)

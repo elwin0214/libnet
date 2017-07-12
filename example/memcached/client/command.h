@@ -19,10 +19,10 @@ using namespace memcached::message;
 class Command
 {
 public:
-  typedef std::function<void()> Callback;
+  typedef std::function<void(const shared_ptr<Message>&)> Callback;
   Command(Message request)
     : request_(request),
-      response_(request.op()),
+      response_(make_shared<Message>(request.op())),
       reqc_(),
       respc_(),
       callback_()
@@ -31,7 +31,7 @@ public:
 
   Command(Message request, Callback callback)
     : request_(request),
-      response_(request.op()),
+      response_(make_shared<Message>(request.op())),
       reqc_(),
       respc_(),
       callback_(callback)
@@ -45,31 +45,28 @@ public:
 
   bool decode(Buffer& buffer) 
   {
-    bool r = respc_.decode(response_, buffer);
+    bool r = respc_.decode(*response_, buffer);
     if (r && callback_)
-      callback_();
+      callback_(response_);
     return r;
   }
 
   void call()
   {
-    if (callback_) callback_();
+    if (callback_) callback_(response_);
   }
 
-  Message& response() { return response_; }
+  Message& response() { return *response_; }
 
   
 protected:
   Message request_;
-  Message response_;
+  shared_ptr<Message> response_;
   RequestCodec reqc_;
   ResponseCodec respc_;
   Callback callback_;
-  //std::shared_ptr<CountDownLatch> latch_;
 };
 
-//RequestCodec Command::reqc_ = RequestCodec();
-//ResponseCodec Command::respc_ = ResponseCodec();
 
 }
 }

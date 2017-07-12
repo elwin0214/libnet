@@ -203,13 +203,14 @@ int main(int argc, char *argv[])
   // ~Client() 与 client handleClose(server 关闭连接) 两个线程都会触发对 Connection的调用，保证执行到这里时候，即使持有conn的shared_ptr 调用Connection的函数，也不会访问析构过的内存。
   Timestamp end = Timestamp::now();
   int64_t time = end.value() - start.value();
-  LOG_INFO << "op = "<< opname 
+  double duration = time / 1000;
+  LOG_WARN << "op = "<< opname 
            << " clients = "  << clients 
            << " threads = " << threads
            << " reqs = " << reqs 
            << " bytes = " << bytes 
-           << " time = " << (time/1000) << "ms" 
-           << " qps = " << reqs * 1.0 / time / 1000;
+           << " time = " << (duration) << "ms" 
+           << " qps = " << reqs * 1000 / duration;
   
   #ifdef PROFILE
   ::ProfilerStop();

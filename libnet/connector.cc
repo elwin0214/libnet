@@ -25,16 +25,6 @@ Connector::~Connector()
   {
     LOG_ERROR << "channel didn't destroy" ;
   }
-  // stop_ = true;
-  // state_ = kDisConnected;
-  // LockGuard guard(lock_);
-  // if (channel_)
-  // {
-  //   channel_->disableAll();
-  //   channel_->remove();
-  //   LOG_DEBUG << "close" ;
-  //   sockets::close(channel_->fd());
-  // }
 };
 
 void Connector::start()
@@ -120,7 +110,7 @@ void Connector::connectInLoop()
       registerConnect(fd);
       break;
     default:
-      LOG_SYSERROR << "fd=" << fd << " connectInLoop!";
+      LOG_SYSERROR << "fd = " << fd << " connectInLoop!";
       sockets::close(fd);
       retry();
       break;
@@ -145,7 +135,8 @@ void Connector::handleWrite(int fd)
   channel_->remove();
 
   int err = sockets::getSocketError(fd);//the fd is readable and writeable when error
-  LOG_ERROR << "err = " << err << " error = " << log::Error(err);
+  if (err != 0)
+    LOG_ERROR << "err = " << err << " error = " << log::Error(err);
   if (err)
   {
     state_ = kDisConnected;

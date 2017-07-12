@@ -5,6 +5,7 @@
 #include <libnet/client.h>
 #include <libnet/mutexlock.h>
 #include <string>
+#include <future>
 #include "command.h"
 
 namespace memcached
@@ -15,114 +16,64 @@ namespace client
 using namespace libnet;
 using namespace std;
 
+class ClientImpl;
 class AsyncClient : public NoCopyable
 {
 public:
-  typedef std::shared_ptr<Connection> ConnectionPtr;
+  typedef std::shared_ptr<ClientImpl> Impl;
+  typedef std::shared_ptr<Message> Msg;
 
-  AsyncClient(EventLoop* loop, const char* host, int port, CountDownLatch& latch)
-    : client_(loop, host, port),
-      latch_(latch)
-  {
-  };
+  AsyncClient(EventLoop* loop, const char* host, int port, CountDownLatch& latch, int connSize = 1);
 
   void connect();
 
-  void disconnect(){ client_.disconnect(); }
+  void disconnect();
 
-  bool get(const string& key, string& result)
+  std::future<Msg> get(const string& key)
   {
-    Message request(kGet, key);
-    CountDownLatch latch(1);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    result = response.data_.value_;
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kGet, key));
   };
 
-  bool set(const std::string& key, int32_t exptime, const std::string& value)
+  std::future<Msg> set(const std::string& key, const std::string& value, int32_t exptime)
   {
-    CountDownLatch latch(1);
-    Message request(kSet, key, value, 0, exptime);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kSet, key, value, 0, exptime)); 
   };
 
-  bool add(const std::string& key, int32_t exptime, const std::string& value)
+  std::future<Msg> add(const std::string& key, const std::string& value, int32_t exptime)
   {
-    CountDownLatch latch(1);
-    Message request(kAdd, key, value, 0, exptime);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kAdd, key, value, 0, exptime)); 
   };
 
-  bool replace(const std::string& key, int32_t exptime, const std::string& value)
+  std::future<Msg> replace(const std::string& key, const std::string& value, int32_t exptime)
   {
-    CountDownLatch latch(1);
-    Message request(kReplace, key, value, 0, exptime);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kReplace, key, value, 0, exptime)); 
   };
 
-  bool remove(const std::string& key)
+  std::future<Msg> remove(const std::string& key)
   {
-    CountDownLatch latch(1);
-    Message request(kDelete, key);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kDelete, key)); 
   };
 
-  bool incr(const std::string& key, uint32_t value, uint32_t& result)
+  std::future<Msg> incr(const std::string& key, uint32_t value)
   {
-    CountDownLatch latch(1);
-    Message request(kIncr, key, value);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    result = response.data_.count_;
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kIncr, key, value)); 
   };
 
-  bool decr(const std::string& key, uint32_t value, uint32_t& result)
+  std::future<Msg> decr(const std::string& key, uint32_t value)
   {
-    CountDownLatch latch(1);
-    Message request(kIncr, key, value);
-    shared_ptr<Command> cmd = make_shared<Command>(request, [&latch](){ latch.countDown(); }); 
-    send(cmd);
-    latch.wait();
-    Message& response = cmd->response();
-    result = response.data_.count_;
-    return response.stat_.code_ == kSucc;
+    return sendFuture(Message(kDecr, key, value)); 
   };
+
+  future<Msg> sendFuture(Message request);
 
   void send(const std::shared_ptr<Command>& command);
 
-private:
-  void onConnection(const ConnectionPtr& conn);
-  void onMessage(const ConnectionPtr& conn);
-  void writeRequest();
-  void notifyWrite();
+  int random(const int& min, const int& max);
 
 private:
-  Client client_;
+  std::vector<Impl> impls;
   CountDownLatch& latch_;
-  ConnectionPtr connection_;
-
+  MutexLock randLock_;
 };
 
 }

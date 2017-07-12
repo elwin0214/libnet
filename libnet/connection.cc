@@ -184,18 +184,14 @@ void Connection::handleClose()// 内部触发
   if (connection_callback_)
   {
     auto sp = shared_from_this();
-    LOG_TRACE << "handleClose p1 " << sp.use_count();
     connection_callback_(sp);  // 这里必须用 shared_ptr
   }
   if (close_callback_)
   {
     auto sp = shared_from_this();
-    LOG_TRACE << "handleClose p2 " << sp.use_count();
     close_callback_(shared_from_this());// 外部注入的调用，connection关闭时候触发
   }
-  auto sp = shared_from_this();
-  LOG_TRACE << "handleClose p3 " << sp.use_count();
-};
+ };
 
 void Connection::handleError()
 {

@@ -5,6 +5,7 @@
 #include <memory>
 #include <string.h>
 #include <iostream>
+#include <vector>
 #include "../async_client.h"
 #ifdef PROFILE
 #include <gperftools/profiler.h>
@@ -17,32 +18,46 @@ using namespace memcached::client;
 AsyncClient* gClient;
 EventLoop* gLoop;
 AtomicInt32 gCounter(0);
+typedef shared_ptr<Message> Msg;
 
 struct MemcacheOpt
 {
 void set(int count, const std::string& value)
 {
-  int succ = 0;
+  vector<future<Msg>> futures;
+  futures.reserve(count);
   for (int i = 0; i < count; i++)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    if (gClient->set(buf, 0, value)) 
-      succ++;
+    auto f = gClient->set(buf, value, 0);
+    futures.push_back(std::move(f)); 
+  }
+  int succ = 0;
+  for(auto f : futures)
+  {
+    f.wait();
+    succ++;
   }
   gCounter.addAndGet(succ);
 }
 
 void get(int count, const std::string& value)
 {
-  int succ = 0;
+  vector<future<Msg>> futures;
+  futures.reserve(count);
   for (int i = 0; i < count; i++)
   {
     char buf[16];
     sprintf(buf, "key-%d", i);
-    string result;
-    if (gClient->get(buf, result)) 
-      succ++;
+    auto f = gClient->get(buf);
+    futures.push_back(std::move(f)); 
+  }
+  int succ = 0;
+  for(auto f : futures)
+  {
+    f.wait();
+    succ++;
   }
   gCounter.addAndGet(succ);
 }

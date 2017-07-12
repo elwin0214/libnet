@@ -11,7 +11,9 @@ enum Code
   kError, 
   kFail,
   kSucc, 
-  kInit
+  kInit,
+
+  kConClosed
 };
 
 enum Opt
