@@ -17,9 +17,9 @@ class Channel;
 class Connector : public NoCopyable, public std::enable_shared_from_this<Connector>
 {
 public:
-  typedef std::shared_ptr<Connection> ConnectionPtr;
-  typedef std::function<void(ConnectionPtr)> ConnectionCallBack;
-  typedef std::unique_ptr<Channel> ChannelPtr;
+  typedef std::shared_ptr<Connection> Conn;
+  typedef std::function<void(Conn)> ConnectionCallBack;
+  typedef std::unique_ptr<Channel> Chan;
   typedef std::function<void(int)> NewConnectionCallBack;
 
 
@@ -64,7 +64,7 @@ private:
   State state_;
   EventLoop* loop_;
   InetAddress server_address_;
-  ChannelPtr channel_;
+  Chan channel_;
   NewConnectionCallBack new_connection_callback_;
   MutexLock lock_;
 

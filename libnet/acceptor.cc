@@ -7,11 +7,10 @@
 #include "eventloop.h"
 #include "logger.h"
 
-
 namespace libnet
 {
 
-Acceptor::Acceptor(EventLoop *loop, InetAddress& listenAddr, int backlog)
+Acceptor::Acceptor(EventLoop *loop, const InetAddress& addr, int backlog)
   : backlog_(backlog),
     closed_(false),
     loop_(loop),
@@ -20,7 +19,7 @@ Acceptor::Acceptor(EventLoop *loop, InetAddress& listenAddr, int backlog)
 {
   socket_.setReuseAddr();
   socket_.setNoBlocking();
-  socket_.bind(listenAddr);
+  socket_.bind(addr);
   channel_->setReadCallback(std::bind(&Acceptor::handleRead, this));
 
 };
@@ -56,9 +55,9 @@ void Acceptor::handleClose()
 void Acceptor::handleRead()
 {
   loop_->assertInLoopThread();
-  InetAddress peerAddr;
-  int fd = socket_.accept(&peerAddr);
-  LOG_INFO << "accept fd=" << fd;
+  InetAddress peer_addr;
+  int fd = socket_.accept(&peer_addr);
+  LOG_INFO << "accept fd = " << fd;
   if (fd == -1)
   {
     if (errno == EAGAIN || errno == EWOULDBLOCK)
@@ -76,9 +75,9 @@ void Acceptor::handleRead()
   }
   else
   {
-    if (!closed_ && newConnectionCallback_)
+    if (!closed_ && new_conn_callback_)
     {
-      newConnectionCallback_(fd, peerAddr);
+      new_conn_callback_(fd, peer_addr);
       return;
     }
     sockets::close(fd);

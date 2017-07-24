@@ -22,14 +22,15 @@ class Acceptor;
 class Server : public NoCopyable 
 {
 public: 
-  typedef std::shared_ptr<Connection> ConnectionPtr;
-  typedef std::function<void(const ConnectionPtr&)> ConnectionCallBack;
-  typedef std::shared_ptr<Acceptor> AcceptorPtr;
-  typedef EventLoop* EventLoopPtr;
-  typedef std::shared_ptr<EventLoopGroup> EventLoopGroupPtr;
+  typedef std::shared_ptr<Connection> Conn;
+  typedef std::function<void(const Conn&)> ConnectionCallBack;
+  typedef EventLoop* Loop;
+  //typedef std::shared_ptr<EventLoopGroup> LoopGroup;
 
 public:
-  Server(EventLoop* loop, const char* host, int port, int workers);
+  Server(EventLoop* loop, const char* host, uint16_t port, EventLoopGroup* loop_group = nullptr);
+  Server(EventLoop* loop, const InetAddress& address, EventLoopGroup* loop_group = nullptr);
+
   ~Server();
 
   void start();
@@ -37,21 +38,22 @@ public:
   void setMessageCallBack(ConnectionCallBack callback) { message_callback_ = callback; }
 
   void newConnection(int fd, InetAddress &addr);
-  void removeConnection(const ConnectionPtr &connection);
-  void removeConnectionInLoop(const ConnectionPtr &connection);
+  void removeConnection(const Conn& conn);
+  void removeConnectionInLoop(const Conn& conn);
 
   
 private:
   EventLoop* loop_;
   InetAddress local_addr_;
   Acceptor acceptor_;
-  EventLoopGroupPtr loop_group_;
+  EventLoopGroup* loop_group_;
+  //EventLoopGroupPtr loop_group_;
   
   int next_id_; 
   MutexLock lock_;
   bool started_;
   
-  std::map<int, ConnectionPtr> connections_;
+  std::map<int, Conn> conns_;
 
   ConnectionCallBack connection_callback_;
   ConnectionCallBack message_callback_;

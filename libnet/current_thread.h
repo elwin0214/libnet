@@ -2,15 +2,24 @@
 #define __LIBNET_CURRENTTHREAD_H__
 
 #include <pthread.h>
+#include <sys/syscall.h>
+
+#ifdef __linux__
+#define TID pid_t
+#else
+#define TID pthread_t
+#endif
 
 namespace libnet
 {
 namespace thread
 {
 
-extern __thread const char* currentThreadName;
+extern __thread const char* t_threadName;
+extern __thread TID t_tid;
 
-pthread_t currentTid();
+TID currentTid();
+const char* currentThreadName();
 
 }
 }

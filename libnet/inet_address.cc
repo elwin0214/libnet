@@ -15,6 +15,12 @@ InetAddress::InetAddress(const char *host, uint16_t port)
   sockets::convert(host, port, &addr_);
 };
 
+InetAddress::InetAddress(const std::string& host, uint16_t port)
+{
+  ::bzero(&addr_, sizeof(addr_));
+  sockets::convert(host.c_str(), port, &addr_);
+};
+
 void InetAddress::setSockAddrIn(const sockaddr_in &addrin)
 {
   addr_ = addrin;

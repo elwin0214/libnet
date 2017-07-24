@@ -1,10 +1,11 @@
 #ifndef __LIBNET_EVENTLOOPTHREAD_H__
 #define __LIBNET_EVENTLOOPTHREAD_H__
 
+#include <string>
+#include <atomic>
 #include "mutexlock.h"
 #include "condition.h"
 #include "thread.h"
-#include <string>
 
 namespace libnet
 {
@@ -20,17 +21,17 @@ public:
 
   EventLoop* getLoop();
 
-  void exec();
-
   ~EventLoopThread();
+  
+private:
+  void exec();
 
 private:
   std::string name_;
   MutexLock lock_;
   Condition cond_;
-  EventLoop* loop_;
+  std::atomic<EventLoop*> loop_;
   Thread thread_;
-
 };
 
 }

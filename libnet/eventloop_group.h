@@ -17,10 +17,10 @@ class EventLoopGroup : public NoCopyable
 {
 
 public:
-  typedef std::shared_ptr<EventLoopThread> EventLoopThreadPtr;
+  typedef std::shared_ptr<EventLoopThread> LoopThread;
 
 public:
-  EventLoopGroup(EventLoop* baseLoop, int num, const std::string& name);
+  EventLoopGroup(EventLoop* loop, int num, const std::string& name);
     
   void start();
 
@@ -32,11 +32,11 @@ public:
   }
 
 private:
-  EventLoop* baseLoop_;
+  EventLoop* base_loop_;
   std::string name_;
   int index_;
   int num_;
-  std::vector<EventLoopThreadPtr> eventLoopThreads_;
+  std::vector<LoopThread> loop_threads_;
 
 };
 

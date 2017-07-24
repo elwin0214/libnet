@@ -188,8 +188,6 @@ void HttpResponse::flush()
   if(!sending_) //发送 headers
   {
     sending_ = true;
-    //std::shared_ptr<Buffer> buffer = std::make_shared<Buffer>(512);
-    //Buffer* buffer = new Buffer(kPrepend, kSize);
     Buffer buffer(kPrepend, kSize);
     appendToBuffer(&buffer);
     send_callback_(CString(buffer.beginRead(), buffer.readable()));
@@ -200,7 +198,6 @@ void HttpResponse::flush()
     {
       send_callback_(CString(buffer_->beginRead(), buffer_->readable()));
       buffer_->clear();
-      //buffer_.reset(new Buffer(kPrepend, kSize));
     }
   }
   else
@@ -216,7 +213,6 @@ void HttpResponse::flush()
     buffer_->append("\r\n");
     send_callback_(CString(buffer_->beginRead(), buffer_->readable()));
     buffer_->clear();
-    //buffer_.reset(new Buffer(kPrepend, kSize));
   }
 };
 

@@ -4,11 +4,12 @@
 #include <functional>
 #include <queue>
 #include <memory>
-#include "atomic.h"
+#include <atomic>
 #include "mutexlock.h"
 #include "timestamp.h"
 #include "timer.h"
 #include "timer_queue.h"
+#include "current_thread.h"
 
 namespace libnet
 {
@@ -60,11 +61,11 @@ public:
 private:
     std::shared_ptr<selector::Selector> selector_;
     std::queue<Functor>  functors_;
-    pthread_t tid_;
+    TID tid_;
     MutexLock lock_;
-    bool stop_;
+    std::atomic<bool> stop_;
 
-    AtomicBool wakeup_;
+    //std::atomic<bool> wakeup_;
     int wakeupFd_[2];
     Channel* wakeupChannel_;
 

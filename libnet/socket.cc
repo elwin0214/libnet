@@ -5,13 +5,14 @@
 #include "logger.h"
 #include "socket.h"
 #include "socket_ops.h"
+#include <string>
 
 namespace libnet
 {
 
-int Socket::bind(InetAddress &localaddr)
+int Socket::bind(const InetAddress &addr)
 {
-  return sockets::bind(fd_, localaddr.getSockAddrIn());
+  return sockets::bind(fd_, addr.getSockAddrIn());
 };
 
 int Socket::listen(int backlog)
@@ -40,7 +41,8 @@ int Socket::read(Buffer &buffer)
   if (n <= 0) 
     return n; 
   buffer.moveWriteIndex(n);
-  LOG_TRACE << "buffer = " << buffer.toString() ;
+  if (log::Logger::getLogLevel() <= libnet::log::TRACE)
+    LOG_TRACE << "buffer = " << buffer.toString();
   return n;
 };
 
@@ -48,12 +50,11 @@ int Socket::write(Buffer &buffer)
 {
   int len = buffer.readable();
   ssize_t n = sockets::write(fd_, buffer.beginRead(), len);
-  LOG_TRACE << "n = " << n << ", len = " << len  ;
+  LOG_TRACE << "n = " << n << ", len = " << len;
   if (n <= 0) 
     return n; 
-  LOG_TRACE << "buffer = " << buffer.toString() << ", len = " << len  ;
+  LOG_TRACE << " write = " << std::string(buffer.beginRead(), n) << ".";
   buffer.moveReadIndex(n);
-  LOG_TRACE << "buffer = " << buffer.toString() ;
   return n;
 };
 
@@ -61,7 +62,10 @@ int Socket::write(const CString &cstring)
 {
   int len = cstring.length();
   ssize_t n = sockets::write(fd_, cstring.data(), len);
+  LOG_TRACE << "n = " << n << ", len = " << len;
   if (n <= 0) return n; //todo errno
+  if (log::Logger::getLogLevel() <= libnet::log::TRACE)
+    LOG_TRACE << " write = " << std::string(cstring.data(), n) << ".";
   return n;
 };
 

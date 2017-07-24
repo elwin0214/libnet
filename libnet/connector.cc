@@ -93,8 +93,6 @@ void Connector::registerConnect(int fd)
 
 void Connector::connectInLoop()
 {
-
-  //if (stop_) return;
   loop_->assertInLoopThread();
   int fd = sockets::createSocketFd();
   sockets::setNoBlocking(fd);

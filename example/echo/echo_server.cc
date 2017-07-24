@@ -7,9 +7,9 @@
 #include <libnet/cstring.h>
 #include "echo_server.h"
 
-EchoServer::EchoServer(EventLoop* loop, const char* host, int port, int threads)
+EchoServer::EchoServer(EventLoop* loop, const char* host, uint16_t port)
     : loop_(loop),
-      server_(loop, host, port, threads)
+      server_(loop, host, port)
 {
 };
 
@@ -20,30 +20,30 @@ void EchoServer::start()
   server_.start();
 };
 
-void EchoServer::onConnection(const ConnectionPtr& connection)
+void EchoServer::onConnection(const Conn& conn)
 {
-  LOG_INFO << "connection id=" << (connection->id())  <<" state=" << (connection->stateToString());
+  LOG_INFO << "conn id=" << (conn->id())  <<" state=" << (conn->stateToString());
 
-  if (connection->connected())
+  if (conn->connected())
   {
-    LOG_INFO << "connection id=" << (connection->id()) << " connected";
+    LOG_INFO << "conn id=" << (conn->id()) << " connected";
   }
-  else if (connection->disconnected())
+  else if (conn->disconnected())
   {
-    LOG_INFO << "connection id=" << (connection->id()) << " disconnected";
+    LOG_INFO << "conn id=" << (conn->id()) << " disconnected";
   }
 };
 
-void EchoServer::onMessage(const ConnectionPtr& connection)
+void EchoServer::onMessage(const Conn& conn)
 {
-  std::string str = connection->input().toString();
-  int id = connection->id();
-  LOG_INFO << "connection id = "<< id << " message = " << str;
+  std::string str = conn->input().toString();
+  int id = conn->id();
+  LOG_INFO << "conn id = "<< id << " message = " << str;
   
   if (str == "exit\r\n")
   {
-    LOG_INFO << "connection id = "<< id << " go to close.";
-    connection->shutdown();
+    LOG_INFO << "conn id = "<< id << " go to close.";
+    conn->shutdown();
     return;
   }
   else if (str == "exit all\r\n")
@@ -52,6 +52,6 @@ void EchoServer::onMessage(const ConnectionPtr& connection)
     loop_->shutdown();
     return;
   }
-  connection->input().clear();
-  connection->send(str);
+  conn->input().clear();
+  conn->send(str);
 };

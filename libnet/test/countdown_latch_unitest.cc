@@ -3,40 +3,32 @@
 #include <libnet/thread.h>
 #include <assert.h>
 #include <functional>
+#include <vector>
 
+using namespace std;
 using namespace libnet;
-
-CountDownLatch countDownLatch(2);
-
-
-void thread_wait()
-{
-  countDownLatch.wait();
-  LOG_INFO << "finished "; 
-  assert(countDownLatch.count() == 0);
-};
-
-void thread_countDown()
-{
-  countDownLatch.countDown();
-};
-
 
 int main()
 {
+  CountDownLatch latch(100);
+  std::vector<unique_ptr<Thread>> threads;
+  threads.reserve(100);
+  for (int i = 0; i < 100; i++)
+  {
+    unique_ptr<Thread> up(new Thread([&latch](){ latch.countDown(); }));
+    threads.push_back(std::move(up));
+  }
 
-  Thread t1(std::bind(thread_wait));
+  for (auto& t : threads)
+  {
+    t->start();
+  }
 
-  Thread t21(std::bind(thread_countDown));
-  Thread t22(std::bind(thread_countDown));
-
-  t1.start();
-  t21.start();
-  t22.start();
-
-  t1.join();
-  t21.join();
-  t22.join();
-
+  for (auto& t : threads)
+  {
+    t->join();
+  }
+  latch.wait();
+  assert(true);
   return 0;
 }

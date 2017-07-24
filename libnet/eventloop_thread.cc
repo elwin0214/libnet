@@ -37,7 +37,7 @@ void EventLoopThread::exec()
     loop_ = &loop;
     cond_.notifyAll();
   }
-  loop_->loop();
+  loop_.load()->loop();
   loop_ = NULL;
 };
 
@@ -50,9 +50,9 @@ EventLoop* EventLoopThread::getLoop()
 EventLoopThread::~EventLoopThread()
 {
   LOG_TRACE << "~EventLoopThread()" ;
-  if (loop_)
+  if (loop_ != NULL)
   {
-    loop_->shutdown();
+    loop_.load()->shutdown();
     thread_.join();
   }
 };

@@ -20,7 +20,7 @@ public:
 
 
 public:
-  Acceptor(EventLoop *loop, InetAddress& listenAddr, int backlog);
+  Acceptor(EventLoop *loop, const InetAddress& addr, int backlog);
 
   ~Acceptor();
 
@@ -34,7 +34,7 @@ public:
 
   void handleRead();
  
-  void setNewConnectionCallback(ConnectionCallback callback) { newConnectionCallback_ = callback; }
+  void setNewConnectionCallback(ConnectionCallback callback) { new_conn_callback_ = callback; }
 
 private:
   int backlog_;
@@ -42,7 +42,7 @@ private:
   EventLoop *loop_;
   Socket socket_;
   std::shared_ptr<Channel> channel_;
-  ConnectionCallback newConnectionCallback_;
+  ConnectionCallback new_conn_callback_;
 
 };
 

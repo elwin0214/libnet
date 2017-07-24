@@ -84,8 +84,8 @@ Logger::Impl::Impl(const char* file, const char* func, int line, int err, LogLev
       filename = file;
     stream_.append("%s::%s", filename, func);
     stream_.append(" (%d) ", line);
-    stream_.append("[%x] ", thread::currentTid());
-    stream_.append("[%s] ", thread::currentThreadName);
+    stream_.append("[%lx] ", thread::currentTid());
+    stream_.append("[%s] ", thread::currentThreadName());
     if (err != 0)
       stream_ << Error() << "(errno=" << err << ") ";
   }

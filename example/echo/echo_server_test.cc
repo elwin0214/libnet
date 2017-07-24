@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   log::LogLevel logLevel = log::LogLevel(level);
   log::Logger::setLogLevel(logLevel);
   EventLoop loop;
-  EchoServer server(&loop, host, port, threads);
+  EchoServer server(&loop, host, port);
   server.start();
   loop.loop();
   return 0;

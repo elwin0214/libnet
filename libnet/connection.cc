@@ -207,8 +207,9 @@ void Connection::handleError()
 };
 const char* Connection::stateToString()
 {
-  if (state_ >= kConnecting && state_ <= kDisConnected)
-    return state::StateName[state_];
+  int state = state_.load();
+  if (state >= kConnecting && state <= kDisConnected)
+    return state::StateName[state];
   else return "unknow";
 };
 

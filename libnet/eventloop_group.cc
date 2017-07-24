@@ -4,37 +4,38 @@
 
 namespace libnet
 {
-
-EventLoopGroup::EventLoopGroup(EventLoop* baseLoop, int num, const std::string& name)
-  : baseLoop_(baseLoop),
+using namespace std;
+EventLoopGroup::EventLoopGroup(EventLoop* loop, int num, const std::string& name)
+  : base_loop_(loop),
     name_(name),
     index_(0),
-    num_(num)
+    num_(num),
+    loop_threads_()
 {
-    
+    loop_threads_.reserve(num);
 };
 
 void EventLoopGroup::start()
 {
-  baseLoop_->assertInLoopThread();
+  base_loop_->assertInLoopThread();
   for (int i = 0; i < num_; i++)
   {
-    std::string threadName = name_;
-    threadName.push_back('-');
-    threadName.push_back(i + '1' -1);
-    EventLoopThreadPtr loopThreadPtr(new EventLoopThread(threadName));
-    eventLoopThreads_.push_back(loopThreadPtr);
-    loopThreadPtr->start();
+    std::string name = name_;
+    name.push_back('-');
+    name.push_back(i + '1' -1);
+    LoopThread thread = make_shared<EventLoopThread>(name);
+    loop_threads_.push_back(thread);
+    thread->start();
   }    
 };
 
 EventLoop* EventLoopGroup::getNextLoop()
 {
-  baseLoop_->assertInLoopThread();
+  base_loop_->assertInLoopThread();
   if (num_ <= 0)
-    return baseLoop_;
+    return base_loop_;
   int index = index_++ % num_;
-  return eventLoopThreads_[index]->getLoop();
+  return loop_threads_[index]->getLoop();
 };
 
 }

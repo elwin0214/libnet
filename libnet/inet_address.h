@@ -13,7 +13,9 @@ class InetAddress
 public:
   InetAddress();
 
-  InetAddress(const char *ip, uint16_t port);
+  InetAddress(const char *host, uint16_t port);
+
+  InetAddress(const std::string& host, uint16_t port);
 
   const sockaddr_in& getSockAddrIn() const { return addr_; }
 

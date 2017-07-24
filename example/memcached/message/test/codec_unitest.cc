@@ -98,7 +98,18 @@ TEST(Codec, resp_set)
   ASSERT_EQ(response.code(), kSucc);
 }  
 
- 
+TEST(Codec, resp_err_set)
+{
+  Buffer buffer(0, 1024);
+  buffer.append("CLIENT_ERROR bad command line format\r\n");
+  ResponseCodec codec;
+  Message response;
+  response.data_.op_ = kSet;
+  bool r = codec.decode(response, buffer);
+  ASSERT_TRUE(r);
+  ASSERT_EQ(response.code(), kError);
+}  
+
 TEST(Codec, resp_get)
 {
   Buffer buffer(0, 1024);
@@ -195,7 +206,7 @@ TEST(Codec, del)
   ASSERT_EQ(resp.stat_.code_, kSucc);
 }
 
-TEST(Command, delfail)
+TEST(Codec, resp_delfail)
 {
   Buffer rb(0, 1024);
   Message resp;
@@ -206,7 +217,7 @@ TEST(Command, delfail)
   ASSERT_EQ(resp.code(), kFail);
 }
 
-TEST(Command, incr)
+TEST(Codec, incr)
 {
   Buffer wb(0, 1024);
   Message req(kIncr, "name", "1", 0, 0);
@@ -225,7 +236,7 @@ TEST(Command, incr)
   ASSERT_EQ(resp.data_.count_, 12);
 }
 
-TEST(Command, incrfail)
+TEST(Codec, resp_incrfail)
 {
   Buffer rb(0, 1024);
   Message resp;
@@ -235,6 +246,29 @@ TEST(Command, incrfail)
   ASSERT_TRUE(respc.decode(resp, rb));
   ASSERT_EQ(resp.code(), kFail);
 }
+
+TEST(Codec, encode_batch)
+{
+  Buffer buffer(0, 4096);
+  RequestCodec codec;
+  char buf[4096];
+  for (int i = 0; i < 10; i++)
+  {
+    buf[i] = '1';
+  }
+  std::string value(buf, 10);
+  for (int i = 36; i < 56; i++)
+  {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "key-%d", i);
+    Message msg(kSet, buf, value, 0, 0);
+    codec.encode(msg, buffer);
+  }
+  cout << buffer.toString() << " " << buffer.readable();
+  cout << buffer.toAsciiString() << " " << buffer.readable();
+
+}
+
 
 int main(int argc, char **argv)
 {

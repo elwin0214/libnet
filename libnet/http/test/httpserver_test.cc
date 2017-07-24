@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
   EventLoop loop;
-  HttpServer server(&loop, host, port, threads);
+  HttpServer server(&loop, host, port);
   OkHandler handler;
   server.processor().setRequestHandlerCallBack(std::bind(&OkHandler::handleRequest, &handler, _1, _2));
   server.start();

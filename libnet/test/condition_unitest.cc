@@ -5,20 +5,17 @@
 #include <queue>
 #include <vector>
 #include <assert.h>
-#include <iostream>
-#include <stdio.h>
 #include <memory>
 
 using namespace std;
 using namespace libnet;
 
-int g_consume = 0;
-
-class ProducerAndConsumer
+template<typename T>
+class SyncQueue
 {
 
 public:
-  ProducerAndConsumer(int capcity)
+  SyncQueue(int capcity)
     : lock_(),
       noempty_(lock_),
       nofull_(lock_),
@@ -46,7 +43,7 @@ public:
     }
   }
 
-  void consume()
+  T consume()
   {
     LockGuard guard(lock_);
     while(true)
@@ -57,11 +54,11 @@ public:
       }
       else
       {
-        int value = queue_.front();
-        queue_.pop();
-        g_consume += value;
+        T& t = queue_.front();
+        T result = std::move(t);
+        queue_.pop();  
         nofull_.notifyAll();
-        break;
+        return result;
       }
     }
   }
@@ -70,35 +67,54 @@ private:
   MutexLock lock_;
   Condition noempty_;
   Condition nofull_;
-  int capcity_;
-  queue<int> queue_;
+  size_t capcity_;
+  queue<T> queue_;
 
 };
 
 TEST(Condition, test)
 {
-  ProducerAndConsumer pc(1);
-  vector<shared_ptr<Thread>> producers;
-  vector<shared_ptr<Thread>> consumers;
+  SyncQueue<int> cache(10);
+  std::vector<int> values;
+  values.reserve(100);
+  std::vector<unique_ptr<Thread>> threads;
+  threads.reserve(10);
+
   for (int i = 0; i < 10; i++)
   {
-    shared_ptr<Thread> p = shared_ptr<Thread>(new Thread(std::bind(&ProducerAndConsumer::produce,  &pc, 1)));
-    producers.push_back(p);
-    shared_ptr<Thread> c = shared_ptr<Thread>(new Thread(std::bind(&ProducerAndConsumer::consume, &pc)));
-    consumers.push_back(c);
-    p->start();
-    c->start();
-  }
-  for (auto thread : producers)
-  {
-    thread->join();
+    unique_ptr<Thread> up(new Thread([&cache, i]()mutable{ 
+      for (int j = 0; j < 10; j++)
+      {
+        cache.produce(j + i * 10);
+      }
+    }));
+    threads.push_back(std::move(up));
   }
 
-  for (auto thread : consumers)
-  {
-    thread->join();
+  Thread consumer([&values, &cache](){
+    for (int i = 0; i < 100; i++)
+    {
+      int v = cache.consume();
+      values.push_back(v);
+    }
+  });
+
+  consumer.start();
+  for (auto& t : threads)
+    t->start();
+
+  consumer.join();
+  for (auto& t : threads)
+    t->join();
+  
+  std::sort(values.begin(), values.end());
+
+  int index = 0;
+  assert(values.size() == 100);
+  for (auto value : values)
+  { 
+    assert(value == index++);
   }
-  ASSERT_EQ(g_consume, 10);
 }
 
 int main(int argc, char **argv)

@@ -1,19 +1,33 @@
 #include <stdlib.h>
+#include <sys/syscall.h>
 #include "thread.h"
 #include "logger.h"
 #include "exception.h"
-#include "current_thread.h"
 
 namespace libnet
 {
 namespace thread
 {
 
-__thread const char* currentThreadName = "";
+__thread const char* t_threadName = "";
+__thread TID t_tid = 0; 
 
-pthread_t currentTid()
+TID currentTid()
 {
-    return pthread_self();
+  if (0 == t_tid)
+  {
+    #ifdef __linux__
+    t_tid = ::syscall(SYS_gettid);
+    #else
+    t_tid = ::pthread_self();
+    #endif
+  }
+  return t_tid;
+};
+
+const char* currentThreadName()
+{
+  return t_threadName;
 };
 
 void* thread_execute(void* param)
@@ -26,22 +40,21 @@ void* thread_execute(void* param)
 }
 
 Thread::Thread(const ThreadFunc &func)
-    : started_(false),
-      joined_(false),
-      func_(func),
-      name_("")
+  : started_(false),
+    joined_(false),
+    func_(func),
+    name_("")
 {
 
 };
 Thread::Thread(const ThreadFunc &func,const std::string &name)
-    : started_(false),
-      joined_(false),
-      func_(func),
-      name_(name)
+  : started_(false),
+    joined_(false),
+    func_(func),
+    name_(name)
 {
 
 };
-
 
 void Thread::start()
 {
@@ -50,7 +63,7 @@ void Thread::start()
   started_ = true;
   int r = pthread_create(&tid_, NULL, thread::thread_execute, this);
   if (r == 0)
-    LOG_DEBUG << "tid=" << tid_;
+    LOG_DEBUG << "tid = " << tid_;
   else
     LOG_SYSFATAL << "pthread_create!" ;
 };
@@ -62,9 +75,16 @@ void Thread::run()
     Thread::initCallback_();
   }
   if ("" != name_)
-    thread::currentThreadName = name_.c_str();
+    thread::t_threadName = name_.c_str();
   else 
-    thread::currentThreadName = "main";
+    thread::t_threadName = "main";
+
+  #ifdef __linux__
+  pid_ = ::syscall(SYS_gettid);
+  thread::t_tid = pid_;
+  #else
+  thread::t_tid = tid_;
+  #endif
 
   try
   {
@@ -91,9 +111,9 @@ void Thread::join()
     joined_ = true;
     int r = pthread_join(tid_, NULL);
     if (r == 0)
-      LOG_TRACE << "tid=" << tid_;
+      LOG_TRACE << "tid = " << tid_;
     else
-      LOG_SYSERROR << "tid=" << tid_ << "pthread_join!";
+      LOG_SYSERROR << "tid = " << tid_ << " pthread_join!";
   }  
 };
 
@@ -103,9 +123,9 @@ Thread::~Thread()
   {
     int r = pthread_detach(tid_);
     if (r == 0)
-      LOG_TRACE << "pthread_detach tid=" << tid_;
+      LOG_TRACE << "pthread_detach tid = " << tid_;
     else
-      LOG_SYSERROR << "pthread_detach! tid=" << tid_;
+      LOG_SYSERROR << "pthread_detach! tid = " << tid_;
   }
 
 };

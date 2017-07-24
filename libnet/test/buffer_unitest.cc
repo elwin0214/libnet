@@ -8,7 +8,6 @@
 using namespace std;
 using namespace libnet;
 
-
 TEST(Buffer, append)
 {
   Buffer buf(0, 10);
@@ -107,12 +106,9 @@ TEST(Buffer, makeRoom2)
   ASSERT_EQ("12345678", buffer.toString());
 }
 
-
-
- 
 int main(int argc, char **argv)
 {
-  ::testing::InitGoogleTest( &argc, argv );
+  ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
 

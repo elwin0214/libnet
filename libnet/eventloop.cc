@@ -9,6 +9,7 @@
 #include "timestamp.h"
 #include "exception.h"
 #include <assert.h>
+#include <signal.h>
 
 namespace libnet
 {
@@ -16,13 +17,26 @@ namespace loop
 {
 const int kSelectTimeMs = 10000;
 }
+namespace signal
+{
+struct IgnoreSigPipe
+{
+  IgnoreSigPipe()
+  {
+    ::signal(SIGPIPE, SIG_IGN); 
+    LOG_TRACE << " errno = " << errno;
+  }
+};
+}
+
+signal::IgnoreSigPipe gIgnoreSigPipe;
 
 EventLoop::EventLoop()
   : selector_(selector::SelectorProvider::provide(this)),
     functors_(),
     tid_(thread::currentTid()),
     stop_(false),
-    wakeup_(false),
+    //wakeup_(false),
     timerQueue_(new TimerQueue(this))
 {
   LOG_TRACE << "EventLoop.tid = " << tid_ << " current.tid = "<< thread::currentTid();
@@ -60,7 +74,8 @@ void EventLoop::loop()
 
     const Timestamp* earliestTimeStamp = timerQueue_->earliest();
     std::vector<Channel*> activeChannles;
-    wakeup_.set(false);
+    //wakeup_.set(false);
+    // place 1
     if (NULL == earliestTimeStamp)
       selector_->select(loop::kSelectTimeMs, activeChannles);
     else
@@ -83,10 +98,13 @@ void EventLoop::loop()
     std::queue<Functor>  functors;
     {//functor 要放在后面，loop停止的时候 仍然会执行queue中的 functor
       LockGuard guard(lock_);
-      LOG_DEBUG << "functors.size=" << functors_.size();
+      LOG_DEBUG << "functors.size = " << functors_.size();
       functors.swap(functors_);
     }
-
+    // it maybe dont work, if we add a wakeup variable like Reactor.java in xmemcached-client.
+    // if one "add(functor)" was called when Loop running in place 1, and when Loop run here, 
+    // wakeup will be ture, if the add(functor) is called again at this time and will not be called
+    // after setting wakeup to false, the functor added later will run after selectTimeMs.  
     while (!functors.empty())
     {
       Functor& func = functors.front();
@@ -226,10 +244,10 @@ void EventLoop::wakeup()
   //  LOG_TRACE << "cas fail! fd=" << (wakeupFd_[1]);
   //  return;
   //}
-  LOG_TRACE << "goto write fd=" << (wakeupFd_[1]);
+  LOG_TRACE << "goto write fd = " << (wakeupFd_[1]);
   ssize_t n = sockets::write(wakeupFd_[1], "a", 1);
   if (n < 0)
-    LOG_SYSERROR << "wake up, fd=" << (wakeupFd_[1]);
+    LOG_SYSERROR << "wake up, fd = " << (wakeupFd_[1]);
 };
 
 }

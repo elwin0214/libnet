@@ -20,15 +20,15 @@ using namespace std;
 class MemcachedServer : public libnet::NoCopyable
 {
 public:
-  typedef std::shared_ptr<Connection> ConnectionPtr;
+  typedef std::shared_ptr<Connection> Conn;
 
   MemcachedServer(EventLoop* loop, const char* ip, int port, size_t max_connections);
 
   void start();
   
-  void onMessage(const ConnectionPtr& connection);
+  void onMessage(const Conn& conn);
 
-  void onConnection(const ConnectionPtr& connection);
+  void onConnection(const Conn& conn);
 
   size_t getNumConnections() { return num_connections_; }
 

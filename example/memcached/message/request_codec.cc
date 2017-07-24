@@ -24,6 +24,7 @@ void RequestCodec::encode(Message& message, Buffer& buffer)
     char buf[128];
     ::bzero(buf, sizeof(buf));
     snprintf(buf, sizeof(buf), " %d %d %lu", request.flags_, request.exptime_, request.value_.size());
+    LOG_TRACE << "key "<< request.key_ << " line " << buf ;
     buffer.append(buf);
     buffer.append(CRLF);
     buffer.append(request.value_);

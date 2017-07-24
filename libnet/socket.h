@@ -19,7 +19,7 @@ public:
 
   int fd(){ return fd_; }
 
-  int bind(InetAddress &localaddr);
+  int bind(const InetAddress &addr);
 
   int listen(int backlog);
     

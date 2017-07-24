@@ -119,9 +119,6 @@ struct Message
   void reset() { stat_.reset(); data_.reset(); }
 };
 
-
-
-
 }
 }
 

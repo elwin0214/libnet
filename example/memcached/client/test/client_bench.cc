@@ -200,7 +200,8 @@ int main(int argc, char *argv[])
     mclients[i]->send();
   }
   finished.wait();
-  // ~Client() 与 client handleClose(server 关闭连接) 两个线程都会触发对 Connection的调用，保证执行到这里时候，即使持有conn的shared_ptr 调用Connection的函数，也不会访问析构过的内存。
+  // ~Client() 与 client handleClose(server 关闭连接) 两个线程都会触发对 Connection的调用，
+  //保证执行到这里时候，即使持有conn的shared_ptr 调用Connection的函数，也不会访问析构过的内存。
   Timestamp end = Timestamp::now();
   int64_t time = end.value() - start.value();
   double duration = time / 1000;

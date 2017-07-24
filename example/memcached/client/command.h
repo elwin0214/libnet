@@ -57,7 +57,7 @@ public:
   }
 
   Message& response() { return *response_; }
-
+  Message& request() { return request_; }
   
 protected:
   Message request_;

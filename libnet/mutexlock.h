@@ -20,25 +20,25 @@ public:
   MutexLock()
   {
     if (0 > pthread_mutex_init(&mutex, NULL))
-      LOG_SYSERROR << "thread=" << thread::currentTid();
+      LOG_SYSERROR << "tid = " << thread::currentTid();
   }
   
   ~MutexLock()
   {
     if (0 > pthread_mutex_destroy(&mutex))
-      LOG_SYSERROR << "thread=" << thread::currentTid();
+      LOG_SYSERROR << "tid = " << thread::currentTid();
   }
 
   void lock()
   {
     if (0 > pthread_mutex_lock(&mutex))
-      LOG_SYSERROR << "thread=" << thread::currentTid();
+      LOG_SYSERROR << "tid = " << thread::currentTid();
   }
     
   void unlock()
   {
     if (0 > pthread_mutex_unlock(&mutex))
-      LOG_SYSERROR << "thread=" << thread::currentTid();
+      LOG_SYSERROR << "tid = " << thread::currentTid();
   }
 };
 
@@ -50,11 +50,13 @@ private:
 public:
   LockGuard(MutexLock &lock):lock_(lock)
   {
+    LOG_TRACE << "LockGuard" ;
     lock_.lock();
   }
   
   ~LockGuard()
   {
+    LOG_TRACE << "~LockGuard" ;
     lock_.unlock();
   }
 

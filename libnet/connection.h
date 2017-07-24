@@ -4,6 +4,7 @@
 #include "cstring.h"
 #include <functional>
 #include <memory>
+#include <atomic>
 
 namespace libnet
 {
@@ -46,8 +47,8 @@ public:
   Buffer& input() {return input_;}
   Buffer& output() {return output_;}
 
-  bool connected() {return state_ == kConnected;}
-  bool disconnected() {return state_ == kDisConnected;}
+  bool connected() {return state_.load() == kConnected;}
+  bool disconnected() {return state_.load() == kDisConnected;}
 
   void establish();
   void destroy();
@@ -80,7 +81,7 @@ private:
   enum State {kConnecting, kConnected, kDisConnecting, kDisConnected};
 
   EventLoop* loop_;
-  State state_;
+  std::atomic<int> state_;
   ConnectionCallBack connection_callback_;
   ConnectionCallBack read_callback_;
   ConnectionCallBack close_callback_;

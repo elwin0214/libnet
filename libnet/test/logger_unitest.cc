@@ -1,4 +1,5 @@
 #include <libnet/logger.h>
+#include <libnet/current_thread.h>
 #include <gtest/gtest.h>
 #include <assert.h>
 
@@ -19,12 +20,11 @@ void flush_func()
 
 struct TestLogger
 {
-
   void test_output()
   {
     Logger::setOutputFunc(output_func);
     Logger::setFlushFunc(flush_func);
-    LOG_INFO << "abc" ;
+    LOG_INFO << "abc "  << thread::currentTid();
   }
 
 };

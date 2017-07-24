@@ -26,17 +26,11 @@ target_link_libraries(thread_unitest libnet ${GTEST_LIBRARY})
 add_executable(timestamp_unitest timestamp_unitest.cc)
 target_link_libraries(timestamp_unitest libnet)
 
-#add_executable(atomic_unitest atomic_unitest.cc)
-#target_link_libraries(atomic_unitest)
+add_executable(client_unitest client_unitest.cc)
+target_link_libraries(client_unitest libnet ${GTEST_LIBRARY})
 
-add_executable(client_rst_test client_rst_test.cc)
-target_link_libraries(client_rst_test libnet)
-
-add_executable(client_hello_test client_hello_test.cc)
-target_link_libraries(client_hello_test libnet)
-
-add_executable(client_retry_test client_retry_test.cc)
-target_link_libraries(client_retry_test libnet)
+add_executable(server_unitest server_unitest.cc)
+target_link_libraries(server_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(countdown_latch_unitest countdown_latch_unitest.cc)
 target_link_libraries(countdown_latch_unitest libnet)
@@ -46,9 +40,6 @@ target_link_libraries(digits_unitest libnet  ${GTEST_LIBRARY})
 
 add_executable(condition_unitest condition_unitest.cc)
 target_link_libraries(condition_unitest libnet ${GTEST_LIBRARY})
-
-add_executable(condition_wait_unitest condition_wait_unitest.cc)
-target_link_libraries(condition_wait_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(eventloop_unitest eventloop_unitest.cc)
 target_link_libraries(eventloop_unitest libnet)
@@ -64,9 +55,6 @@ add_test(NAME timestamp_unitest COMMAND timestamp_unitest)
 add_test(NAME countdown_latch_unitest COMMAND countdown_latch_unitest)
 add_test(NAME digits_unitest COMMAND digits_unitest)
 add_test(NAME condition_unitest COMMAND condition_unitest)
-add_test(NAME condition_wait_unitest COMMAND condition_wait_unitest)
 add_test(NAME eventloop_unitest COMMAND eventloop_unitest)
-
-#add_test(NAME atomic_unitest COMMAND atomic_unitest)
-
-
+add_test(NAME server_unitest COMMAND server_unitest)
+add_test(NAME client_unitest COMMAND client_unitest)

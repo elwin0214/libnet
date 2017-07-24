@@ -70,6 +70,8 @@ public:
 
   int random(const int& min, const int& max);
 
+  void enableRetry();
+  
 private:
   std::vector<Impl> impls;
   CountDownLatch& latch_;

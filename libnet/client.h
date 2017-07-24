@@ -7,6 +7,7 @@
 #include "mutexlock.h"
 #include <functional>
 #include <map>
+#include <atomic>
 
 namespace libnet
 {
@@ -18,17 +19,21 @@ class Client : public NoCopyable
 {
 
 public:
-  typedef std::shared_ptr<Channel> ChannelPtr;
-  typedef std::shared_ptr<Connection> ConnectionPtr;
-  typedef std::function<void(const ConnectionPtr&)> ConnectionCallBack;
+  typedef std::shared_ptr<Channel> Chan;
+  typedef std::shared_ptr<Connection> Conn;
+  typedef std::function<void(const Conn&)> ConnectionCallBack;
  
   Client(EventLoop* loop, const char* host, int port);
+
+  Client(EventLoop* loop, const InetAddress& address);
 
   ~Client();
 
   bool retry(){ return retry_; }
 
   void enableRetry(){ retry_ = true; }
+
+  void disableRetry() { retry_ = false; }
 
   void connect();
 
@@ -41,7 +46,7 @@ public:
 private:
   void newConnection(int fd);
   void disconnectInLoop();
-  void removeConnection(const ConnectionPtr& connPtr);
+  void removeConnection(const Conn& connPtr);
 
 private:
   ConnectionCallBack connection_callback_;
@@ -52,9 +57,9 @@ private:
   InetAddress server_addr_;
   std::shared_ptr<Connector> connector_;
   int next_id_;
-  ConnectionPtr connection_;
+  Conn connection_;
   std::atomic<bool> stop_;
-  bool retry_;
+  std::atomic<bool> retry_;
   MutexLock lock_;
  };
 

@@ -12,8 +12,8 @@ namespace libnet
 namespace http
 {
 
-HttpServer::HttpServer(EventLoop* loop, const char* ip, int port, int threads)
-  : server_(loop, ip, port, threads)
+HttpServer::HttpServer(EventLoop* loop, const char* ip, uint16_t port, EventLoopGroup* loop_group)
+  : server_(loop, ip, port, loop_group)
 {
 
 };
@@ -25,28 +25,28 @@ void HttpServer::start()
   server_.start();
 };
 
-void HttpServer::onConnection(const ConnectionPtr& connection)
+void HttpServer::onConnection(const Conn& conn)
 {
-  LOG_DEBUG << "onConnection connected=" << (connection->connected()) ;
-  if (connection->connected())
+  LOG_DEBUG << "onConnection connected=" << (conn->connected()) ;
+  if (conn->connected())
   {
     std::shared_ptr<HttpContext> context = std::make_shared<HttpContext>();
-    connection->setContext(context);
-    context->getResponse().setSendCallback(std::bind(&Connection::send, connection.get(), std::placeholders::_1));
+    conn->setContext(context);
+    context->getResponse().setSendCallback(std::bind(&Connection::send, conn.get(), std::placeholders::_1));
   }  
 };
 
-void HttpServer::onMessage(const ConnectionPtr& connection)
+void HttpServer::onMessage(const Conn& conn)
 {
-  std::shared_ptr<HttpContext> context = std::static_pointer_cast<HttpContext>(connection->getContext());
+  std::shared_ptr<HttpContext> context = std::static_pointer_cast<HttpContext>(conn->getContext());
 
-  Buffer &input = connection->input();
-  bool r = httpProcessor_.process(input, *context);
+  Buffer &input = conn->input();
+  bool r = processor_.process(input, *context);
   LOG_DEBUG << "onConnection " <<  (context->getState()) << " process = " << r ;
   if (!r)
   {
-    connection->send("HTTP/1.1 400 Bad Request\r\n\r\n");
-    connection->shutdown();
+    conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
+    conn->shutdown();
     return;
   }
   HttpResponse& response = context->getResponse();
@@ -54,7 +54,7 @@ void HttpServer::onMessage(const ConnectionPtr& connection)
   if (context->getState() == HttpContext::kBodySent || context->getState() == HttpContext::kAllChunkSent)
   {
     if (response.isClose())
-      connection->shutdown();
+      conn->shutdown();
     context->reset();
   }
 

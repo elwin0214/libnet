@@ -28,13 +28,14 @@ void set(int count, const std::string& value)
   futures.reserve(count);
   for (int i = 0; i < count; i++)
   {
-    char buf[16];
-    sprintf(buf, "key-%d", i);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "key-%d", i);
+    LOG_TRACE << i << " " << buf ;
     auto f = gClient->set(buf, value, 0);
     futures.push_back(std::move(f)); 
   }
   int succ = 0;
-  for(auto f : futures)
+  for(future<Msg>& f : futures)
   {
     f.wait();
     succ++;
@@ -48,13 +49,13 @@ void get(int count, const std::string& value)
   futures.reserve(count);
   for (int i = 0; i < count; i++)
   {
-    char buf[16];
-    sprintf(buf, "key-%d", i);
+    char buf[32];
+    snprintf(buf, sizeof(buf), "key-%d", i);
     auto f = gClient->get(buf);
     futures.push_back(std::move(f)); 
   }
   int succ = 0;
-  for(auto f : futures)
+  for(future<Msg>& f : futures)
   {
     f.wait();
     succ++;
@@ -104,9 +105,9 @@ int main(int argc, char *argv[])
 
   EventLoopThread loopThread("loop");
   loopThread.start();
-  CountDownLatch latch(1);
+  CountDownLatch latch(clients);
   gLoop = loopThread.getLoop();
-  AsyncClient client(gLoop, host, port, latch);
+  AsyncClient client(gLoop, host, port, latch, clients);
  
   gClient = &client;
   client.connect();
@@ -147,7 +148,7 @@ int main(int argc, char *argv[])
   #endif
   for (int i = 0; i < clients; i++)
   {
-     threads[i]->start();
+    threads[i]->start();
   }
 
   for (int i = 0; i < clients; i++)
@@ -159,13 +160,13 @@ int main(int argc, char *argv[])
   ::ProfilerStop();
   #endif
   int64_t time = end.value() - start.value();
-  LOG_INFO << " opname = " << (isSet ? "set" : "get")
+  LOG_WARN << " opname = " << (isSet ? "set" : "get")
            << " clients = "  << clients 
            << " reqs = " << reqs 
            << " bytes = " << bytes 
            << " reqs = " << (gCounter.getValue()) 
            << " time = " << (time/1000) << "ms"
-           << " qps = " << (reqs * 1.0 / time / 1000);
+           << " qps = " << (reqs * 1.0 / (time * 1.0 / 1000 / 1000) );
   //g_loop->runAfter(20000, std::bind(&EventLoop::shutdown, g_loop));
   return 0;
 }
