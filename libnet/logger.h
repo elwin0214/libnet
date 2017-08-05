@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <string>
-#include "nocopyable.h"
+#include <libnet/nocopyable.h>
 
 namespace libnet
 {

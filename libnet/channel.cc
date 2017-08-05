@@ -1,5 +1,5 @@
-#include "channel.h"
-#include "eventloop.h"
+#include <libnet/channel.h>
+#include <libnet/eventloop.h>
 
 
 namespace libnet

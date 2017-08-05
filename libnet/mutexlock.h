@@ -2,9 +2,9 @@
 #define __LIBNET_THREAD_MUTEXLOCK_H__
 
 #include <errno.h>
-#include "nocopyable.h"
-#include "current_thread.h"
-#include "logger.h"
+#include <libnet/nocopyable.h>
+#include <libnet/current_thread.h>
+#include <libnet/logger.h>
 
 namespace libnet
 {

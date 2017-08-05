@@ -1,7 +1,7 @@
-#include "connector.h"
-#include "eventloop.h"
-#include "channel.h"
-#include "socket_ops.h"
+#include <libnet/connector.h>
+#include <libnet/eventloop.h>
+#include <libnet/channel.h>
+#include <libnet/socket_ops.h>
 #include <assert.h>
 
 namespace libnet
@@ -20,6 +20,7 @@ Connector::Connector(EventLoop* loop, const InetAddress& server_address)
 
 Connector::~Connector()
 { 
+  LockGuard guard(lock_);
   assert(!channel_);
   if (channel_)
   {
@@ -66,7 +67,6 @@ void Connector::stop()
 
 void Connector::stopInLoop()
 {
-
   loop_->assertInLoopThread();
   if (state_ == kConnecting)
   {
@@ -74,6 +74,7 @@ void Connector::stopInLoop()
     LockGuard guard(lock_);
     channel_->disableAll();
     channel_->remove();
+    sockets::close(channel_->fd());
     loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
   }
 };
@@ -127,11 +128,12 @@ void Connector::handleWrite(int fd)
   loop_->assertInLoopThread();
   if (state_ != kConnecting)
     return;
-  LOG_DEBUG << "fd = " << fd ;
-  LockGuard guard(lock_);
-  channel_->disableAll();
-  channel_->remove();
-
+  LOG_DEBUG << "fd = " << fd;
+  {
+    LockGuard guard(lock_);
+    channel_->disableAll();
+    channel_->remove();
+  }
   int err = sockets::getSocketError(fd);//the fd is readable and writeable when error
   if (err != 0)
     LOG_ERROR << "err = " << err << " error = " << log::Error(err);

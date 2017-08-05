@@ -4,9 +4,9 @@
 #include <memory>
 #include <atomic>
 #include <functional>
-#include "atomic.h"
-#include "inet_address.h"
-#include "mutexlock.h"
+#include <libnet/atomic.h>
+#include <libnet/inet_address.h>
+#include <libnet/mutexlock.h>
 
 namespace libnet
 {

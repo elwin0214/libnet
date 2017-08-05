@@ -1,10 +1,10 @@
 #ifndef __LIBNET_TIMER_H__
 #define __LIBNET_TIMER_H__
 #include <functional>
-#include "timestamp.h"
-#include "nocopyable.h"
-#include "atomic.h"
-#include "logger.h"
+#include <libnet/timestamp.h>
+#include <libnet/nocopyable.h>
+#include <libnet/atomic.h>
+#include <libnet/logger.h>
 
 namespace libnet
 {
@@ -28,22 +28,24 @@ public:
     LOG_TRACE << "destroy!" ;
   }
 
-  Timestamp& time(){ return time_; }
+  const Timestamp& time(){ return time_; } const
 
-  const TimerCallback& callback() {return callback_; }
+  //Timestamp& time(){ return time_; }
+
+  TimerCallback& callback() const {return callback_; }
 
   void run() {callback_(); }
 
   bool next();
 
-  int64_t id() {return id_; }
+  uint64_t id() {return id_; }
 
 private:
   Timestamp time_;
-  int interval_; //ms
+  int interval_; //ms the period of the timer which will be run.it's only valid when greater than 0
   const TimerCallback callback_;
-  int64_t id_;
-  static AtomicInt64 s_timerId_;
+  uint64_t id_;
+  static std::atomic<uint64_t>  g_timer_id_;
 
 };
 
@@ -55,7 +57,7 @@ public:
 
   }
 
-  TimerId(Timer* timer, int64_t id):timer_(timer),id_(id)
+  TimerId(Timer* timer, uint64_t id):timer_(timer),id_(id)
   {
 
   }
@@ -71,11 +73,11 @@ public:
   }
 
   Timer* timer() {return timer_;}
-  int64_t id() {return id_;}
+  uint64_t id() {return id_;}
 
 private:
   Timer* timer_;
-  int64_t id_;
+  uint64_t id_;
 };
 
 }

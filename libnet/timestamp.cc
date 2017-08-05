@@ -1,5 +1,5 @@
 #include <sys/time.h>
-#include "timestamp.h"
+#include <libnet/timestamp.h>
 
 namespace libnet
 {

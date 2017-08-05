@@ -1,8 +1,8 @@
 #include <strings.h>
 #include <unistd.h>
 #include <errno.h>
-#include "../logger.h"
-#include "../channel.h"
+#include <libnet/logger.h>
+#include <libnet/channel.h>
 #include "poll_selector.h"
 
 namespace libnet

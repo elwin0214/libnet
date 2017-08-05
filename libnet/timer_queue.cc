@@ -1,11 +1,15 @@
+#include <assert.h>
 #include <vector>
-#include "timer_queue.h"
-#include "eventloop.h"
+#include <libnet/timer_queue.h>
+#include <libnet/eventloop.h>
 
 namespace libnet
 {
 
-TimerQueue::TimerQueue(EventLoop *loop):queue_(),loop_(loop)
+TimerQueue::TimerQueue(EventLoop *loop)
+  : loop_(loop),
+    timers_(),
+    canceling_timers_()
 {
 
 };
@@ -13,104 +17,124 @@ TimerQueue::TimerQueue(EventLoop *loop):queue_(),loop_(loop)
 TimerId TimerQueue::runAt(const Timestamp& timestamp, const Timer::TimerCallback& callback)
 {
   Timer *timer = new Timer(timestamp, callback);
-  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  loop_->runInLoop(std::bind(&TimerQueue::addInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
 TimerId TimerQueue::runAt(const Timestamp& timestamp, int interval, const Timer::TimerCallback& callback)
 {
   Timer *timer = new Timer(timestamp, interval, callback);
-  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  loop_->runInLoop(std::bind(&TimerQueue::addInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
 TimerId TimerQueue::runAt(const Timestamp& timestamp, Timer::TimerCallback&& callback)
 {
   Timer *timer = new Timer(timestamp, std::move(callback));
-  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  loop_->runInLoop(std::bind(&TimerQueue::addInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
 TimerId TimerQueue::runAt(const Timestamp& timestamp, int interval, Timer::TimerCallback&& callback)
 {
   Timer *timer = new Timer(timestamp, interval, std::move(callback));
-  loop_->queueInLoop(std::bind(&TimerQueue::runInLoop, this, timer));
+  loop_->runInLoop(std::bind(&TimerQueue::addInLoop, this, timer));
   return TimerId(timer, timer->id());
 };
 
 
-void TimerQueue::cancel(TimerId timerId)
+void TimerQueue::cancel(TimerId timer_id)
 {
   loop_->assertInLoopThread();
-  loop_->runInLoop(std::bind(&TimerQueue::cancelInLoop, this, timerId));
+  loop_->runInLoop(std::bind(&TimerQueue::cancelInLoop, this, timer_id));
 };
 
 
-void TimerQueue::runInLoop(Timer *timer)
+void TimerQueue::addInLoop(Timer *timer)
 {
   loop_->assertInLoopThread();
-  LOG_TRACE << "queue.size=" << (queue_.size()) <<" add timer=" << (timer->id()) <<" time=" << (timer->time().value());
-  queue_.insert(std::pair<const Timestamp, Timer*>(timer->time(), timer));
+  LOG_TRACE <<" add timer = " << (timer->id()) <<" time = " << (timer->time().value());
+  timers_.insert(Entry(timer->time(), timer));
 
 };
 
-void TimerQueue::cancelInLoop(TimerId timerId)
+void TimerQueue::cancelInLoop(TimerId timer_id)
 { 
   loop_->assertInLoopThread();
-  cancelingTimers_.insert(timerId);
+  Timer* timer = timer_id.timer();
+  auto itr = timers_.find(Entry(timer->time(), timer));
+  if (itr != timers_.end())
+  {
+    timers_.erase(itr);
+  }
+  else
+  {
+    canceling_timers_.insert(ActiveTimer(timer, timer->id()));
+  }
 };
 
 void TimerQueue::expire(const Timestamp &now)
 {
   loop_->assertInLoopThread();
-  LOG_TRACE << "begin queue.size=" << (queue_.size());
-  if (queue_.size() == 0) return;
-  Queue::iterator lmt = queue_.lower_bound(now);
-  Queue::iterator itr = queue_.begin();
-  std::vector<Timer*> expireTimers;
-  expireTimers.reserve(100);
-  for (; itr != lmt; )
+  if (timers_.size() == 0) 
+  { 
+    LOG_TRACE << "size is null";
+    return;
+  }
+  TimerList::iterator end = timers_.lower_bound(Entry(now, reinterpret_cast<Timer*>(UINTPTR_MAX)));
+  assert(end == timers_.end() || now < end->first);
+  std::vector<Timer*> active_timers;
+  std::vector<Timer*> next_timers;
+  active_timers.reserve(128);
+  next_timers.reserve(128);
+  for (auto itr = timers_.begin(); itr != end; itr++)
   {
+    active_timers.push_back(itr->second);
+  }
+  timers_.erase(timers_.begin(), end);
 
-    (itr->second)->run(); //call 
-    Queue::iterator tmp = itr;
-    itr++;
-    TimerId timerId(tmp->second, tmp->second->id());
-    if (tmp->second->next() && cancelingTimers_.find(timerId) == cancelingTimers_.end())// wont be cancel
-    {
-        expireTimers.push_back(tmp->second);
-    }
-    else
-    {
-      LOG_TRACE << "remove timer = " << (tmp->second->id());
-      delete tmp->second;
-    }
-    queue_.erase(tmp);
-  }
-  LOG_TRACE << "queue.size=" << (queue_.size());
-  for (std::vector<Timer*>::iterator itr = expireTimers.begin(); itr != expireTimers.end(); itr++)
+  for (auto itr = active_timers.begin(); itr != active_timers.end(); itr++)
   {
-    LOG_TRACE << "queue.size=" << (queue_.size()) <<" add timer=" << ((*itr)->id()) <<" time=" << (((*itr)->time()).value());
-    queue_.insert(std::pair<const Timestamp, Timer*>((*itr)->time(), *itr));
+    Timer* timer = *itr;
+    if (canceling_timers_.find(ActiveTimer(timer, timer->id())) != canceling_timers_.end())
+    {
+      LOG_TRACE << "timer " << timer->id() << " delete for cancel.";
+      delete timer;
+      continue;
+    }
+    LOG_TRACE << "timer " << timer->id() << " run.";
+    timer->run();
+    if (!timer->next())
+    {
+      LOG_TRACE << "timer " << timer->id() << " delete for finished.";
+      delete timer;
+      continue;
+    }
+    next_timers.push_back(timer);
   }
-  cancelingTimers_.clear();
+  for (auto itr = next_timers.begin(); itr != next_timers.end(); itr++)
+  {
+    LOG_TRACE <<" add timer = " << ((*itr)->id()) <<" time = " << (((*itr)->time()).value());
+    timers_.insert(Entry((*itr)->time(), *itr));
+  }
+  canceling_timers_.clear();
 };
 
 const Timestamp* TimerQueue::earliest()
 {
-  Queue::iterator itr = queue_.begin();
-  if (itr == queue_.end()){
-    LOG_TRACE << "size=" << queue_.size() << " earliest time is NULL.";
+  auto itr = timers_.begin();
+  if (itr == timers_.end()){
+    LOG_TRACE << " earliest time is NULL.";
     return NULL;
   }
-  LOG_TRACE << "size=" << queue_.size() << " earliest time is " << (itr->first).toString();
+  LOG_TRACE << " earliest time is " << (itr->first).toString();
   return &(itr->first);
 };
 
 TimerQueue::~TimerQueue()
 {
     //delete timer
-  for (Queue::iterator itr = queue_.begin(); itr != queue_.end(); itr++)
+  for (auto itr = timers_.begin(); itr != timers_.end(); itr++)
   {
     delete itr->second;
   }

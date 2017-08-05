@@ -3,9 +3,9 @@
 
 #include <string>
 #include <atomic>
-#include "mutexlock.h"
-#include "condition.h"
-#include "thread.h"
+#include <libnet/mutexlock.h>
+#include <libnet/condition.h>
+#include <libnet/thread.h>
 
 namespace libnet
 {

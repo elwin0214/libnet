@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <sys/syscall.h>
-#include "thread.h"
-#include "logger.h"
-#include "exception.h"
+#include <exception>
+#include <libnet/thread.h>
+#include <libnet/logger.h>
+#include <libnet/exception.h>
 
 namespace libnet
 {
@@ -89,6 +90,11 @@ void Thread::run()
   try
   {
     func_();
+  }
+  catch(const std::exception& e)
+  {
+    fprintf(stderr, "exception caught in Thread %s\n", name_.c_str());
+    fprintf(stderr, "reason: %s\n", e.what());
   }
   catch(const Exception& e)
   {

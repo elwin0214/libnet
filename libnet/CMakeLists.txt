@@ -42,6 +42,7 @@ message(STATUS " source files = " ${SRCS})
 
 SET (HEADERS
   buffer.h
+  endian_ops.h
   channel.h
   client.h
   condition.h
@@ -56,6 +57,7 @@ SET (HEADERS
   nocopyable.h
   server.h
   socket.h
+  socket_ops.h
   thread.h
   thread_pool.h
   timer.h
@@ -80,4 +82,5 @@ INSTALL(TARGETS libnet DESTINATION lib)
 INSTALL(FILES ${HEADERS} DESTINATION include/libnet)
 
 add_subdirectory(http)
+add_subdirectory(mc)
 add_subdirectory(test)

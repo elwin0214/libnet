@@ -3,8 +3,9 @@
 #include <functional>
 #include <map>
 #include <set>
-#include "nocopyable.h"
-#include "timer.h"
+#include <libnet/nocopyable.h>
+#include <libnet/timer.h>
+#include <libnet/timestamp.h>
 
 namespace libnet
 {
@@ -12,13 +13,15 @@ namespace libnet
 class EventLoop;
 class Timer;
 
-
 class TimerQueue: public NoCopyable
 {
 
 public:
 
-  typedef std::multimap<Timestamp, Timer*> Queue;
+  typedef std::pair<Timestamp, Timer*> Entry;
+  typedef std::set<Entry> TimerList;
+  typedef std::pair<Timer*, uint64_t> ActiveTimer;
+  typedef std::set<ActiveTimer> ActiveTimerList;
 
   TimerQueue(EventLoop *loop);
 
@@ -33,51 +36,51 @@ public:
 
   TimerId runAt(const Timestamp &timestamp, int interval, Timer::TimerCallback&& callback);
 
-  TimerId runAfter(int timeMs, const Timer::TimerCallback &callback)
+  TimerId runAfter(int delay, const Timer::TimerCallback &callback)
   {
     Timestamp ts = Timestamp::now();
-    ts.add(timeMs);
+    ts.add(delay);
     return runAt(ts, callback);
   }
 
-  TimerId runAfter(int timeMs, int interval, const Timer::TimerCallback& callback)
+  TimerId runAfter(int delay, int interval, const Timer::TimerCallback& callback)
   {
     Timestamp ts = Timestamp::now();
-    ts.add(timeMs);
+    ts.add(delay);
     return runAt(ts, interval, callback);
   }
 
-  TimerId runAfter(int timeMs, Timer::TimerCallback&& callback)
+  TimerId runAfter(int delay, Timer::TimerCallback&& callback)
   {
     Timestamp ts = Timestamp::now();
-    ts.add(timeMs);
+    ts.add(delay);
     return runAt(ts, std::move(callback));
   }
 
-  TimerId runAfter(int timeMs, int interval, Timer::TimerCallback&& callback)
+  TimerId runAfter(int delay, int interval, Timer::TimerCallback&& callback)
   {
     Timestamp ts = Timestamp::now();
-    ts.add(timeMs);
+    ts.add(delay);
     return runAt(ts, interval, std::move(callback));
   }
 
-  void cancel(TimerId timerId);
+  void cancel(TimerId timer_id);
 
   // run all the callback before the given time
   void expire(const Timestamp &timestamp);
 
   const Timestamp* earliest();
 
-  size_t size() {return queue_.size(); } 
+  size_t size() {return timers_.size(); } 
 
 private:
-  void runInLoop(Timer *timer);
+  void addInLoop(Timer *timer);
   void cancelInLoop(TimerId timerId);
 
 private:
-    Queue queue_;
-    EventLoop *loop_;
-    std::set<TimerId> cancelingTimers_;
+  EventLoop *loop_;
+  TimerList timers_;
+  ActiveTimerList canceling_timers_;
 };
 
 }

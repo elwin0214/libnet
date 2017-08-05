@@ -2,9 +2,9 @@
 #include <strings.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-#include "logger.h"
-#include "socket.h"
-#include "socket_ops.h"
+#include <libnet/logger.h>
+#include <libnet/socket.h>
+#include <libnet/socket_ops.h>
 #include <string>
 
 namespace libnet

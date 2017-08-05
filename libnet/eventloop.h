@@ -5,11 +5,11 @@
 #include <queue>
 #include <memory>
 #include <atomic>
-#include "mutexlock.h"
-#include "timestamp.h"
-#include "timer.h"
-#include "timer_queue.h"
-#include "current_thread.h"
+#include <libnet/mutexlock.h>
+#include <libnet/timestamp.h>
+#include <libnet/timer.h>
+#include <libnet/timer_queue.h>
+#include <libnet/current_thread.h>
 
 namespace libnet
 {
@@ -49,12 +49,12 @@ public:
   void wakeup();
 
   TimerId runAt(const Timestamp &timestamp, const Functor& functor);
-  TimerId runAfter(int afterTimeMs, const Functor& functor);
-  TimerId runInterval(int afterTimeMs, int intervalMs, const Functor& functor);
+  TimerId runAfter(int delay, const Functor& functor);
+  TimerId runInterval(int delay, int interval, const Functor& functor);
 
   TimerId runAt(const Timestamp &timestamp, Functor&& functor);
-  TimerId runAfter(int afterTimeMs, Functor&& functor);
-  TimerId runInterval(int afterTimeMs, int intervalMs, Functor&& functor);
+  TimerId runAfter(int delay, Functor&& functor);
+  TimerId runInterval(int delay, int interval, Functor&& functor);
 
   void cancel(const TimerId& timerId) {timerQueue_->cancel(timerId); }
     

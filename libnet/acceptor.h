@@ -3,8 +3,8 @@
 
 #include <functional>
 #include <memory>  //ubuntu gcc 需要include
-#include "nocopyable.h"
-#include "socket.h"
+#include <libnet/nocopyable.h>
+#include <libnet/socket.h>
 
 namespace libnet
 {

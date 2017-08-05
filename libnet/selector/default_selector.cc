@@ -1,8 +1,8 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
-#include "../logger.h"
-#include "../channel.h"
+#include <libnet/logger.h>
+#include <libnet/channel.h>
 #include "default_selector.h"
 
 namespace libnet

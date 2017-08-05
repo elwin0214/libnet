@@ -1,63 +1,50 @@
-#include <sys/time.h>
-#include <iostream>
-#include <functional>
-#include <map>
-#include <unistd.h>
+#include <atomic>
 #include <libnet/timer.h>
-#include <libnet/timestamp.h>
 #include <libnet/timer_queue.h>
 #include <libnet/eventloop.h>
+#include <libnet/eventloop_thread.h>
+#include <libnet/countdown_latch.h>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace libnet;
 
-//TimerQueue* g_timerQueue;
-EventLoop* g_loop;
-//int count = 0;
-
-void func(const char* msg)
+TEST(TimerQueue, run_interval)
 {
-  fprintf(stdout, "msg=%s,now=%s\n", msg, Timestamp::now().toString().c_str());
-};
-
-void cycle_func(const char* msg)
-{
-  static int count = 0;
-  fprintf(stdout, "msg=%s,now=%s\n", msg, Timestamp::now().toString().c_str());
-  if (++count > 4)
-  {
-    g_loop->shutdown();
-  }
-};
-
-void cancel(const TimerId& timerId)
-{
-   g_loop->cancel(timerId);
-};
-
-
- 
-void test_normal()
-{  
+  int flag = 0;
   EventLoop loop;
-
-  g_loop = &loop;
-
-  loop.runInterval(1000, 2000, std::bind(cycle_func, "cycle 2s task"));
-  loop.runAfter(2000, std::bind(func, "task after 2s"));
-  loop.runAfter(3000, std::bind(func, "task after 3s"));
-  loop.runAfter(5000, std::bind(func, "task after 5s"));
-  loop.runAfter(6000, std::bind(func, "task after 6s"));
-  loop.runAfter(10000, std::bind(func, "wont run task"));
-
-  loop.wakeup();
+  loop.runInterval(100, 200, [&flag](){
+    flag++;
+  });
+  loop.runAfter(550, [&loop](){
+    loop.shutdown();
+  });
   loop.loop();
-};
+  ASSERT_TRUE(flag == 3) << "flag is " << flag;
+}
 
 
-int main()
+TEST(TimerQueue, run_interval_otherthread)
 {
-  //setLogLevel(log::TRACE);
-  test_normal();
-  return 0;
+  std::atomic<int> flag(0);
+  EventLoopThread loop_thread("loop");
+  loop_thread.start();
+  EventLoop* loop = loop_thread.getLoop();
+  loop->runInterval(100, 200, [&flag](){
+    flag.fetch_add(1);
+  });
+
+  CountDownLatch latch(1);
+  loop->runAfter(550, [&loop, &latch](){
+    loop->shutdown();
+    latch.countDown();
+  });
+  latch.wait();
+  ASSERT_TRUE(flag.load() == 3) << "flag is " << flag.load();
+}
+
+int main(int argc, char **argv)
+{
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

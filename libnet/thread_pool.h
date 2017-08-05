@@ -3,10 +3,10 @@
  
 #include <queue>
 #include <memory> 
-#include "nocopyable.h"
-#include "condition.h"
-#include "mutexlock.h"
-#include "thread.h"
+#include <libnet/nocopyable.h>
+#include <libnet/condition.h>
+#include <libnet/mutexlock.h>
+#include <libnet/thread.h>
 
 namespace libnet
 {

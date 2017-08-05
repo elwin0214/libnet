@@ -1,6 +1,6 @@
 #ifndef __LIBNET_ATOMIC_BOOL_H__
 #define __LIBNET_ATOMIC_BOOL_H__
-#include "nocopyable.h"
+#include <libnet/nocopyable.h>
 
 namespace libnet
 {

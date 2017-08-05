@@ -7,7 +7,7 @@
 #include "epoll_selector.h"
 #endif
 
-#include "../logger.h"
+#include <libnet/logger.h>
 
 namespace libnet
 {

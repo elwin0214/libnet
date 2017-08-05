@@ -5,7 +5,7 @@
 #include <string.h>
 #include <string>
 #include <exception>
-#include "nocopyable.h"
+#include <libnet/nocopyable.h>
 
 namespace libnet
 {

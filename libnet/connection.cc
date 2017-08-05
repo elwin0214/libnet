@@ -1,11 +1,11 @@
 #include <assert.h>
 #include <functional> 
 #include <errno.h>
-#include "connection.h"
-#include "channel.h"
-#include "socket.h"
-#include "logger.h"
-#include "eventloop.h"
+#include <libnet/connection.h>
+#include <libnet/channel.h>
+#include <libnet/socket.h>
+#include <libnet/logger.h>
+#include <libnet/eventloop.h>
 
 namespace libnet
 {
@@ -183,12 +183,10 @@ void Connection::handleClose()// 内部触发
 
   if (connection_callback_)
   {
-    auto sp = shared_from_this();
-    connection_callback_(sp);  // 这里必须用 shared_ptr
+    connection_callback_(shared_from_this());  // 这里必须用 shared_ptr
   }
   if (close_callback_)
   {
-    auto sp = shared_from_this();
     close_callback_(shared_from_this());// 外部注入的调用，connection关闭时候触发
   }
  };

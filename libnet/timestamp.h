@@ -19,7 +19,7 @@ public:
 
   static Timestamp now();
 
-  int64_t value() const
+  uint64_t value() const
   {
     return microSeconds_;
   };
@@ -29,14 +29,19 @@ public:
     return microSeconds_ / kMicroSecondsPerSecond;
   };
 
+  uint64_t milliSecondsValue() const
+  {
+    return microSeconds_ / kMilliSecondPerSecond;
+  };
+
   bool operator< (const Timestamp& ts) const
   {
     return microSeconds_ < ts.microSeconds_;
   };
 
-  void add(int timeMs)
+  void add(int ms)
   {
-    microSeconds_ = microSeconds_ + timeMs * 1000;
+    microSeconds_ = microSeconds_ + ms * 1000;
   };
 
   struct timespec getTimespec()
@@ -50,6 +55,8 @@ public:
   std::string toString() const;
 
   static const int kMicroSecondsPerSecond = 1000 * 1000;
+
+  static const int kMilliSecondPerSecond = 1000;
 
 private:
   int64_t microSeconds_; //0.0000001s

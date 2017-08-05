@@ -1,10 +1,10 @@
 #ifndef __LIBNET_CLIENT_H__
 #define __LIBNET_CLIENT_H__
 
-#include "eventloop.h"
-#include "connector.h"
-#include "inet_address.h"
-#include "mutexlock.h"
+#include <libnet/eventloop.h>
+#include <libnet/connector.h>
+#include <libnet/inet_address.h>
+#include <libnet/mutexlock.h>
 #include <functional>
 #include <map>
 #include <atomic>
@@ -51,7 +51,6 @@ private:
 private:
   ConnectionCallBack connection_callback_;
   ConnectionCallBack message_callback_;
-  //ConnectionCallBack close_connection_callback_;
   
   EventLoop* loop_;
   InetAddress server_addr_;

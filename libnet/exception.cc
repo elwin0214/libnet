@@ -1,6 +1,6 @@
 #include <execinfo.h>
 #include <string>
-#include "exception.h"
+#include <libnet/exception.h>
 
 namespace libnet
 {

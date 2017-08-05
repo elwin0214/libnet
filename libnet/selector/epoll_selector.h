@@ -4,7 +4,6 @@
 #include <sys/epoll.h>
 #include "selector.h"
 
-
 namespace libnet
 {
 class Channel;

@@ -5,8 +5,8 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include "socket_ops.h"
-#include "logger.h"
+#include <libnet/socket_ops.h>
+#include <libnet/logger.h>
 
 namespace libnet
 {

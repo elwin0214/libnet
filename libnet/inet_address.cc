@@ -1,5 +1,5 @@
-#include "inet_address.h"
-#include "socket_ops.h"
+#include <libnet/inet_address.h>
+#include <libnet/socket_ops.h>
 #include <string.h>
 
 namespace libnet

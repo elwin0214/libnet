@@ -35,6 +35,12 @@ public:
       condition_.notifyAll();
   };
 
+  void add()
+  {
+    LockGuard guard(lock_);
+    count_++;
+  };
+
   int count()
   {
     LockGuard guard(lock_);

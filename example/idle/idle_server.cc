@@ -11,15 +11,15 @@ void IdleServer::start()
   timerId_ = loop_->runInterval(1, 1000, std::bind(&IdleServer::onTimer, this));
 }
 
-void IdleServer::onConnection(const ConnectionPtr& connection)
+void IdleServer::onConnection(const Conn& conn)
 {
-  timewheel_.onConnection(connection);
+  timewheel_.onConnection(conn);
 }
 
-void IdleServer::onMessage(const ConnectionPtr& connection)
+void IdleServer::onMessage(const Conn& conn)
 {
-  timewheel_.onMessage(connection);
-  Buffer& input = connection->input();
+  timewheel_.onMessage(conn);
+  Buffer& input = conn->input();
   const char* end = input.find("\r\n");
   if (end != NULL)
   {
@@ -28,7 +28,7 @@ void IdleServer::onMessage(const ConnectionPtr& connection)
     input.moveReadIndex(end - start + 2);
     if (line == "exit")
     {
-      connection->shutdown();
+      conn->shutdown();
     }
     else if (line == "exit_all")
     {
@@ -36,8 +36,8 @@ void IdleServer::onMessage(const ConnectionPtr& connection)
     }
     else
     {
-      connection->send(line);
-      connection->send("\r\n");
+      conn->send(line);
+      conn->send("\r\n");
     }
   }
 }

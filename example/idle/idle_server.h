@@ -2,7 +2,6 @@
 #define __EXAMPLE_IDLE_SERVER_H__
 
 #include <libnet/timewheel.h>
-#include <libnet/defs.h>
 #include <libnet/server.h>
 #include <libnet/timer.h>
 
@@ -10,6 +9,8 @@ using namespace libnet;
 //class EventLoop;
 class IdleServer
 {
+public:
+  typedef std::shared_ptr<Connection> Conn;
 public:
   IdleServer(EventLoop* loop, const char* host, int port, size_t seconds)
     : loop_(loop),
@@ -22,9 +23,9 @@ public:
 
   void start();
 
-  void onConnection(const ConnectionPtr& connection);
+  void onConnection(const Conn& conn);
 
-  void onMessage(const ConnectionPtr& connection);
+  void onMessage(const Conn& conn);
 
   void onTimer();
 

@@ -1,13 +1,13 @@
-#include "eventloop.h"
-#include "channel.h"
-#include "logger.h"
+#include <libnet/eventloop.h>
+#include <libnet/channel.h>
+#include <libnet/logger.h>
 #include "selector/selector.h"
 #include "selector/selector_provider.h"
-#include "current_thread.h"
-#include "socket_ops.h"
-#include "timer_queue.h"
-#include "timestamp.h"
-#include "exception.h"
+#include <libnet/current_thread.h>
+#include <libnet/socket_ops.h>
+#include <libnet/timer_queue.h>
+#include <libnet/timestamp.h>
+#include <libnet/exception.h>
 #include <assert.h>
 #include <signal.h>
 
@@ -125,19 +125,20 @@ TimerId EventLoop::runAt(const Timestamp &timestamp, const Functor& functor)
   return timerQueue_->runAt(timestamp, functor);
 };
 
-TimerId EventLoop::runAfter(int afterTimeMs, const Functor& functor)
+TimerId EventLoop::runAfter(int delay, const Functor& functor)
 {
+  
   Timestamp timestamp = Timestamp::now();
-  timestamp.add(afterTimeMs);
+  timestamp.add(delay);
   return timerQueue_->runAt(timestamp, functor);
 };
 
-TimerId EventLoop::runInterval(int afterTimeMs, int intervalMs, const Functor& functor)
+TimerId EventLoop::runInterval(int delay, int interval, const Functor& functor)
 {
   Timestamp timestamp = Timestamp::now();
-  timestamp.add(afterTimeMs);
+  timestamp.add(delay);
   LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
-  return timerQueue_->runAt(timestamp, intervalMs, functor);
+  return timerQueue_->runAt(timestamp, interval, functor);
 };
 
 TimerId EventLoop::runAt(const Timestamp &timestamp, Functor&& functor)
@@ -145,19 +146,19 @@ TimerId EventLoop::runAt(const Timestamp &timestamp, Functor&& functor)
   return timerQueue_->runAt(timestamp, std::move(functor));
 };
 
-TimerId EventLoop::runAfter(int afterTimeMs, Functor&& functor)
+TimerId EventLoop::runAfter(int delay, Functor&& functor)
 {
   Timestamp timestamp = Timestamp::now();
-  timestamp.add(afterTimeMs);
+  timestamp.add(delay);
   return timerQueue_->runAt(timestamp, std::move(functor));
 };
 
-TimerId EventLoop::runInterval(int afterTimeMs, int intervalMs, Functor&& functor)
+TimerId EventLoop::runInterval(int delay, int interval, Functor&& functor)
 {
   Timestamp timestamp = Timestamp::now();
-  timestamp.add(afterTimeMs);
+  timestamp.add(delay);
   LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
-  return timerQueue_->runAt(timestamp, intervalMs, std::move(functor));
+  return timerQueue_->runAt(timestamp, interval, std::move(functor));
 };
 
 void EventLoop::runInLoop(const Functor& functor)
@@ -213,7 +214,11 @@ bool EventLoop::inLoopThread()
 void EventLoop::assertInLoopThread()
 {
   if (!inLoopThread()){
-    LOG_SYSFATAL << "current thread ID "<< thread::currentTid() << ", but the EventLoop thread ID " << tid_;
+    LOG_SYSFATAL << "error = thread dont match, current = "
+                 << thread::currentTid() 
+                 << " loop =  " 
+                 << tid_ << " "
+                 << Exception("dont match").stackTrace();
   }
 
 };

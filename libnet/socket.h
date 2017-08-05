@@ -1,10 +1,9 @@
-
 #ifndef __LIBNET_SOCKET_H__
 #define __LIBNET_SOCKET_H__
 
-#include "nocopyable.h"
-#include "buffer.h"
-#include "inet_address.h"
+#include <libnet/nocopyable.h>
+#include <libnet/buffer.h>
+#include <libnet/inet_address.h>
 
 namespace libnet
 {

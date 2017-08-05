@@ -1,22 +1,22 @@
-#include "timewheel.h"
+#include <libnet/timewheel.h>
 
 namespace libnet
 {
 
-void TimeWheel::onConnection(const ConnectionPtr& connection)
+void TimeWheel::onConnection(const Conn& conn)
 {
-  if (connection->connected())
+  if (conn->connected())
   {
-    EntryPtr entry(new Entry(connection));
+    EntryPtr entry(new Entry(conn));
     WeakEntryPtr wk_entry = entry;
-    connection->setWeakContext(wk_entry);
+    conn->setWeakContext(wk_entry);
     buckets_[index_].insert(std::move(entry));
   }
 };
 
-void TimeWheel::onMessage(const ConnectionPtr& connection)
+void TimeWheel::onMessage(const Conn& conn)
 {
-  std::weak_ptr<void> wk_ptr = connection->getWeakContext();
+  std::weak_ptr<void> wk_ptr = conn->getWeakContext();
   std::shared_ptr<void> ptr = wk_ptr.lock();
   if (!ptr) 
     return;

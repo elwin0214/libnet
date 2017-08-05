@@ -6,8 +6,8 @@
 #include <pthread.h>
 #include <functional>
 #include <sys/types.h>
-#include "nocopyable.h"
-#include "current_thread.h"
+#include <libnet/nocopyable.h>
+#include <libnet/current_thread.h>
 
 namespace libnet
 {

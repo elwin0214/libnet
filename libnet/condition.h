@@ -1,11 +1,11 @@
 #ifndef __LIBNET_CONDITION_H__
 #define __LIBNET_CONDITION_H__
 
-#include "nocopyable.h"
-#include "logger.h"
-#include "mutexlock.h"
+#include <libnet/nocopyable.h>
+#include <libnet/logger.h>
+#include <libnet/mutexlock.h>
 #include <pthread.h>
-#include "timestamp.h"
+#include <libnet/timestamp.h>
 
 namespace libnet
 {

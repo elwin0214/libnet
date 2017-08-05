@@ -1,7 +1,7 @@
-#include "client.h"
-#include "connection.h"
-#include "channel.h"
-#include "logger.h"
+#include <libnet/client.h>
+#include <libnet/connection.h>
+#include <libnet/channel.h>
+#include <libnet/logger.h>
 
 namespace libnet
 {
@@ -77,7 +77,7 @@ void Client::newConnection(int fd)
     LockGuard guard(lock_);
     connection_ = conn;
   }
-  conn->loop()->runInLoop(std::bind(&Connection::establish, connection_));
+  loop_->runInLoop(std::bind(&Connection::establish, connection_));
 };
 
 void Client::removeConnection(const Conn& conn)

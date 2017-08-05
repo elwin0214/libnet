@@ -1,7 +1,7 @@
 #ifndef __LIBNET_CONNECTION_H__
 #define __LIBNET_CONNECTION_H__
-#include "buffer.h"
-#include "cstring.h"
+#include <libnet/buffer.h>
+#include <libnet/cstring.h>
 #include <functional>
 #include <memory>
 #include <atomic>

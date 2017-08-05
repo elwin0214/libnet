@@ -1,7 +1,7 @@
 #ifndef __LIBNET_INETADDRESS_H__
 #define __LIBNET_INETADDRESS_H__
 
-#include "nocopyable.h"
+#include <libnet/nocopyable.h>
 #include <string>
 #include <netinet/in.h>
 

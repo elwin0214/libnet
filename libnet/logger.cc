@@ -2,9 +2,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-#include "timestamp.h"
-#include "logger.h"
-#include "current_thread.h"
+#include <libnet/timestamp.h>
+#include <libnet/logger.h>
+#include <libnet/current_thread.h>
 
 namespace libnet
 {

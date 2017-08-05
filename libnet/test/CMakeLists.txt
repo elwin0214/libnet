@@ -17,7 +17,7 @@ add_executable(logger_test logger_test.cc)
 target_link_libraries(logger_test libnet)
 
 add_executable(timerqueue_unitest timerqueue_unitest.cc)
-target_link_libraries(timerqueue_unitest libnet)
+target_link_libraries(timerqueue_unitest libnet ${GTEST_LIBRARY})
 
 
 add_executable(thread_unitest thread_unitest.cc)
@@ -42,7 +42,7 @@ add_executable(condition_unitest condition_unitest.cc)
 target_link_libraries(condition_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(eventloop_unitest eventloop_unitest.cc)
-target_link_libraries(eventloop_unitest libnet)
+target_link_libraries(eventloop_unitest libnet ${GTEST_LIBRARY})
 
 add_test(NAME buffer_unitest COMMAND buffer_unitest)
 add_test(NAME endian_unitest COMMAND endian_unitest)

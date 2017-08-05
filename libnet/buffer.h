@@ -5,10 +5,10 @@
 #include <vector>
 #include <string>
 #include <assert.h>
-#include "nocopyable.h"
-#include "cstring.h"
-#include "endian_ops.h"
-#include "socket_ops.h"
+#include <libnet/nocopyable.h>
+#include <libnet/cstring.h>
+#include <libnet/endian_ops.h>
+#include <libnet/socket_ops.h>
 
 namespace libnet
 {

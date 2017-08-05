@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits>
-#include "logger.h"
+#include <libnet/logger.h>
 
 namespace libnet
 {

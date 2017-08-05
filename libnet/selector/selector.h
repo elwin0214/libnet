@@ -1,7 +1,7 @@
 #ifndef __LIBNET_SELECTOR_H__
 #define __LIBNET_SELECTOR_H__
 
-#include "../nocopyable.h"
+#include <libnet/nocopyable.h>
 #include <vector>
 #include <map>
 
@@ -26,8 +26,7 @@ protected:
 public:
   Selector(EventLoop* loop);
     virtual ~Selector();
-    //virtual void select(int timeoutMs, ChannelList& activeChannles) = 0;
-
+    
     virtual void updateChannel(Channel *channel) = 0;
     virtual void removeChannel(Channel *channel) = 0;
 

@@ -1,7 +1,7 @@
 #ifndef __LIBNET_CHANNEL_H__
 #define __LIBNET_CHANNEL_H__
 
-#include "nocopyable.h"
+#include <libnet/nocopyable.h>
 #include <memory>
 #include <functional>
 

@@ -1,8 +1,8 @@
 #include <assert.h>
 #include <vector>
 #include <algorithm>
-#include "buffer.h"
-#include "logger.h"
+#include <libnet/buffer.h>
+#include <libnet/logger.h>
 
 namespace libnet
 {

@@ -4,39 +4,39 @@
 #include <memory>
 #include <functional>
 #include <unordered_set>
-#include "defs.h"
-#include "connection.h"
-#include "nocopyable.h"
+#include <libnet/connection.h>
+#include <libnet/nocopyable.h>
 
 namespace libnet
 {
+typedef std::shared_ptr<Connection> Conn;
+typedef std::weak_ptr<Connection> WeakConn;
 
 class Entry
 {
 public:
-  Entry(const ConnectionPtr& connection)
-    : weak_connection_(connection)
+  Entry(const Conn& conn)
+    : weak_conn_(conn)
   {
 
   }
   
   ~Entry()
   {
-    ConnectionPtr connection = weak_connection_.lock();
-    if (connection)
+    Conn conn = weak_conn_.lock();
+    if (conn)
     {
-      connection->shutdown();
+      conn->shutdown();
     }
   }
 private:
-  WeakConnectionPtr weak_connection_;
+  WeakConn weak_conn_;
 };
 
 class TimeWheel : public NoCopyable
 {
 
 public:
-  typedef std::shared_ptr<Connection> ConnectionPtr;
   typedef std::shared_ptr<Entry> EntryPtr;
   typedef std::weak_ptr<Entry> WeakEntryPtr;
   typedef std::unordered_set<EntryPtr> Bucket;
@@ -48,8 +48,8 @@ public:
 
   }
 
-  void onConnection(const ConnectionPtr& connection);
-  void onMessage(const ConnectionPtr& connection);
+  void onConnection(const Conn& conn);
+  void onMessage(const Conn& conn);
   void rotate();
 
 private:

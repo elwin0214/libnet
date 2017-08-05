@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <poll.h>
 #include <assert.h>
-#include "../logger.h"
-#include "../channel.h"
+#include <libnet/logger.h>
+#include <libnet/channel.h>
 #include "epoll_selector.h"
 
 namespace libnet
