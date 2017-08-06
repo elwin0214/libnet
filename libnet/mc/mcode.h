@@ -12,16 +12,18 @@ enum Code
   kFail,
   kSucc, 
   kInit,
-  kConClosed
+  kConClosed,
+  kCacheReject
 };
 
-static const char* CodeName[5] = 
+static const char* CodeName[6] = 
 {
   "Error",
   "Fail",
   "Succ",
   "Init",
-  "ConClosed"
+  "ConClosed",
+  "CacheReject"
 };
 
 enum Opt

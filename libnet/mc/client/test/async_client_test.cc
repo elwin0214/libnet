@@ -4,11 +4,10 @@
 #include <libnet/thread.h>
 #include <string>
 #include <libnet/mc/async_client.h>
+#include <gtest/gtest.h>
 
 using namespace libnet;
 using namespace mc::client;
-
-#define ASSERT(exp, msg) if(!(exp)) fprintf(stderr, "%s\n", msg);
 
 EventLoop* gLoop; 
 AsyncClient* gClient;
@@ -27,10 +26,10 @@ void test_set()
   Msg msg2 = f2.get();
   Msg msg3 = f3.get();
 
-  assert(msg1->code() == kSucc);
-  assert(msg2->code() == kSucc);
-  assert(msg3->code() == kSucc);
-  assert(msg3->data_.value_ == "cc");
+  ASSERT_TRUE(msg1->code() == kSucc) << msg1->code_name();
+  ASSERT_TRUE(msg2->code() == kSucc) << msg2->code_name();
+  ASSERT_TRUE(msg3->code() == kSucc) << msg3->code_name();
+  ASSERT_TRUE(msg3->data_.value_ == "cc");
 }
 
 
@@ -44,10 +43,10 @@ void test_rem()
   f2.wait();
   Msg msg1 = f1.get();
   Msg msg2 = f2.get();
-  assert(msg2->code() == kSucc);
+  ASSERT_TRUE(msg2->code() == kSucc);
   f3.wait();
   Msg msg3 = f3.get();
-  ASSERT(msg3->code() == kSucc, msg3->code_name());
+  ASSERT_TRUE(msg3->code() == kSucc) << msg3->code_name();
 }
 
 
@@ -60,7 +59,7 @@ void test_add()
   future<Msg> f3 = gClient->add("a", "99", 2000);
   f3.wait();
   Msg msg3 = f3.get();
-  assert(msg3->code() == kFail);
+  ASSERT_TRUE(msg3->code() == kFail);
 
   uint32_t last_incr;
   for (int i = 0 ; i < 100 ; i++)
@@ -68,10 +67,10 @@ void test_add()
     future<Msg> f = gClient->incr("a", 1);
     f.wait();
     Msg msg = f.get();
-    assert(msg->code() == kSucc);
+    ASSERT_TRUE(msg->code() == kSucc);
     last_incr = msg->data_.count_;
   }
-  assert( last_incr == 101);
+  ASSERT_TRUE( last_incr == 101);
 
 
   for (int i = 0 ; i < 100 ; i++)
@@ -79,10 +78,10 @@ void test_add()
     future<Msg> f = gClient->decr("a", 1);
     f.wait();
     Msg msg = f.get();
-    assert(msg->code() == kSucc);
+    ASSERT_TRUE(msg->code() == kSucc);
     last_incr = msg->data_.count_;
   }
-  assert( last_incr == 1);
+  ASSERT_TRUE( last_incr == 1);
 }
 // 存在2个线程Loop 和 main，Client先于Loop析构
 // 要考虑2个问题：1. 并发问题，shared_ptr 并发写（析构与reset）
@@ -100,13 +99,13 @@ int main(int argc, char *argv[])
     log::LogLevel logLevel = log::LogLevel(level);
     setLogLevel(logLevel);
 
-    EventLoopThread loopThread("loop");
-    loopThread.start();
-    CountDownLatch connected_latch(2);
+    EventLoopThread thread("loop");
+    thread.start();
+    CountDownLatch connected_latch(1);
     CountDownLatch closed_latch(0);
 
-    gLoop = loopThread.getLoop();
-    AsyncClient client(gLoop, host, port, connected_latch, closed_latch, 2);
+    gLoop = thread.getLoop();
+    AsyncClient client(gLoop, host, port, connected_latch, closed_latch, 1);
     gClient = &client;
     client.connect();
     connected_latch.wait();

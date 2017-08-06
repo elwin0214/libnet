@@ -6,6 +6,7 @@
 #include <libnet/mutexlock.h>
 #include <pthread.h>
 #include <libnet/timestamp.h>
+#include <errno.h>
 
 namespace libnet
 {
@@ -29,16 +30,7 @@ public:
       LOG_SYSERROR << "thread = " << thread::currentTid() ;
   }
 
-  void wait(int ms)
-  {
-    Timestamp now = Timestamp::now();
-    now.add(ms);
-    struct timespec ts = now.getTimespec();
-    int r = pthread_cond_timedwait(&cond_, &(lock_.mutex), &ts);
-    if (0 > r)
-      LOG_SYSERROR << " result = " << r << " thread = " << thread::currentTid() ;
-  }
-
+  int64_t wait(uint32_t wait_milli);
 
   void notifyAll()
   {

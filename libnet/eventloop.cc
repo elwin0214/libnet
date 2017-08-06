@@ -36,6 +36,7 @@ EventLoop::EventLoop()
     functors_(),
     tid_(thread::currentTid()),
     stop_(false),
+    callingPendingFunctor_(false),
     //wakeup_(false),
     timerQueue_(new TimerQueue(this))
 {
@@ -105,12 +106,14 @@ void EventLoop::loop()
     // if one "add(functor)" was called when Loop running in place 1, and when Loop run here, 
     // wakeup will be ture, if the add(functor) is called again at this time and will not be called
     // after setting wakeup to false, the functor added later will run after selectTimeMs.  
+    callingPendingFunctor_ = true;  // some functor may be add by func() in the while.
     while (!functors.empty())
     {
       Functor& func = functors.front();
-      func();
+      func();   
       functors.pop();
     }
+    callingPendingFunctor_ = false;
 
     if (!stop_)
     {
@@ -179,7 +182,7 @@ void EventLoop::queueInLoop(const Functor& functor)
     LockGuard guard(lock_);
     functors_.push(functor);
   }
-  if (!inLoopThread())
+  if (!inLoopThread() || callingPendingFunctor_)
     wakeup();
 };
 

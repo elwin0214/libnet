@@ -14,7 +14,7 @@ Timestamp Timestamp::now()
 std::string Timestamp::toString() const
 {
   char buf[32];
-  time_t seconds = static_cast<time_t>(microSeconds_ / kMicroSecondsPerSecond);
+  time_t seconds = static_cast<time_t>(micro_seconds_ / kMicroSecondsPerSecond);
   struct tm time;
   ::gmtime_r(&seconds, &time);
   snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d",

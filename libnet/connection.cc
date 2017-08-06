@@ -86,11 +86,13 @@ void Connection::sendInLoop(const CString& cstring)
     LOG_ERROR <<"connection Id = " << id_ << " fd = " << (channel_->fd()) << " error = disconnected";
     return;
   }
+  size_t before = output_.readable();
   int n = 0;
   if (!channel_->isWriting() && output_.readable() == 0)
   {
-    //LOG_
     n = socket_->write(cstring);
+    if (n == cstring.length())
+      loop_->queueInLoop(std::bind(write_complete_callback_, shared_from_this()));
   }
   if (n < 0)
   {
@@ -103,6 +105,13 @@ void Connection::sendInLoop(const CString& cstring)
       output_.append(cstring, n);
       channel_->enableWriting();
     }
+  }
+  size_t after = output_.readable();
+  if (before <= high_water_mark_
+      && after > high_water_mark_
+      && high_watermark_callback_)
+  {
+    loop_->queueInLoop(std::bind(high_watermark_callback_, shared_from_this(), after));
   }
 };
 

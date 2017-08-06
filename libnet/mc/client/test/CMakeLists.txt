@@ -1,5 +1,5 @@
 add_executable(async_client_test async_client_test.cc)
-TARGET_LINK_LIBRARIES(async_client_test libnet libnet_mc)
+TARGET_LINK_LIBRARIES(async_client_test libnet libnet_mc ${GTEST_LIBRARY})
 
 add_executable(async_client_bench async_client_bench.cc)
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)

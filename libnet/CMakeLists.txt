@@ -10,6 +10,7 @@ SET (SRCS
  buffer.cc
  channel.cc
  client.cc
+ condition.cc
  connection.cc
  connector.cc
  exception.cc

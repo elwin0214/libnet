@@ -22,15 +22,27 @@ using namespace std;
 AsyncClient::AsyncClient(EventLoop* loop, 
                          const char* host, 
                          uint16_t port, 
-                         CountDownLatch& connected_latch_,
-                         CountDownLatch& closed_latch_,
-                         size_t conn_size)
+                         CountDownLatch& connected_latch,
+                         CountDownLatch& closed_latch,
+                         size_t conn_size,
+                         int32_t send_wait_milli,
+                         size_t high_water_mark,
+                         uint32_t idle_timeout_milli,
+                         size_t max_retry)
+  : send_wait_milli_(send_wait_milli)
 {
   sessions.reserve(conn_size);
   for (size_t i = 0; i < conn_size; i++)
   {
-    shared_ptr<Session> session(new Session(loop, host, port, connected_latch_, closed_latch_));
-    sessions.push_back(std::move(session));
+    auto s = make_shared<Session>(loop,
+                                  host,
+                                  port,
+                                  connected_latch,
+                                  closed_latch,
+                                  high_water_mark,
+                                  idle_timeout_milli,
+                                  max_retry);
+    sessions.push_back(std::move(s));
   }
 };
 
@@ -67,7 +79,11 @@ void AsyncClient::send(const std::shared_ptr<Command>& command)
   int index = random(0, size - 1);
   if (sessions[index]->connected())
   {
-    sessions[index]->send(command);
+    if (!sessions[index]->send(command, send_wait_milli_))
+    {
+      command->response().stat_.code_ = kCacheReject;
+      command->call();
+    }
     return;
   }
   int last = index;
@@ -78,7 +94,11 @@ void AsyncClient::send(const std::shared_ptr<Command>& command)
     next = next % size;
     if (sessions[index]->connected())
     {
-      sessions[index]->send(command);
+      if (!sessions[index]->send(command, send_wait_milli_))
+      {
+        command->response().stat_.code_ = kCacheReject;
+        command->call();
+      }
       return;
     }
   }

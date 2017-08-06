@@ -64,11 +64,10 @@ private:
     TID tid_;
     MutexLock lock_;
     std::atomic<bool> stop_;
-
+    bool callingPendingFunctor_;
     //std::atomic<bool> wakeup_;
     int wakeupFd_[2];
     Channel* wakeupChannel_;
-
     std::unique_ptr<TimerQueue> timerQueue_;
 
 };

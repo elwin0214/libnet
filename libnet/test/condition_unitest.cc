@@ -6,6 +6,7 @@
 #include <vector>
 #include <assert.h>
 #include <memory>
+#include <unistd.h>
 
 using namespace std;
 using namespace libnet;
@@ -115,6 +116,21 @@ TEST(Condition, test)
   { 
     assert(value == index++);
   }
+}
+
+TEST(Condition, wait)
+{
+  MutexLock lock;
+  Condition c(lock);
+
+  Thread([&c](){
+    sleep(1);// 1s
+    c.notifyAll();
+  }).start();
+  bool r = c.wait(2000);
+
+  ASSERT_TRUE(!r);
+
 }
 
 int main(int argc, char **argv)

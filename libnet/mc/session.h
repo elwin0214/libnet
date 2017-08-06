@@ -9,6 +9,7 @@
 #include <libnet/countdown_latch.h>
 #include <libnet/mc/message.h>
 #include <libnet/mc/command.h>
+#include <libnet/mc/req_cache.h>
 
 namespace mc
 {
@@ -30,17 +31,19 @@ public:
   Session(EventLoop* loop, 
           const char* host, 
           uint16_t port, 
-          CountDownLatch& connected_latch_, 
-          CountDownLatch& closed_latch_, 
-          uint32_t idle_timeout = 1000,
-          size_t max_retry = 2);
+          CountDownLatch& connected_latch, 
+          CountDownLatch& closed_latch,
+          size_t high_water_mark = 4096,
+          uint32_t idle_timeout_milli = 20000,
+          size_t max_retry = 3);
 
   Session(EventLoop* loop, 
           const InetAddress& remote_addr, 
-          CountDownLatch& connected_latch_, 
-          CountDownLatch& closed_latch_,
-          uint32_t idle_timeout = 1000,
-          size_t max_retry = 2);
+          CountDownLatch& connected_latch, 
+          CountDownLatch& closed_latch,
+          size_t high_water_mark = 4096,
+          uint32_t idle_timeout_milli = 20000,
+          size_t max_retry = 3);
 
   void connect();
   void disconnect();
@@ -50,9 +53,11 @@ public:
   void onConnection(const Conn& conn);
   void onMessage(const Conn& conn);
 
-  void send(const std::shared_ptr<Command>& cmd);
+  // if check_cache_reject is false , the idle_timeout_milli is not valid
+  bool send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject = true);
 
   void writeRequest();
+
   void notifyWrite();
 
 private:
@@ -62,14 +67,16 @@ private:
 private:
   EventLoop* loop_;
   Client client_;  
-  shared_ptr<RequestCache> cache_;
+  RequestCache cache_;
   CountDownLatch& connected_latch_;
   CountDownLatch& closed_latch_;
+  size_t high_water_mark_;
   TimerId timer_id_;
   Conn conn_;
   std::atomic<bool> connected_;
+
   uint64_t last_optime_;  // ms
-  uint32_t idle_timeout_; // ms
+  uint32_t idle_timeout_milli_; // ms
   size_t max_retry_; 
   size_t retries_;
 

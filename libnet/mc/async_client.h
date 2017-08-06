@@ -27,7 +27,11 @@ public:
               uint16_t port, 
               CountDownLatch& connected_latch_,
               CountDownLatch& closed_latch_,
-              size_t conn_size = 1);
+              size_t conn_size = 1,
+              int32_t send_wait_milli = 5000,
+              size_t high_water_mark = 4096,
+              uint32_t idle_timeout_milli = 20000,
+              size_t max_retry = 3);
 
   void connect();
 
@@ -78,7 +82,10 @@ public:
   
 private:
   std::vector<shared_ptr<Session>> sessions;
-  MutexLock randLock_;
+  int32_t send_wait_milli_;
+  //size_t high_water_mark_;
+  //uint32_t idle_timeout_milli_;
+  //size_t max_retry_;
 };
 
 }

@@ -15,7 +15,8 @@ const char* gHost = "0.0.0.0";
 uint16_t gPort = 9000;
 
 TEST(Session, idle_close)
-{
+{ 
+  log::Logger::setLogLevel(log::LogLevel(0));
   std::atomic<int> req_num(0);
   Server* server;
   EventLoop* loop;
@@ -44,7 +45,7 @@ TEST(Session, idle_close)
   CountDownLatch connected_latch(1);
   CountDownLatch closed_latch(0);
 
-  Session session(loop_thread.getLoop(), gHost, gPort, connected_latch, closed_latch, 200, 3);
+  Session session(loop_thread.getLoop(), gHost, gPort, connected_latch, closed_latch, 4096, 1000, 3);
   session.connect();
 
   connected_latch.wait();

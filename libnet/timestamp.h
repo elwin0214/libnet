@@ -11,8 +11,8 @@ class Timestamp
 {
 
 public:
-  explicit Timestamp(int64_t microSeconds)
-    :  microSeconds_(microSeconds)
+  explicit Timestamp(int64_t micro_seconds)
+    :  micro_seconds_(micro_seconds)
   {
 
   }
@@ -21,36 +21,46 @@ public:
 
   uint64_t value() const
   {
-    return microSeconds_;
+    return micro_seconds_;
   };
 
   uint64_t secondsValue() const 
   {
-    return microSeconds_ / kMicroSecondsPerSecond;
+    return micro_seconds_ / kMicroSecondsPerSecond;
   };
 
   uint64_t milliSecondsValue() const
   {
-    return microSeconds_ / kMilliSecondPerSecond;
+    return micro_seconds_ / kMilliSecondPerSecond;
   };
 
   bool operator< (const Timestamp& ts) const
   {
-    return microSeconds_ < ts.microSeconds_;
+    return micro_seconds_ < ts.micro_seconds_;
   };
 
-  void add(int ms)
+  void add(int32_t milli_seconds)
   {
-    microSeconds_ = microSeconds_ + ms * 1000;
+    micro_seconds_ = micro_seconds_ + milli_seconds * 1000;
   };
+
+  void addMicro(int32_t micro_seconds)
+  {
+    micro_seconds_ = micro_seconds_ + micro_seconds; 
+  }
 
   struct timespec getTimespec()
   {
     struct timespec ts;
-    ts.tv_sec = microSeconds_ / kMicroSecondsPerSecond;
-    ts.tv_nsec = microSeconds_ % kMicroSecondsPerSecond;
+    ts.tv_sec = micro_seconds_ / kMicroSecondsPerSecond;
+    ts.tv_nsec = micro_seconds_ % kMicroSecondsPerSecond;
     return ts;
   };
+
+  int64_t sub(const Timestamp& ts)
+  {
+    return micro_seconds_ - ts.micro_seconds_;
+  }
 
   std::string toString() const;
 
@@ -59,7 +69,7 @@ public:
   static const int kMilliSecondPerSecond = 1000;
 
 private:
-  int64_t microSeconds_; //0.0000001s
+  int64_t micro_seconds_; //0.0000001s
   
 };
 

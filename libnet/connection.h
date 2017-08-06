@@ -18,8 +18,9 @@ class Connection : public NoCopyable, public std::enable_shared_from_this<Connec
 {
 
 public:
-  typedef std::shared_ptr<Connection> ConnectionPtr;
-  typedef std::function<void(const ConnectionPtr&)>  ConnectionCallBack;
+  typedef std::shared_ptr<Connection> Conn;
+  typedef std::function<void(const Conn&)>  ConnectionCallBack;
+  typedef std::function<void(const Conn&, size_t size)>  WaterMarkCallBack;
 
 public:
   Connection(EventLoop* loop, int fd, /*InetAddress& addr, */int id);
@@ -33,15 +34,11 @@ public:
 
   EventLoop* loop(){ return loop_; }
 
-  //void sendString(const CString& cstring);
   void sendBuffer(Buffer* buffer)
   {
     send(CString(buffer->beginRead(), buffer->readable()));
   }
 
-  
-  //void sendWithLen(const char* str, size_t len) { sendString(CString(str, len)); }
-  //void send(const char* str) { sendString(CString(str));}
   void send(const CString& cstring);
 
   Buffer& input() {return input_;}
@@ -60,6 +57,16 @@ public:
   void setReadCallBack(ConnectionCallBack callback) {read_callback_ = callback; }//读到sock的数据需要传递给外部
   void setCloseCallBack(ConnectionCallBack callback) {close_callback_ = callback; }//关闭connection需要通知到外部
 
+  void setHighWaterMarkCallBack(WaterMarkCallBack callback, size_t size)
+  {
+    high_water_mark_ = size;
+    high_watermark_callback_ = callback;
+  }
+
+  void setWriteCompleteCallBack(ConnectionCallBack callback)
+  {
+    write_complete_callback_ = callback;
+  }
 
   void handleRead();
   void handleWrite();
@@ -85,6 +92,10 @@ private:
   ConnectionCallBack connection_callback_;
   ConnectionCallBack read_callback_;
   ConnectionCallBack close_callback_;
+  size_t high_water_mark_;
+  WaterMarkCallBack high_watermark_callback_;
+  ConnectionCallBack write_complete_callback_;
+
   std::shared_ptr<Channel> channel_;
   std::shared_ptr<Socket> socket_;
   Buffer input_;
