@@ -1,0 +1,2 @@
+add_executable(proxy_server_test proxy_server_test.cc )
+TARGET_LINK_LIBRARIES(proxy_server_test libnet libnet_mc)
