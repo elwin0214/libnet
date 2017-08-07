@@ -1,2 +1,2 @@
-add_executable(idle_server_test idle_server.cc idle_server_test.cc )
+add_executable(idle_server_test idle_server_test.cc )
 TARGET_LINK_LIBRARIES(idle_server_test libnet)

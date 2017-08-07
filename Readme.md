@@ -19,11 +19,12 @@ make test
 * select/poll/epoll
 * use std::map to achieve the timer
 * http server module
-* memcached client/server module (support partial text protocol)
+* memcached client/server/proxy module (support partial text protocol)
 
 ### example
-* echo server
-* idle server
+* [echo server](https://github.com/elwin0214/libnet/blob/master/example/echo/echo_server_test.cc)
+* [idle server](https://github.com/elwin0214/libnet/blob/master/example/idle/idle_server_test.cc)
+* [http server](https://github.com/elwin0214/libnet/blob/master/libnet/http/test/httpserver_test.cc)
 * memcached client imitate xmemcached-client
 * memcached server
 

@@ -1,6 +1,9 @@
+#include <signal.h>
 #include <functional>
 #include <iostream>
 #include <libnet/logger.h>
+#include <libnet/eventloop.h>
+#include <libnet/eventloop_group.h>
 #include <libnet/http/http_context.h>
 #include <libnet/http/http_server.h>
 
@@ -39,6 +42,14 @@ struct OkHandler
   }
 };
 
+EventLoop* gLoop;
+void stop(int sig)
+{
+  if (gLoop)
+    gLoop->shutdown();
+};
+
+
 int main(int argc, char *argv[])
 {
   if (argc < 5)
@@ -53,7 +64,11 @@ int main(int argc, char *argv[])
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
   EventLoop loop;
-  HttpServer server(&loop, host, port);
+  gLoop = &loop;
+  ::signal(SIGINT, stop);
+  EventLoopGroup loop_group(&loop, threads, "loop");
+  loop_group.start();
+  HttpServer server(&loop, host, port, &loop_group);
   OkHandler handler;
   server.processor().setRequestHandlerCallBack(std::bind(&OkHandler::handleRequest, &handler, _1, _2));
   server.start();
