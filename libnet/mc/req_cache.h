@@ -8,10 +8,6 @@
 
 namespace mc
 {
-namespace msg
-{
-class Command;
-}
 namespace client
 {
 using namespace libnet;

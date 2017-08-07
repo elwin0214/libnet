@@ -18,8 +18,8 @@ make test
 ### feature
 * select/poll/epoll
 * use std::map to achieve the timer
-* http module
-
+* http server module
+* memcached client/server module (support partial text protocol)
 
 ### example
 * echo server
@@ -28,25 +28,6 @@ make test
 * memcached server
 
 ### dependent libraries
-* gperftools
-```
-https://github.com/gperftools/gperftools.git
-git checkout gperftools-2.5
-./autogen.sh
-./configure 
-make 
-make install
-```
-* google test 
-```
-todo
-```
-* google benchmark
-```
-git clone https://github.com/google/benchmark.git
-git checkout v1.1.0
-mkdir build
-cmake ..
-make 
-make install
-```
+* [gperftools-2.5](https://github.com/gperftools/gperftools.git)
+* [google test](https://github.com/google/googletest)
+* [google benchmark](https://github.com/google/benchmark.git)

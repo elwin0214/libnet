@@ -91,16 +91,17 @@ void Thread::run()
   {
     func_();
   }
-  catch(const std::exception& e)
-  {
-    fprintf(stderr, "exception caught in Thread %s\n", name_.c_str());
-    fprintf(stderr, "reason: %s\n", e.what());
-  }
   catch(const Exception& e)
   {
     fprintf(stderr, "exception caught in Thread %s\n", name_.c_str());
     fprintf(stderr, "reason: %s\n", e.message());
     fprintf(stderr, "stack trace: %s\n", e.stackTrace());
+    abort();
+  }
+  catch(const std::exception& e)
+  {
+    fprintf(stderr, "exception caught in Thread %s\n", name_.c_str());
+    fprintf(stderr, "reason: %s\n", e.what());
     abort();
   }
   catch(...)

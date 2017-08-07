@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <libnet/eventloop.h>
 #include <libnet/channel.h>
 #include <libnet/logger.h>
@@ -110,7 +111,16 @@ void EventLoop::loop()
     while (!functors.empty())
     {
       Functor& func = functors.front();
-      func();   
+      try
+      {
+        func();
+      }
+      catch(const std::exception& e)
+      {
+        LOG_ERROR << " exception = " << e.what();
+        fprintf(stderr, "exception = %s\n", e.what());
+        throw Exception(e.what());
+      }  
       functors.pop();
     }
     callingPendingFunctor_ = false;
@@ -178,6 +188,9 @@ void EventLoop::runInLoop(const Functor& functor)
 
 void EventLoop::queueInLoop(const Functor& functor)
 {  
+  LOG_TRACE << " queueInLoop " 
+          << " tid = "
+          << tid_;
   {
     LockGuard guard(lock_);
     functors_.push(functor);
@@ -200,11 +213,14 @@ void EventLoop::runInLoop(Functor&& functor)
 
 void EventLoop::queueInLoop(Functor&& functor)
 {  
+  LOG_TRACE << " queueInLoop " 
+            << " tid = "
+            << tid_;
   {
     LockGuard guard(lock_);
     functors_.push(std::move(functor));
   }
-  if (!inLoopThread())
+  if (!inLoopThread() || callingPendingFunctor_)
     wakeup();
 };
 

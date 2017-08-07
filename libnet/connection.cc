@@ -91,7 +91,7 @@ void Connection::sendInLoop(const CString& cstring)
   if (!channel_->isWriting() && output_.readable() == 0)
   {
     n = socket_->write(cstring);
-    if (n == cstring.length())
+    if (n == cstring.length() && write_complete_callback_)
       loop_->queueInLoop(std::bind(write_complete_callback_, shared_from_this()));
   }
   if (n < 0)
@@ -170,6 +170,8 @@ void Connection::handleWrite()
       if(output_.readable() == 0)
       {
         channel_->disableWriting();
+        if (write_complete_callback_)
+          loop_->queueInLoop(std::bind(write_complete_callback_, shared_from_this()));
         if (state_ == kDisConnecting)
         {
           shutdownInLoop();
