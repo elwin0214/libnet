@@ -79,6 +79,11 @@ public:
   void setWeakContext(const std::weak_ptr<void>& wk_context) { wk_context_ = wk_context; }
   std::weak_ptr<void>& getWeakContext() { return wk_context_; }
 
+  void setTcpNoDelay(bool on);
+
+  void enableReading();
+  void disableReading();
+
   const char* stateToString();
   ~Connection();
 private:

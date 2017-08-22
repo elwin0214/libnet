@@ -37,6 +37,8 @@ Connection::Connection(EventLoop* loop, int fd, /*InetAddress &addr, */int id)
   channel_->setWriteCallback(std::bind(&Connection::handleWrite, this));
   channel_->setCloseCallback(std::bind(&Connection::handleClose, this));//channel callback使用的connection 不必使用share_ptr ,因为直接disableAll,没机会被调用了
   channel_->setErrorCallback(std::bind(&Connection::handleError, this));
+  socket_->setNoBlocking();
+  socket_->setKeepAlive(true);
 };
 
 void Connection::establish()
@@ -194,11 +196,11 @@ void Connection::handleClose()// 内部触发
 
   if (connection_callback_)
   {
-    connection_callback_(shared_from_this());  // 这里必须用 shared_ptr
+    connection_callback_(shared_from_this()); // 先 connection_callback_ 再 close_callback_ 
   }
   if (close_callback_)
   {
-    close_callback_(shared_from_this());// 外部注入的调用，connection关闭时候触发
+    close_callback_(shared_from_this());// 外部注入的调用，connection关闭时候触发，会把最后一个share_ptr 放入loop 尾部
   }
  };
 
@@ -207,13 +209,29 @@ void Connection::handleError()
   loop_->assertInLoopThread();
 
   int err = sockets::getSocketError(socket_->fd());
-  LOG_ERROR <<"fd = "<< socket_->fd() <<" err = " << err << " error = " << log::Error(err);
   if (err & (ETIMEDOUT | EHOSTUNREACH | ENETUNREACH | EPIPE | ECONNRESET))
   {
+    LOG_ERROR <<"fd = "<< socket_->fd() <<" err = " << err << " error = " << log::Error(err);
     if (state_ != kDisConnected)
       handleClose();
   }
 };
+
+void Connection::setTcpNoDelay(bool on)
+{
+  socket_->setTcpNoDelay(on);
+};
+
+void Connection::enableReading()
+{
+  loop_->runInLoop(std::bind(&Channel::enableReading, channel_));
+};
+
+void Connection::disableReading()
+{
+  loop_->runInLoop(std::bind(&Channel::disableReading, channel_));
+};
+
 const char* Connection::stateToString()
 {
   int state = state_.load();
