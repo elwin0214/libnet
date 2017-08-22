@@ -22,12 +22,12 @@ EpollSelector::EpollSelector(EventLoop* loop)
       epfd_(::epoll_create1(0)),
       epollEvents_(kDefaultEvents)
 {
-  assert(EPOLLIN == POLLIN);
-  assert(EPOLLPRI == POLLPRI);
-  assert(EPOLLOUT == POLLOUT);
-  assert(EPOLLRDHUP == POLLRDHUP);
-  assert(EPOLLERR == POLLERR);
-  assert(EPOLLHUP == POLLHUP);
+  assert(EPOLLIN == POLLIN);  //1
+  assert(EPOLLPRI == POLLPRI);  //2
+  assert(EPOLLOUT == POLLOUT);  //4
+  assert(EPOLLRDHUP == POLLRDHUP); //8192
+  assert(EPOLLERR == POLLERR); //8
+  assert(EPOLLHUP == POLLHUP); //16
 };
 
 EpollSelector::~EpollSelector()

@@ -6,7 +6,7 @@
 namespace libnet
 {
 
-Client::Client(EventLoop* loop, const char* host, int port)
+Client::Client(EventLoop* loop, const char* host, uint16_t port)
   : loop_(loop),
     server_addr_(host, port),
     connector_(std::make_shared<Connector>(loop_, server_addr_)),

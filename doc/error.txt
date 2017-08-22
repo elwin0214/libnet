@@ -51,5 +51,13 @@ poll/epoll对于 socket异常事件的处理。
 如果由handleWrite()处理，Loop中并不会一直关注write事件
 所以还是单独触发handleError()
 
+//
+A POLLHUP means the socket is no longer connected. In TCP, this means FIN has been received and sent.
+//todo 是否应该不再关注read，对httpserver ab test发现 shutdownWrite到最终close 会反复触发此事件
+A POLLERR means the socket got an asynchronous error. In TCP, this typically means a RST has been received or sent. If the file descriptor is not a socket, POLLERR might mean the device does not support polling.
+
+For both of the conditions above, the socket file descriptor is still open, and has not yet been closed (but shutdown() may have already been called). A close() on the file descriptor will release resources that are still being reserved on behalf of the socket. In theory, it should be possible to reuse the socket immediately (e.g., with another connect() call).
+
+A POLLNVAL means the socket file descriptor is not open. It would be an error to close() it.
 
 

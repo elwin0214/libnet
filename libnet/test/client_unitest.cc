@@ -6,6 +6,7 @@
 #include <libnet/eventloop_group.h>
 #include <libnet/connection.h>
 #include <gtest/gtest.h>
+#include <atomic>
 
 using namespace libnet;
 using namespace std;
@@ -61,9 +62,9 @@ TEST(client, multi_client_online)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  atomic<int> connected(0);
-  atomic<int> client_close(0);
-  atomic<int> server_close(0);
+  std::atomic<int> connected(0);
+  std::atomic<int> client_close(0);
+  std::atomic<int> server_close(0);
 
   int number = 100;
   bool stop = false;

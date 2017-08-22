@@ -30,8 +30,9 @@ public:
     Buffer& buffer = conn->input();
     const char* pos = buffer.find("\r\n");
     if (NULL == pos) return;
-    std::string str = buffer.toString();
-    buffer.skip(pos - buffer.beginRead() + 2);
+    size_t len = pos - buffer.beginRead() + 2;
+    std::string str = std::string(buffer.beginRead(), len);
+    buffer.skip(len);
     if (str == "exit\r\n")
     {
       conn->shutdown();

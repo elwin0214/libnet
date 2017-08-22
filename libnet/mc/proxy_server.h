@@ -2,6 +2,7 @@
 #define __LIBNET_MC_PROXY_SERVER_H__
 #include <memory>
 #include <vector>
+#include <map>
 #include <libnet/countdown_latch.h>
 
 namespace libnet

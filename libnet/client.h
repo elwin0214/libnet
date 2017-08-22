@@ -23,7 +23,7 @@ public:
   typedef std::shared_ptr<Connection> Conn;
   typedef std::function<void(const Conn&)> ConnectionCallBack;
  
-  Client(EventLoop* loop, const char* host, int port);
+  Client(EventLoop* loop, const char* host, uint16_t port);
 
   Client(EventLoop* loop, const InetAddress& address);
 

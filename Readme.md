@@ -24,9 +24,10 @@ make test
 ### example
 * [echo server](https://github.com/elwin0214/libnet/blob/master/example/echo/echo_server_test.cc)
 * [idle server](https://github.com/elwin0214/libnet/blob/master/example/idle/idle_server_test.cc)
+* [tcp proxy server](https://github.com/elwin0214/libnet/blob/master/example/proxy/tcp_proxy.cc)
 * [http server](https://github.com/elwin0214/libnet/blob/master/libnet/http/test/httpserver_test.cc)
-* memcached client imitate xmemcached-client
-* memcached server
+* [memcached client](https://github.com/elwin0214/libnet/blob/master/libnet/mc/client/test/async_client_bench.cc)
+* [memcached server](https://github.com/elwin0214/libnet/blob/master/libnet/mc/server/test/memcached_server_bench.cc)
 
 ### dependent libraries
 * [gperftools-2.5](https://github.com/gperftools/gperftools.git)

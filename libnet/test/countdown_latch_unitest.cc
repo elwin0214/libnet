@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <functional>
 #include <vector>
+#include <memory>
 
 using namespace std;
 using namespace libnet;
