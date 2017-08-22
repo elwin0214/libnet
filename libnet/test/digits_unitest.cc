@@ -9,23 +9,34 @@ using namespace libnet::digits;
 using namespace std;
 
 
-TEST(digits, convert)
+TEST(Digits, convert)
 {
   std::string s = "12";
   uint32_t value = 0;
   convert<uint32_t>(s.c_str(), value, 10);
   ASSERT_EQ(value, 12);
 }
-/*
-TEST(digits, convert_string)// error
+
+TEST(Digits, overflow)
 {
-  std::string s = "12";
+  long long l = 1;
+  l = (l << 63) - 1;
+  std::string str = to_string(l);
   uint32_t value = 0;
-  convert<uint32_t>(s, value, 10);
-  ASSERT_EQ(value, 12);
-}*/
+  bool result = convert<uint32_t>(str.c_str(), value, 10);
+  ASSERT_TRUE(!result);
+}
+
+TEST(Digits, error_format)
+{
+  
+  std::string str = "1abc2";
+  uint32_t value = 0;
+  bool result = convert<uint32_t>(str.c_str(), value, 10);
+  ASSERT_TRUE(!result);
+}
    
-TEST(digits, digit2xstring)
+TEST(Digits, digit2xstring)
 {
   char buf[100];
   digitToXstring(16, buf);

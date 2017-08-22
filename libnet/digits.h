@@ -21,14 +21,17 @@ template<typename T>
 bool convert(const char* str, T& result, int base)
 {
   int64_t value = 0; 
+  size_t pos = 0;
   try
   {
-    value = std::stoll(str, nullptr, base);  
+    value = std::stoll(str, &pos, base);  
   }
   catch(...)
   {
     return false;
   }
+  if (pos != strlen(str)) return false;
+
   if (value < 0 || value > std::numeric_limits<T>::max())
   {
     return false;
