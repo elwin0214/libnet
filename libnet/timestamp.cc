@@ -16,7 +16,7 @@ std::string Timestamp::toString() const
   char buf[32];
   time_t seconds = static_cast<time_t>(micro_seconds_ / kMicroSecondsPerSecond);
   struct tm time;
-  ::gmtime_r(&seconds, &time);
+  ::localtime_r(&seconds, &time);
   snprintf(buf, sizeof(buf), "%4d%02d%02d %02d:%02d:%02d",
              time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
              time.tm_hour, time.tm_min, time.tm_sec);
