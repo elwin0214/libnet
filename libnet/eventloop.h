@@ -46,6 +46,7 @@ public:
   void assertInLoopThread();
 
   void shutdown();
+  void shutdownInLoop();
   void wakeup();
 
   TimerId runAt(const Timestamp &timestamp, const Functor& functor);

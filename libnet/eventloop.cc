@@ -256,10 +256,14 @@ void EventLoop::removeChannel(Channel* channel)
 
 void EventLoop::shutdown()
 {
-  stop_ = true;
-  if (!inLoopThread())
-    wakeup();
+  queueInLoop(std::bind(&EventLoop::shutdownInLoop, this));
 };
+
+void EventLoop::shutdownInLoop()
+{
+  assertInLoopThread();
+  stop_ = true;
+}
 
 void EventLoop::wakeup()
 {
