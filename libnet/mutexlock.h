@@ -50,13 +50,13 @@ private:
 public:
   LockGuard(MutexLock &lock):lock_(lock)
   {
-    LOG_TRACE << "LockGuard" ;
+    //LOG_TRACE << "LockGuard" ;
     lock_.lock();
   }
   
   ~LockGuard()
   {
-    LOG_TRACE << "~LockGuard" ;
+    //LOG_TRACE << "~LockGuard" ;
     lock_.unlock();
   }
 

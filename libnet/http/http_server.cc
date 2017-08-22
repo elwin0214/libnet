@@ -35,11 +35,10 @@ void HttpServer::onConnection(const Conn& conn)
     context->getResponse().setSendCallback(std::bind(&Connection::send, conn.get(), std::placeholders::_1));
   }  
 };
-
+// no pipeline, multiple request will not be received in a buffer.
 void HttpServer::onMessage(const Conn& conn)
 {
   std::shared_ptr<HttpContext> context = std::static_pointer_cast<HttpContext>(conn->getContext());
-
   Buffer &input = conn->input();
   bool r = processor_.process(input, *context);
   LOG_DEBUG << "onConnection " <<  (context->getState()) << " process = " << r ;

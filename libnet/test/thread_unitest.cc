@@ -1,4 +1,4 @@
-
+#include <memory>
 #include <libnet/thread.h>
 #include <atomic>
 #include <gtest/gtest.h>

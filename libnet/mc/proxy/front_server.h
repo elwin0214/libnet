@@ -32,10 +32,27 @@ public:
   typedef shared_ptr<Command> Cmd;
   typedef shared_ptr<Message> Msg;
 
+  /*struct Session
+  {
+    Session(size_t unack, Connection* owner)
+      : unack_(unack),
+        owner_(owner)
+    {
+    };
+    Session(const Session& s)
+      : unack_(s.unack_),
+        owner_(s.owner_)
+    {
+    };
+    Connection* owner_;
+    size_t unack_;
+  }; */
+
 public:
   FrontServer(EventLoop* loop, 
               EventLoopGroup* loop_group,
-              const InetAddress& local_address);
+              const InetAddress& local_address,
+              size_t unack = 100);
 
   void start();
   void onConnection(const Conn& cn);
@@ -47,12 +64,15 @@ public:
     message_callback_ = callback;
   }
 
+
 private:
   Server server_;
-  map<int, Conn> front_conns_;
+  std::map<int, size_t> front_unacks_;
+  MutexLock lock_;
   function<void(const Conn&, Message&)> message_callback_;
   RequestCodec req_codec_;
   ResponseCodec resp_codec_;
+  size_t unack_;
 };
 
 }

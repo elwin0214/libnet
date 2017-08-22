@@ -56,11 +56,13 @@ public:
   // if check_cache_reject is false , the idle_timeout_milli is not valid
   bool send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject = true);
 
-  void writeRequest();
-
+  void writeInLoop();
   void notifyWrite();
 
 private:
+  void acceptWrite(const Conn& conn);
+  void rejectWrite(const Conn& conn, size_t size);
+
   void onIdle();
   void update();
 
@@ -79,7 +81,6 @@ private:
   uint32_t idle_timeout_milli_; // ms
   size_t max_retry_; 
   size_t retries_;
-
 };
 
 }

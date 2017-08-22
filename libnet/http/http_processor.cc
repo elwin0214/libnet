@@ -126,7 +126,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
  
   const char* pos = NULL;
   bool done = false;
-  bool result = false; // false - error , true - nedd more data
+  bool result = false; // false - error
   while (!done)
   { 
     HttpContext::State state = context.getState();
@@ -233,7 +233,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
 
         size_t allowed = std::min(input.readable(), request.body.remain());
         int used = processBody(input, allowed, context);
-        if (used == 0) 
+        if (used == 0) // need more data 
         {
           done = true;
           result = true;
@@ -243,7 +243,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
         request.body.offset_ += used;
         if (request.body.remain() == 0)
         {
-          context.setState(HttpContext::kBodySent);
+          context.setState(HttpContext::kBodySent); //finish
           requestHandlerCallBack_(input, context);
           done = true;
           result = true;
@@ -291,7 +291,7 @@ bool HttpProcessor::parseRequest(Buffer &input, HttpContext &context)
               break;
             }
             input.moveReadIndex(2); //0\r\n
-            context.setState(HttpContext::kAllChunkSent);
+            context.setState(HttpContext::kAllChunkSent);// finish
             requestHandlerCallBack_(input, context);
 
             done = true;

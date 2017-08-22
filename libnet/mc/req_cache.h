@@ -23,38 +23,27 @@ public:
 
   RequestCache(size_t buffer_size = 4096);
   
-  void start() { stoped_ = false; }
+  void start();
   void close();
 
-  void writeRequest(const Conn& connection);
+  bool send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject);
+  size_t write(const Conn& connection);
+  bool receive(Buffer& input);
 
-  bool push(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject);
+  void acceptSending();
+  void rejectSending();
 
-  bool readResponse(Buffer& input);
-
-  void disableSending(const Conn& conn, size_t size)
-  {
-    LOG_DEBUG << "conn = " << conn->id() << " size = " << size ;
-    reject_sending_ = true;
-  }
-
-  void enableSending(const Conn& conn)
-  {
-    LOG_DEBUG << "conn = " << conn->id();
-    LockGuard guard(sending_lock_);
-    reject_sending_ = false;
-    sending_cond_.notifyAll();
-  }
 private:
   MutexLock sending_lock_;
   MutexLock sent_lock_;
   Condition sending_cond_;
+  size_t capacity_;
+  std::atomic<size_t> size_;
   std::atomic<bool> reject_sending_;
-  std::atomic<bool> stoped_; // used to release the thread wait on sending_queue_
+  std::atomic<bool> closed_; // used to release the thread wait on sending_queue_
   CommandQueue sending_queue_;
   CommandQueue sent_queue_;
   size_t buffer_size_;
-
 
 };
 

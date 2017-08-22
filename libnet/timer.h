@@ -3,8 +3,8 @@
 #include <functional>
 #include <libnet/timestamp.h>
 #include <libnet/nocopyable.h>
-#include <libnet/atomic.h>
 #include <libnet/logger.h>
+#include <atomic>
 
 namespace libnet
 {

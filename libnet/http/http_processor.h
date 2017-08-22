@@ -47,6 +47,7 @@ private:
   bool parseRequestLine(const char* begin, const char* end, HttpContext& context);
   bool parseRequestHeader(const char* begin, const char* end, HttpContext &context);
   bool processHeaders(HttpContext &context);
+  // size - the consumed size
   size_t processBody(Buffer &input, size_t size, HttpContext &context);
 
 private:

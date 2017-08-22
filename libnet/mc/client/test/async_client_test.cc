@@ -83,9 +83,7 @@ void test_add()
   }
   ASSERT_TRUE( last_incr == 1);
 }
-// 存在2个线程Loop 和 main，Client先于Loop析构
-// 要考虑2个问题：1. 并发问题，shared_ptr 并发写（析构与reset）
-// 2.Loop线程访问Client的资源,Client析构时候，注意Loop访问Client控制的资源被析构。
+
 int main(int argc, char *argv[])
 {
     if (argc < 4)

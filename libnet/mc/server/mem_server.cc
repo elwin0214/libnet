@@ -54,20 +54,24 @@ void MemServer::onMessage(const Conn& conn)
   std::shared_ptr<Context> context = std::static_pointer_cast<Context>(conn->getContext());
   Message& request = context->request();
   Buffer& in = conn->input();
-  if (!request_codec_.decode(request, in)) return;
-  if (request.stat_.code_ != kSucc)
+  while (true)
   {
-    conn->send("ERROR\r\n");
+    if (!request_codec_.decode(request, in)) return;
+    if (request.stat_.code_ != kSucc)
+    {
+      conn->send("ERROR\r\n");
+      request.reset();
+      continue;
+    }
+    LOG_TRACE << " op = " << request.op()  << " key = "  << request.data_.key_;
+    Message response(request.data_.op_);
+    handler_(request, response);
     request.reset();
-    return;
+    Buffer buffer(0, response.data_.value_.size() + response.data_.key_.size() + 64);
+    response_codec_.encode(response, buffer);
+    conn->sendBuffer(&buffer);
   }
-  LOG_TRACE << " op = " << request.op()  << " key = "  << request.data_.key_;
-  Message response(request.data_.op_);
-  handler_(request, response);
-  request.reset();
-  Buffer buffer(0, response.data_.value_.size() + response.data_.key_.size() + 64);
-  response_codec_.encode(response, buffer);
-  conn->sendBuffer(&buffer);
+
 };
 
 }

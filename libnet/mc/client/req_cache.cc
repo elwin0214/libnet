@@ -22,20 +22,26 @@ RequestCache::RequestCache(size_t buffer_size)
                 sent_lock_(),
                 sending_cond_(sending_lock_),
                 reject_sending_(false),
-                stoped_(false),
+                closed_(false),
                 sending_queue_(),
                 sent_queue_(),
                 buffer_size_(buffer_size)
 {
-}
-  
+};
+
+void RequestCache::start()
+{
+  closed_ = false; 
+  reject_sending_ = false;
+};
+
 void RequestCache::close()
 {
   
   LOG_TRACE << "close()";
   {
     LockGuard guard(sending_lock_);
-    stoped_ = true;
+    closed_ = true;
     sending_cond_.notifyAll();
     while (!sending_queue_.empty())
     {
@@ -55,16 +61,18 @@ void RequestCache::close()
       sent_queue_.pop();
     }
   }
-}
+};
 
-void RequestCache::writeRequest(const Conn& conn)//todo fix bug if dont write all command
+// collect more command and write to connection at a time
+size_t RequestCache::write(const Conn& conn)
 {   
   vector<shared_ptr<Command>> commands;
   Buffer buffer(0, buffer_size_);
-  int n = 0;
+  size_t n = 0;
+  size_t remain = 0;
   {
     LockGuard guard(sending_lock_); 
-    if (sending_queue_.empty()) return;
+    if (sending_queue_.empty()) return 0;
     commands.reserve(1024);
     for (n = 0; n < 1024; n++)
     {
@@ -75,14 +83,14 @@ void RequestCache::writeRequest(const Conn& conn)//todo fix bug if dont write al
       cmd->encode(buffer);
       commands.push_back(std::move(cmd));
     }
-
-    if (!sending_queue_.empty())
-    {
-      conn->loop()->queueInLoop(std::bind(&RequestCache::writeRequest, this ,conn));
-    }
+    remain = sending_queue_.size();
+    // if (!sending_queue_.empty())
+    // {
+    //   conn->loop()->queueInLoop(std::bind(&RequestCache::writeRequest, this ,conn));//if dont write all command
+    // }
   }
 
-  if (commands.size() <= 0) return;
+  if (commands.size() <= 0) return remain;
   {
     LockGuard guard(sent_lock_);
     for (auto itr = commands.begin(); itr != commands.end(); itr++)
@@ -96,30 +104,31 @@ void RequestCache::writeRequest(const Conn& conn)//todo fix bug if dont write al
   }
   if (buffer.readable() > 0)
     conn->sendBuffer(&buffer);
-}
+  return remain;
+};
 
-bool RequestCache::push(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject)
+bool RequestCache::send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject)
 {
-  LOG_DEBUG << send_wait_milli << " " << check_cache_reject << " stoped = " << stoped_.load();
-  if (stoped_) return false;
+  LOG_DEBUG << send_wait_milli << " " << check_cache_reject << " stoped = " << closed_.load();
+  if (closed_) return false;
   LockGuard guard(sending_lock_);
-  if (stoped_) return false;//
+  if (closed_) return false;//
   if (!check_cache_reject)
   {
     sending_queue_.push(cmd);
     return true;
   }
-  while (reject_sending_.load())
+  while (reject_sending_)
   {
     if (send_wait_milli <= 0) return false;
     send_wait_milli = sending_cond_.wait(send_wait_milli);
-    if (stoped_) return false;
+    if (closed_) return false;
   }
   sending_queue_.push(cmd);
   return true;
-}
+};
 
-bool RequestCache::readResponse(Buffer& input)
+bool RequestCache::receive(Buffer& input)
 {
   LockGuard guard(sent_lock_);
   if (sent_queue_.empty()){
@@ -134,7 +143,18 @@ bool RequestCache::readResponse(Buffer& input)
     return true;
   }
   return false;
-}
+};
+
+void RequestCache::acceptSending()
+{
+  reject_sending_ = false;
+  sending_cond_.notifyAll();
+};
+
+void RequestCache::rejectSending()
+{
+  reject_sending_ = true;
+};
 
 }
 }

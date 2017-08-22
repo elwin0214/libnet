@@ -10,11 +10,14 @@ namespace proxy
 
 FrontServer::FrontServer(EventLoop* loop,
                          EventLoopGroup* loop_group,
-                         const InetAddress& local_address)
+                         const InetAddress& local_address,
+                         size_t unack)
   : server_(loop, local_address, loop_group),
-    front_conns_(),
+    front_unacks_(),
+    lock_(),
     req_codec_(),
-    resp_codec_()
+    resp_codec_(),
+    unack_(unack)
 {
 
 }
@@ -32,11 +35,15 @@ void FrontServer::onConnection(const Conn& cn)
   {
     std::shared_ptr<Message> ctx = std::make_shared<Message>();
     cn->setContext(ctx);
-    front_conns_[cn->id()] = cn;
+    {
+      LockGuard guard(lock_);
+      front_unacks_[cn->id()] = 0;
+    }
   }
   else
   {
-    front_conns_.erase(cn->id());
+    LockGuard guard(lock_);
+    front_unacks_.erase(cn->id());
   }
 }
 
@@ -44,16 +51,26 @@ void FrontServer::onMessage(const Conn& cn)
 {
   std::shared_ptr<Message> request = std::static_pointer_cast<Message>(cn->getContext());
   Buffer& in = cn->input();
-  if (!req_codec_.decode(*request, in)) return;
-  if (request->stat_.code_ != kSucc)
+  
+  while (true)
   {
-    cn->send("ERROR\r\n");
+    if (!req_codec_.decode(*request, in)) return;
+    if (request->stat_.code_ != kSucc)
+    {
+      cn->send("ERROR\r\n");
+      request->reset();
+      continue;
+    }
+    LOG_TRACE << " op = " << request->op()  << " key = "  << request->data_.key_;
+    message_callback_(cn, *request);
     request->reset();
-    return;
+    {
+      LockGuard guard(lock_);
+      size_t& unack = front_unacks_[cn->id()];
+      unack++ ;
+      if (unack >= unack_) cn->disableReading();
+    }
   }
-  LOG_TRACE << " op = " << request->op()  << " key = "  << request->data_.key_;
-  message_callback_(cn, *request);
-  request->reset();
 }
 
 void FrontServer::send(const Conn& cn, Message& response)
@@ -62,6 +79,12 @@ void FrontServer::send(const Conn& cn, Message& response)
   resp_codec_.encode(response, buffer);
   LOG_TRACE << "conn = " << cn->id();
   cn->sendBuffer(&buffer);
+  {
+    LockGuard guard(lock_);
+    size_t& unack = front_unacks_[cn->id()];
+    unack -- ;
+    if (unack == 0) cn->enableReading();
+  }
 }
 
 }

@@ -15,13 +15,14 @@ using namespace mc::proxy;
 std::function<void()> gStopCallback;
 void stop(int sig)
 {
+  LOG_INFO << "stop" ;
   if (gStopCallback)
     gStopCallback();
 };
 
 int main(int argc, char *argv[])
 {
-  log::LogLevel logLevel = log::LogLevel(0);
+  log::LogLevel logLevel = log::LogLevel(2);
   log::Logger::setLogLevel(logLevel);
   EventLoop loop;
   EventLoopGroup server_loops(&loop, 1, "server");
@@ -40,7 +41,6 @@ int main(int argc, char *argv[])
                        connected_latch,
                        closed_latch);
   proxy.start();
-  connected_latch.wait();
   gStopCallback = [&loop, &proxy, &closed_latch]()mutable{
     proxy.close();
     loop.runInterval(100, 1000, [&loop, &closed_latch]()mutable{
@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
         loop.shutdown();
     });
   };
+  connected_latch.wait();
   ::signal(SIGINT, stop);
   loop.loop();
 }

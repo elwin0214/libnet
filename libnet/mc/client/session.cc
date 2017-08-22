@@ -11,7 +11,7 @@ namespace client
 using namespace libnet;
 using namespace std;
 using namespace std::placeholders;
-
+// 一旦触发 high_water_mark_ request不能往 cache投递，cache 里面的 request会继续往buffer写，直到buffer写完
 Session::Session(EventLoop* loop, 
                  const char* host, 
                  uint16_t port,
@@ -84,8 +84,8 @@ void Session::onConnection(const Conn& conn)
       timer_id_ = loop_->runAfter(idle_timeout_milli_, std::bind(&Session::onIdle, this));
       update();
     }
-    conn->setHighWaterMarkCallBack(std::bind(&RequestCache::disableSending, &cache_, _1, _2), high_water_mark_);
-    conn->setWriteCompleteCallBack(std::bind(&RequestCache::enableSending, &cache_, _1));
+    conn->setHighWaterMarkCallBack(std::bind(&Session::rejectWrite, this, _1, _2), high_water_mark_);
+    conn->setWriteCompleteCallBack(std::bind(&Session::acceptWrite, this, _1));
     connected_ = true;
     cache_.start();
     connected_latch_.countDown();
@@ -106,7 +106,7 @@ void Session::onConnection(const Conn& conn)
 
 bool Session::send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject) // check connected?
 {    
-  if (!cache_.push(cmd, send_wait_milli, check_cache_reject))
+  if (!cache_.send(cmd, send_wait_milli, check_cache_reject))
   {
     LOG_TRACE << "send_wait_milli = "
               << send_wait_milli
@@ -126,22 +126,28 @@ void Session::onMessage(const Conn& conn)
   if (log::Logger::getLogLevel() <= libnet::log::TRACE)
     LOG_TRACE << "read = " << input.toString() ;
   update();
-  while(cache_.readResponse(input))// more response
+  while(cache_.receive(input))// more response
   {
 
   }
 };
 
-void Session::writeRequest()
+void Session::writeInLoop()
 {
   loop_->assertInLoopThread();
   if (conn_ && conn_->connected())
-    cache_.writeRequest(conn_);
+  {
+    size_t remain = cache_.write(conn_);
+    if (remain > 0)
+    {
+      loop_->runInLoop(std::bind(&Session::writeInLoop, this));
+    }
+  }
 };
 
 void Session::notifyWrite()
 {
-  loop_->runInLoop(std::bind(&Session::writeRequest, this));
+  loop_->runInLoop(std::bind(&Session::writeInLoop, this));
 };
 
 void Session::onIdle()
@@ -181,6 +187,18 @@ void Session::update()
 {
   last_optime_ = Timestamp::now().milliSecondsValue();
   retries_ = 0;
+};
+
+void Session::acceptWrite(const Conn& conn)
+{
+  loop_->assertInLoopThread();
+  cache_.acceptSending();
+};
+
+void Session::rejectWrite(const Conn& conn, size_t size)
+{
+  loop_->assertInLoopThread();
+  cache_.rejectSending();
 };
 
 }
