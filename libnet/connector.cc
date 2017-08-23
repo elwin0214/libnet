@@ -140,6 +140,8 @@ void Connector::handleWrite(int fd)
   if (err)
   {
     state_ = kDisConnected;
+    //channel_->disableAll();
+    //channel_->remove();
     sockets::close(fd); 
     // handleWrite is excuted inside the Channle::handleEvent
     loop_->queueInLoop(std::bind(&Connector::removeChannelInLoop, shared_from_this()));
@@ -166,7 +168,7 @@ void Connector::handleError(int fd)// trigger handleWrite and handleError at the
   loop_->assertInLoopThread();
   int err = sockets::getSocketError(fd); 
   LOG_ERROR << "err = " << err << " error = " << log::Error(err);
-  if (state_ != kConnecting)
+  if (state_ != kConnecting) // 可能同时触发 handleWrite handleError
     return;
   state_ = kDisConnected;
   LockGuard guard(lock_);

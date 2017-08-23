@@ -66,6 +66,8 @@ void RequestCache::close()
 // collect more command and write to connection at a time
 size_t RequestCache::write(const Conn& conn)
 {   
+  //LockGuard guard1(sending_lock_); 
+  //LockGuard guard2(sent_lock_);
   vector<shared_ptr<Command>> commands;
   Buffer buffer(0, buffer_size_);
   size_t n = 0;
@@ -100,7 +102,7 @@ size_t RequestCache::write(const Conn& conn)
   }
   if (log::Logger::getLogLevel() <= libnet::log::TRACE)
   {
-    LOG_TRACE << "n = " << n << " buffer.readable = " << buffer.readable();
+    LOG_TRACE << "n = " << n << " buffer.readable = " << buffer.readable()  << " content = " << buffer.toAsciiString();
   }
   if (buffer.readable() > 0)
     conn->sendBuffer(&buffer);
@@ -109,13 +111,14 @@ size_t RequestCache::write(const Conn& conn)
 
 bool RequestCache::send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject)
 {
-  LOG_DEBUG << send_wait_milli << " " << check_cache_reject << " stoped = " << closed_.load();
+  LOG_TRACE << send_wait_milli << " " << check_cache_reject << " closed = " << closed_.load();
   if (closed_) return false;
   LockGuard guard(sending_lock_);
   if (closed_) return false;//
   if (!check_cache_reject)
   {
     sending_queue_.push(cmd);
+    LOG_DEBUG << "push a command";
     return true;
   }
   while (reject_sending_)
@@ -147,12 +150,14 @@ bool RequestCache::receive(Buffer& input)
 
 void RequestCache::acceptSending()
 {
+  LOG_DEBUG << "enable";
   reject_sending_ = false;
   sending_cond_.notifyAll();
 };
 
 void RequestCache::rejectSending()
 {
+  LOG_DEBUG << "enable";
   reject_sending_ = true;
 };
 

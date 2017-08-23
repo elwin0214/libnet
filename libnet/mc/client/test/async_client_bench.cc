@@ -6,6 +6,7 @@
 #include <string.h>
 #include <iostream>
 #include <vector>
+#include <stdio.h>
 #include <libnet/mc/async_client.h>
 #ifdef PROFILE
 #include <gperftools/profiler.h>
@@ -24,61 +25,77 @@ struct MemcacheOpt
 {
 void set(int count, const std::string& value)
 {
-  vector<future<Msg>> futures;
-  futures.reserve(count);
-  for (int i = 0; i < count; i++)
+  int batch = 100;
+  int batch_num = count / batch;
+  for (int b = 0; b < batch_num; b++)
   {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "key-%d", i);
-    LOG_TRACE << i << " " << buf ;
-    auto f = gClient->set(buf, value, 0);
-    futures.push_back(std::move(f)); 
+    vector<future<Msg>> futures;
+    futures.reserve(batch);
+    for (int i = 0; i < batch; i++)
+    {
+      char buf[32];
+      snprintf(buf, sizeof(buf), "key-%d", i);
+      LOG_TRACE << i << " " << buf ;
+      auto f = gClient->set(buf, value, 0);
+      futures.push_back(std::move(f)); 
+    }
+    int succ = 0;
+    for(future<Msg>& f : futures)
+    {
+      f.wait();
+      Msg msg = f.get();
+      if (msg->code() == kSucc)
+        succ++;
+    }
+    gCounter.fetch_add(succ);
   }
-  int succ = 0;
-  for(future<Msg>& f : futures)
-  {
-    f.wait();
-    succ++;
-  }
-  gCounter.fetch_add(succ);
 }
 
 void get(int count, const std::string& value)
 {
-  vector<future<Msg>> futures;
-  futures.reserve(count);
-  for (int i = 0; i < count; i++)
+  int batch = 100;
+  int batch_num = count / batch;
+  for (int b = 0; b < batch_num; b++)
   {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "key-%d", i);
-    auto f = gClient->get(buf);
-    futures.push_back(std::move(f)); 
+    vector<future<Msg>> futures;
+    futures.reserve(batch);
+    for (int i = 0; i < batch; i++)
+    {
+      char buf[32];
+      snprintf(buf, sizeof(buf), "key-%d", i);
+      auto f = gClient->get(buf);
+      futures.push_back(std::move(f)); 
+    }
+    int succ = 0;
+    for(future<Msg>& f : futures)
+    {
+      f.wait();
+      Msg msg = f.get();
+      if (msg->code() == kSucc)
+        succ++;
+    }
+    gCounter.fetch_add(succ);
   }
-  int succ = 0;
-  for(future<Msg>& f : futures)
-  {
-    f.wait();
-    succ++;
-  }
-  gCounter.fetch_add(succ);
 }
 };
 
+bool gProf = false;
 struct ThreadInitializer
 {
 void profile()
 {
   #ifdef PROFILE
-  ::ProfilerRegisterThread();
+  if (gProf)
+    ::ProfilerRegisterThread();
   #endif
 }
 };
 
 int main(int argc, char *argv[])
 {
-  if (argc < 7)
+  if (argc < 8)
   {
-    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <clients> <number>" ;
+    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <clients> <reqs> <prof>" ;
     exit(1);
   }
 
@@ -99,7 +116,7 @@ int main(int argc, char *argv[])
   int bytes = atoi(argv[5]);
   int clients = atoi(argv[6]);
   int reqs = atoi(argv[7]);
-
+  gProf = (1 == atoi(argv[8]));
   //int numberPerClient = number / clients;
 
 
@@ -145,7 +162,8 @@ int main(int argc, char *argv[])
 
   Timestamp start = Timestamp::now();
   #ifdef PROFILE
-  ::ProfilerStart("cpu.out");
+  if (gProf)
+    ::ProfilerStart("cpu.out");
   cout << "profile start" << endl;
   #endif
   for (int i = 0; i < clients; i++)
@@ -159,16 +177,21 @@ int main(int argc, char *argv[])
   }
   Timestamp end = Timestamp::now();
   #ifdef PROFILE
-  ::ProfilerStop();
+  if (gProf)
+    ::ProfilerStop();
   #endif
   int64_t time = end.value() - start.value();
+  double qps = (reqs * 1.0 / (time * 1.0 / 1000 / 1000));
   LOG_WARN << " opname = " << (isSet ? "set" : "get")
            << " clients = "  << clients 
            << " reqs = " << reqs 
            << " bytes = " << bytes 
-           << " reqs = " << (gCounter.load()) 
+           << " succ = " << (gCounter.load()) 
            << " time = " << (time/1000) << "ms"
-           << " qps = " << (reqs * 1.0 / (time * 1.0 / 1000 / 1000) );
+           << " qps = " << qps;
+
+  fprintf(stderr, "opname = %s clients = %d bytes =%d reqs = %d succ = %d time = %dms qps = %.2f\n",
+                  (isSet ? "set" : "get"), clients, bytes, reqs, gCounter.load(), time/1000, qps);
   client.disconnect();
   closed_latch.wait();
   return 0;

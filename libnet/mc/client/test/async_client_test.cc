@@ -5,6 +5,7 @@
 #include <string>
 #include <libnet/mc/async_client.h>
 #include <gtest/gtest.h>
+#include <stdio.h>
 
 using namespace libnet;
 using namespace mc::client;

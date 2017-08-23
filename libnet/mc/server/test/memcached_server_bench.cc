@@ -14,6 +14,7 @@
 using namespace libnet;
 using namespace mc::server;
 
+bool gProf = false;
 struct ThreadInitializer
 {
 void profile()
@@ -30,27 +31,30 @@ void stop(int signo)
   LOG_ERROR << "stop";
   gLoop->shutdown();
   #ifdef PROFILE
-  ::ProfilerStop();
+  if (gProf)
+    ::ProfilerStop();
   #endif
 }  
 
 int main(int argc, char *argv[])
 {
-  if (argc < 4)
+  if (argc < 5)
   {
-    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel>" ;
+    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> <prof>" ;
     exit(1);
   }
 
   char *host = static_cast<char *>(argv[1]);
   int port = atoi(argv[2]); 
   int level = atoi(argv[3]);
+  gProf = 1 == atoi(argv[4]);
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
 
   #ifdef PROFILE
   ThreadInitializer initialzer;
-  Thread::registerInitCallback(std::bind(&ThreadInitializer::profile, &initialzer));
+  if (gProf)
+    Thread::registerInitCallback(std::bind(&ThreadInitializer::profile, &initialzer));
   #endif
 
   EventLoop loop;
@@ -60,7 +64,8 @@ int main(int argc, char *argv[])
   MemHandler handler(24, 1.2, SlabOption(16, 1024, 1.2, 1024 * 1024, true, 1024 * 1024 * 1024));
 
   #ifdef PROFILE
-  ProfilerStart("cpu.out");
+  if (gProf)
+    ProfilerStart("cpu.out");
   #endif
 
   server.set_handler(std::bind(&MemHandler::handle, &handler, _1, _2));

@@ -50,9 +50,10 @@ EventLoop* EventLoopThread::getLoop()
 EventLoopThread::~EventLoopThread()
 {
   LOG_TRACE << "~EventLoopThread()" ;
-  if (loop_ != NULL)
+  EventLoop* loop = loop_.load();
+  if (loop != NULL)
   {
-    loop_.load()->shutdown();
+    loop->shutdown();
     thread_.join();
   }
 };

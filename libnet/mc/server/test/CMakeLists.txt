@@ -1,7 +1,7 @@
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
 message("add PROFILE")
-set_source_files_properties(server/test/memcached_server_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
-set_source_files_properties(server/test/memcache_prof.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
+set_source_files_properties(memcached_server_bench.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
+set_source_files_properties(memcache_prof.cc PROPERTIES COMPILE_FLAGS "-DPROFILE")
 endif()
 
 
@@ -12,12 +12,13 @@ TARGET_LINK_LIBRARIES(memcache_bench libnet ${BENCHMARK_LIBEARY})
 message(" memcache_bench link benchmark")
 endif()
 
-add_executable(memcached_server_bench ../allocator.cc ../slab.cc ../lru.cc ../tokenizer.cc ../hashtable.cc ../mem_cache.cc ../mem_handler.cc ../../msg/reader.cc ../../msg/request_codec.cc ../../msg/response_codec.cc ../mem_server.cc memcached_server_bench.cc)
+add_executable(memcached_server_bench memcached_server_bench.cc)
+
 
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)
-TARGET_LINK_LIBRARIES(memcached_server_bench libnet profiler)
+TARGET_LINK_LIBRARIES(memcached_server_bench libnet libnet_mc profiler)
 else()
-TARGET_LINK_LIBRARIES(memcached_server_bench libnet)
+TARGET_LINK_LIBRARIES(memcached_server_bench libnet libnet_mc)
 endif()
 
 if(PROFILER_INCLUDE_DIR AND PROFILER_LIBRARY)

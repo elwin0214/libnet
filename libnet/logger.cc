@@ -59,7 +59,7 @@ void LoggerStream::init()
 
   time_t seconds = static_cast<time_t>(now.value() / Timestamp::kMicroSecondsPerSecond);
   struct tm time;
-  ::gmtime_r(&seconds, &time);
+  ::localtime_r(&seconds, &time);
   int size = snprintf(buffer_.cur(),buffer_.remain(), "%4d%02d%02d %02d:%02d:%02d",
              time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
              time.tm_hour, time.tm_min, time.tm_sec);

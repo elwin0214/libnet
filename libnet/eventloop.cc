@@ -37,10 +37,10 @@ EventLoop::EventLoop()
     functors_(),
     tid_(thread::currentTid()),
     stop_(false),
-    callingPendingFunctor_(false),
+    exist_loopadded_functor_(false),
     //wakeup_(false),
-    wrote_(false),
-    timerQueue_(new TimerQueue(this))
+    //existPendingFunctor_(false),
+    timer_queue_(new TimerQueue(this))
 {
   LOG_TRACE << "EventLoop.tid = " << tid_ << " current.tid = "<< thread::currentTid();
   sockets::createPipe(wakeupFd_);
@@ -68,8 +68,6 @@ void EventLoop::handleRead()
   LOG_TRACE << "read fd = " <<  wakeupFd_[0] << ", size = " << n;
   if (n < 0)
     LOG_ERROR << "read fd = " << wakeupFd_[0] << " ,size = " <<n << ", errno = " << errno ;
-  else
-    wrote_ = false;
 };
 
 void EventLoop::loop()
@@ -77,26 +75,33 @@ void EventLoop::loop()
   assertInLoopThread();
   while(!stop_)//stop = true 如果queue 还有任务？
   {
-
-    const Timestamp* earliestTimeStamp = timerQueue_->earliest();
-    std::vector<Channel*> activeChannles;
+    std::vector<Channel*> active_channles;
     //wakeup_.set(false);
     // place 1
-    if (NULL == earliestTimeStamp)
-      selector_->select(loop::kSelectTimeMs, activeChannles);
+    if (exist_loopadded_functor_)
+    {
+      selector_->select(0, active_channles);
+    }
     else
     {
-      Timestamp now = Timestamp::now();
-      int timeoutMs = ((earliestTimeStamp->value() - now.value()) / 1000);
-      timeoutMs = timeoutMs < loop::kSelectTimeMs ? timeoutMs : loop::kSelectTimeMs;
-      timeoutMs = timeoutMs < 0 ? 0 : timeoutMs;
-      LOG_TRACE << "loop now = " <<  (now.value()) << " ,early=" << (earliestTimeStamp->value()) << " ,timeout=" << timeoutMs;
-      selector_->select(timeoutMs, activeChannles);
+      const Timestamp* earliest_ts = timer_queue_->earliest();
+      if (NULL == earliest_ts)
+        selector_->select(loop::kSelectTimeMs, active_channles);
+      else
+      {
+        Timestamp now = Timestamp::now();
+        int timeout_ms = ((earliest_ts->value() - now.value()) / 1000);
+        timeout_ms = timeout_ms < loop::kSelectTimeMs ? timeout_ms : loop::kSelectTimeMs;
+        timeout_ms = timeout_ms < 0 ? 0 : timeout_ms;
+        LOG_TRACE << "loop now = " <<  (now.value()) << " ,early = " << (earliest_ts->value()) << " ,timeout = " << timeout_ms;
+        selector_->select(timeout_ms, active_channles);
+      }
     }
 
-    if (activeChannles.size() > 0)
+
+    if (active_channles.size() > 0)
     {
-      for (std::vector<Channel*>::iterator itr = activeChannles.begin(); itr != activeChannles.end(); itr++)
+      for (std::vector<Channel*>::iterator itr = active_channles.begin(); itr != active_channles.end(); itr++)
       {
         (*itr)->handleEvent();
       }
@@ -106,12 +111,14 @@ void EventLoop::loop()
       LockGuard guard(lock_);
       LOG_DEBUG << "functors.size = " << functors_.size();
       functors.swap(functors_);
+
     }
     // it maybe dont work, if we add a wakeup variable like Reactor.java in xmemcached-client.
     // if one "add(functor)" was called when Loop running in place 1, and when Loop run here, 
     // wakeup will be ture, if the add(functor) is called again at this time and will not be called
     // after setting wakeup to false, the functor added later will run after selectTimeMs.  
-    callingPendingFunctor_ = true;  // some functor may be add by func() in the while.
+    //callingPendingFunctor_ = true;  // some functor may be add by func() in the while.
+    exist_loopadded_functor_ = false;
     while (!functors.empty())
     {
       Functor& func = functors.front();
@@ -127,19 +134,19 @@ void EventLoop::loop()
       }  
       functors.pop();
     }
-    callingPendingFunctor_ = false;
+    //callingPendingFunctor_ = false;
 
     if (!stop_)
     {
       Timestamp now = Timestamp::now();
-      timerQueue_->expire(now);
+      timer_queue_->expire(now);
     }
   }
 };
 
 TimerId EventLoop::runAt(const Timestamp &timestamp, const Functor& functor)
 {
-  return timerQueue_->runAt(timestamp, functor);
+  return timer_queue_->runAt(timestamp, functor);
 };
 
 TimerId EventLoop::runAfter(int delay, const Functor& functor)
@@ -147,7 +154,7 @@ TimerId EventLoop::runAfter(int delay, const Functor& functor)
   
   Timestamp timestamp = Timestamp::now();
   timestamp.add(delay);
-  return timerQueue_->runAt(timestamp, functor);
+  return timer_queue_->runAt(timestamp, functor);
 };
 
 TimerId EventLoop::runInterval(int delay, int interval, const Functor& functor)
@@ -155,19 +162,19 @@ TimerId EventLoop::runInterval(int delay, int interval, const Functor& functor)
   Timestamp timestamp = Timestamp::now();
   timestamp.add(delay);
   LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
-  return timerQueue_->runAt(timestamp, interval, functor);
+  return timer_queue_->runAt(timestamp, interval, functor);
 };
 
 TimerId EventLoop::runAt(const Timestamp &timestamp, Functor&& functor)
 {
-  return timerQueue_->runAt(timestamp, std::move(functor));
+  return timer_queue_->runAt(timestamp, std::move(functor));
 };
 
 TimerId EventLoop::runAfter(int delay, Functor&& functor)
 {
   Timestamp timestamp = Timestamp::now();
   timestamp.add(delay);
-  return timerQueue_->runAt(timestamp, std::move(functor));
+  return timer_queue_->runAt(timestamp, std::move(functor));
 };
 
 TimerId EventLoop::runInterval(int delay, int interval, Functor&& functor)
@@ -175,7 +182,7 @@ TimerId EventLoop::runInterval(int delay, int interval, Functor&& functor)
   Timestamp timestamp = Timestamp::now();
   timestamp.add(delay);
   LOG_TRACE << "runInterval timestamp at " <<timestamp.value();
-  return timerQueue_->runAt(timestamp, interval, std::move(functor));
+  return timer_queue_->runAt(timestamp, interval, std::move(functor));
 };
 
 void EventLoop::runInLoop(const Functor& functor)
@@ -199,8 +206,8 @@ void EventLoop::queueInLoop(const Functor& functor)
     LockGuard guard(lock_);
     functors_.push(functor);
   }
-  if (!inLoopThread() || callingPendingFunctor_)
-    wakeup();
+  if (!inLoopThread()) wakeup();
+  else exist_loopadded_functor_ = true;//loop thread
 };
 
 void EventLoop::runInLoop(Functor&& functor)
@@ -224,8 +231,8 @@ void EventLoop::queueInLoop(Functor&& functor)
     LockGuard guard(lock_);
     functors_.push(std::move(functor));
   }
-  if (!inLoopThread() || callingPendingFunctor_)
-    wakeup();
+  if (!inLoopThread()) wakeup();
+  else exist_loopadded_functor_ = true; // loop thread
 };
 
 
@@ -276,12 +283,11 @@ void EventLoop::wakeup()
   //  LOG_TRACE << "cas fail! fd=" << (wakeupFd_[1]);
   //  return;
   //}
-  LOG_TRACE << "write fd = " << (wakeupFd_[1]);
-  if (wrote_) return ;
-  // todo outter thread and loop thread may be dead lock in here
-  // if the data was not read at time.
+  
+  // if the loop thread write the wakeupFd
+  // the dead lock maybe appear in this place between outter thread and loop thread
   ssize_t n = sockets::write(wakeupFd_[1], "a", 1);  
-  if (n > 0) wrote_ = true;
+  LOG_TRACE << "write fd = " << (wakeupFd_[1]) << " size = " << n;
   if (n < 0)
     LOG_SYSERROR << "wake up, fd = " << (wakeupFd_[1]);
 };

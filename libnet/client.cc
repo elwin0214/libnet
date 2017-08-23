@@ -88,6 +88,7 @@ void Client::removeConnection(const Conn& conn)
     loop_->queueInLoop(std::bind(&Connection::destroy, conn));
     LOG_TRACE << "removeConnection " << connection_.use_count() ;
     connection_.reset();
+    loop_->wakeup(); // call destory() immediately
   }
 
   if (!stop_ && retry_)

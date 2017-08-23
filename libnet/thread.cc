@@ -131,9 +131,9 @@ Thread::~Thread()
   {
     int r = pthread_detach(tid_);
     if (r == 0)
-      LOG_TRACE << "pthread_detach tid = " << tid_;
+      LOG_TRACE << "pthread_detach tid = " << tid();
     else
-      LOG_SYSERROR << "pthread_detach! tid = " << tid_;
+      LOG_SYSERROR << "pthread_detach! tid = " << tid();
   }
 
 };

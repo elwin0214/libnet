@@ -11,7 +11,7 @@ add_executable(logger_stream_unitest logger_stream_unitest.cc)
 target_link_libraries(logger_stream_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(logger_unitest logger_unitest.cc)
-target_link_libraries(logger_unitest libnet)
+target_link_libraries(logger_unitest libnet ${GTEST_LIBRARY})
 
 add_executable(logger_test logger_test.cc)
 target_link_libraries(logger_test libnet)

@@ -35,7 +35,7 @@ void DefaultSelector::select(ChannelList& activeChannles)
 
 void DefaultSelector::select(int timeoutMs, ChannelList& activeChannles)
 {
-  LOG_DEBUG << "timeoutMs-" << timeoutMs;
+  LOG_DEBUG << " timeout_ms = " << timeoutMs;
   struct timeval *tvPtr = NULL;
   if (timeoutMs < 0) timeoutMs = 0;
 

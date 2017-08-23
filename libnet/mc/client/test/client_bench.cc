@@ -9,6 +9,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <stdio.h>
 #include <libnet/mc/mcode.h>
 #include <libnet/mc/message.h>
 #include <libnet/mc/response_codec.h>
@@ -21,13 +22,14 @@ using namespace std;
 using namespace libnet;
 using namespace mc::msg;
 
-
+bool gProf = false;
 struct ThreadInitializer
 {
 void profile()
 {
   #ifdef PROFILE
-  ::ProfilerRegisterThread();
+  if (gProf)
+    ::ProfilerRegisterThread();
   #endif
 }
 };
@@ -147,9 +149,9 @@ private:
 
 int main(int argc, char *argv[])
 {
-  if (argc < 7)
+  if (argc < 10)
   {
-    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <clients> <threads> <reqs>" ;
+    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <clients> <threads> <reqs> <prof>" ;
     exit(1);
   }
 
@@ -168,16 +170,19 @@ int main(int argc, char *argv[])
   int clients = atoi(argv[6]);
   int threads = atoi(argv[7]);
   int reqs = atoi(argv[8]);
+  gProf = (1 == atoi(argv[9]));
 
   log::LogLevel logLevel = log::LogLevel(level);
   setLogLevel(logLevel);
   #ifdef PROFILE
   ThreadInitializer initialzer;
-  Thread::registerInitCallback(std::bind(&ThreadInitializer::profile, &initialzer));
+  if (gProf)
+    Thread::registerInitCallback(std::bind(&ThreadInitializer::profile, &initialzer));
   #endif
 
   #ifdef PROFILE
-  ::ProfilerStart("cpu.out");
+  if (gProf)
+    ::ProfilerStart("cpu.out");
   cout << "profile start" << endl;
   #endif
 
@@ -205,16 +210,19 @@ int main(int argc, char *argv[])
   Timestamp end = Timestamp::now();
   int64_t time = end.value() - start.value();
   double duration = time / 1000;
+  double qps = reqs * 1000 / duration;
   LOG_WARN << "op = "<< opname 
            << " clients = "  << clients 
            << " threads = " << threads
            << " reqs = " << reqs 
            << " bytes = " << bytes 
            << " time = " << (duration) << "ms" 
-           << " qps = " << reqs * 1000 / duration;
-  
+           << " qps = " << qps;
+  fprintf(stderr, "opname = %s clients = %d threads = %d reqs = %d bytes =%d time = %dms qps = %.2f\n",
+                  opname.c_str(), clients, threads ,reqs, bytes, time/1000, qps);
   #ifdef PROFILE
-  ::ProfilerStop();
+  if (gProf)
+    ::ProfilerStop();
   #endif
   return 0;
 }

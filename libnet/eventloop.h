@@ -57,7 +57,7 @@ public:
   TimerId runAfter(int delay, Functor&& functor);
   TimerId runInterval(int delay, int interval, Functor&& functor);
 
-  void cancel(const TimerId& timerId) {timerQueue_->cancel(timerId); }
+  void cancel(const TimerId& timer_id) {timer_queue_->cancel(timer_id); }
     
 private:
     std::shared_ptr<selector::Selector> selector_;
@@ -65,12 +65,12 @@ private:
     TID tid_;
     MutexLock lock_;
     std::atomic<bool> stop_;
-    bool callingPendingFunctor_;
+    //bool callingPendingFunctor_;
+    bool exist_loopadded_functor_;
     //std::atomic<bool> wakeup_;
-    std::atomic<bool> wrote_;
     int wakeupFd_[2];
     Channel* wakeupChannel_;
-    std::unique_ptr<TimerQueue> timerQueue_;
+    std::unique_ptr<TimerQueue> timer_queue_;
 
 };
 

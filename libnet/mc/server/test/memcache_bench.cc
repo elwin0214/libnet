@@ -194,20 +194,4 @@ BENCHMARK(UnOrderedMap_AddInt)->Unit(benchmark::kMicrosecond)->Args({1<<24, 512}
 //BENCHMARK(UnOrderedMap_Construct)->Unit(benchmark::kMicrosecond)->Args({1<<6, 512})->Args({1<<6, 1<<10})->Args({1<<6,1<<20});
 //BENCHMARK(UnOrderedMap_Construct)->Unit(benchmark::kMicrosecond)->Args({1<<24, 512})->Args({1<<24, 1<<10});
 
-BENCHMARK_MAIN();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
+BENCHMARK_MAIN();  
