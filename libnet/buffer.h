@@ -57,7 +57,8 @@ public:
     if (len <= writable())
       writeIndex_ += len; 
     else
-      writeIndex_ = data_.capacity();
+      assert(false);
+      //writeIndex_ = data_.capacity();
   };
   
   size_t append(const char* str, size_t n);

@@ -139,5 +139,4 @@ std::string Buffer::toAsciiString()
   return str;
 };
 
-
 }

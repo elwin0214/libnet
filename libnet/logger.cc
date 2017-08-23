@@ -27,8 +27,10 @@ LoggerStream& LoggerStream::operator << (const std::string &str)
   if (closed() || buffer_.remain() <= 0) return *this;
   //The snprintf() and vsnprintf() functions will write at most n-1 of the characters printed into the
   //   output string (the n'th character then gets the terminating `\0');
-  int size = snprintf(buffer_.cur(), buffer_.remain(), "%s", str.c_str());
-  buffer_.move(size);
+  int remain = buffer_.remain();
+  int size = snprintf(buffer_.cur(), remain, "%s", str.c_str());
+  int len = size < remain - 1 ? size : remain - 1; 
+  buffer_.move(len);
   return *this;
 };
 
@@ -42,9 +44,11 @@ LoggerStream& LoggerStream::append(const char *format_string, ...)
   if (closed() || buffer_.remain() <= 0) return *this;
   va_list ap;
   va_start(ap, format_string);
-  int size = vsnprintf(buffer_.cur(), buffer_.remain() , format_string, ap);
+  int remain = buffer_.remain();
+  int size = vsnprintf(buffer_.cur(), remain , format_string, ap);
+  int len = size < remain - 1 ? size : remain - 1; 
   va_end(ap);
-  buffer_.move(size);//maybe bug
+  buffer_.move(len);//maybe bug
   return *this;
 };
 
