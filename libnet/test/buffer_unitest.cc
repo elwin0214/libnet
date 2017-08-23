@@ -106,6 +106,22 @@ TEST(Buffer, makeRoom2)
   ASSERT_EQ("12345678", buffer.toString());
 }
 
+TEST(Buffer, appendOver2)
+{
+  
+  Buffer buffer(0, 4096);
+  for (int i = 0; i < 200; i++)
+  {
+    buffer.append("set key-5846 0 0 10");
+    buffer.append("\r\n");
+    buffer.append("1111111111");
+    buffer.append("\r\n");
+  }
+  cout << buffer.readable() << endl;
+  cout << buffer.toString() ;
+  LOG_INFO << buffer.toAsciiString() << " end";
+ // ASSERT_EQ("12345678", );
+}
 int main(int argc, char **argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

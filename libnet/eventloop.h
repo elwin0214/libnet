@@ -67,6 +67,7 @@ private:
     std::atomic<bool> stop_;
     bool callingPendingFunctor_;
     //std::atomic<bool> wakeup_;
+    std::atomic<bool> wrote_;
     int wakeupFd_[2];
     Channel* wakeupChannel_;
     std::unique_ptr<TimerQueue> timerQueue_;

@@ -39,6 +39,7 @@ EventLoop::EventLoop()
     stop_(false),
     callingPendingFunctor_(false),
     //wakeup_(false),
+    wrote_(false),
     timerQueue_(new TimerQueue(this))
 {
   LOG_TRACE << "EventLoop.tid = " << tid_ << " current.tid = "<< thread::currentTid();
@@ -64,8 +65,11 @@ void EventLoop::handleRead()
 {   
   char buf[128];
   ssize_t n = sockets::read(wakeupFd_[0], buf, 128);
+  LOG_TRACE << "read fd = " <<  wakeupFd_[0] << ", size = " << n;
   if (n < 0)
-    LOG_ERROR << "read fd-" << wakeupFd_[0] << " ,size-" <<n << ", errno-" << errno ;
+    LOG_ERROR << "read fd = " << wakeupFd_[0] << " ,size = " <<n << ", errno = " << errno ;
+  else
+    wrote_ = false;
 };
 
 void EventLoop::loop()
@@ -272,8 +276,12 @@ void EventLoop::wakeup()
   //  LOG_TRACE << "cas fail! fd=" << (wakeupFd_[1]);
   //  return;
   //}
-  LOG_TRACE << "goto write fd = " << (wakeupFd_[1]);
-  ssize_t n = sockets::write(wakeupFd_[1], "a", 1);
+  LOG_TRACE << "write fd = " << (wakeupFd_[1]);
+  if (wrote_) return ;
+  // todo outter thread and loop thread may be dead lock in here
+  // if the data was not read at time.
+  ssize_t n = sockets::write(wakeupFd_[1], "a", 1);  
+  if (n > 0) wrote_ = true;
   if (n < 0)
     LOG_SYSERROR << "wake up, fd = " << (wakeupFd_[1]);
 };
