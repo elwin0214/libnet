@@ -19,7 +19,7 @@ void stop(int sig)
   if (gStopCallback)
     gStopCallback();
 };
-
+// a memcached proxy server, 
 int main(int argc, char *argv[])
 {
   log::LogLevel logLevel = log::LogLevel(2);
@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
   client_loops.start();
   std::vector<InetAddress> remote_addr_list;
   remote_addr_list.push_back(InetAddress("0.0.0.0", 11211));
+  remote_addr_list.push_back(InetAddress("0.0.0.0", 11212));
   CountDownLatch connected_latch(1);
   CountDownLatch closed_latch(0);
   MemcachedProxy proxy(&loop, 

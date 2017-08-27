@@ -98,13 +98,12 @@ int main(int argc, char *argv[])
     log::LogLevel logLevel = log::LogLevel(level);
     setLogLevel(logLevel);
 
-    EventLoopThread thread("loop");
-    thread.start();
     CountDownLatch connected_latch(1);
     CountDownLatch closed_latch(0);
-
-    gLoop = thread.getLoop();
-    AsyncClient client(gLoop, host, port, connected_latch, closed_latch, 1);
+    EventLoop loop;
+    EventLoopGroup loop_group(&loop, 1, "io");
+    loop_group.start();
+    AsyncClient client(&loop_group, host, port, connected_latch, closed_latch, 1);
     gClient = &client;
     client.connect();
     connected_latch.wait();

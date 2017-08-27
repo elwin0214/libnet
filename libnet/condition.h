@@ -32,9 +32,17 @@ public:
 
   int64_t wait(uint32_t wait_milli);
 
+  //different with Lock & Object monitor in Java 
+  //https://stackoverflow.com/questions/4544234/calling-pthread-cond-signal-without-locking-mutex
   void notifyAll()
   {
     if (0 > pthread_cond_broadcast(&cond_))
+      LOG_SYSERROR << "thread = " << thread::currentTid() ;
+  }
+
+  void notify()
+  {
+    if (0 > pthread_cond_signal(&cond_))
       LOG_SYSERROR << "thread = " << thread::currentTid() ;
   }
 

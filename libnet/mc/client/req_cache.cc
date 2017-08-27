@@ -17,22 +17,23 @@ namespace client
 using namespace libnet;
 using namespace std;
 
-RequestCache::RequestCache(size_t buffer_size)
+RequestCache::RequestCache(size_t capacity, size_t batch_buffer_size)
               : sending_lock_(),
                 sent_lock_(),
                 sending_cond_(sending_lock_),
-                reject_sending_(false),
+                //reject_sending_(false),
                 closed_(false),
                 sending_queue_(),
+                capacity_(capacity),
                 sent_queue_(),
-                buffer_size_(buffer_size)
+                batch_buffer_size_(batch_buffer_size)
 {
 };
 
 void RequestCache::start()
 {
   closed_ = false; 
-  reject_sending_ = false;
+  //reject_sending_ = false;
 };
 
 void RequestCache::close()
@@ -66,10 +67,8 @@ void RequestCache::close()
 // collect more command and write to connection at a time
 size_t RequestCache::write(const Conn& conn)
 {   
-  //LockGuard guard1(sending_lock_); 
-  //LockGuard guard2(sent_lock_);
   vector<shared_ptr<Command>> commands;
-  Buffer buffer(0, buffer_size_);
+  Buffer buffer(0, batch_buffer_size_);
   size_t n = 0;
   size_t remain = 0;
   {
@@ -78,7 +77,7 @@ size_t RequestCache::write(const Conn& conn)
     commands.reserve(1024);
     for (n = 0; n < 1024; n++)
     {
-      if (sending_queue_.empty() || buffer.readable() >= buffer_size_)
+      if (sending_queue_.empty() || buffer.readable() >= batch_buffer_size_)
         break;
       std::shared_ptr<Command> cmd = sending_queue_.front();
       sending_queue_.pop();
@@ -112,7 +111,7 @@ size_t RequestCache::write(const Conn& conn)
 bool RequestCache::send(const std::shared_ptr<Command>& cmd, int32_t send_wait_milli, bool check_cache_reject)
 {
   LOG_TRACE << send_wait_milli << " " << check_cache_reject << " closed = " << closed_.load();
-  if (closed_) return false;
+  if (closed_) return false; // todo fix promise deconstruct error
   LockGuard guard(sending_lock_);
   if (closed_) return false;//
   if (!check_cache_reject)
@@ -121,45 +120,54 @@ bool RequestCache::send(const std::shared_ptr<Command>& cmd, int32_t send_wait_m
     LOG_DEBUG << "push a command";
     return true;
   }
-  while (reject_sending_)
+  while (size_ >= capacity_)
   {
     if (send_wait_milli <= 0) return false;
     send_wait_milli = sending_cond_.wait(send_wait_milli);
     if (closed_) return false;
   }
   sending_queue_.push(cmd);
+  size_++;
   return true;
 };
 
 bool RequestCache::receive(Buffer& input)
 {
-  LockGuard guard(sent_lock_);
-  if (sent_queue_.empty()){
-    assert(input.readable() <= 0);// 收到了server发来的多余数据
-    return false;
-  }
-  std::shared_ptr<Command>& cmd = sent_queue_.front();
-  if (cmd->decode(input))
+  bool received = false;
   {
-    LOG_DEBUG << "read.wakup" ;
-    sent_queue_.pop();
+    LockGuard guard(sent_lock_);
+    if (sent_queue_.empty()){
+      assert(input.readable() <= 0);// 收到了server发来的多余数据
+      return false;
+    }
+    std::shared_ptr<Command>& cmd = sent_queue_.front();
+    if (cmd->decode(input))
+    {
+      LOG_DEBUG << "read.wakup" ;
+      sent_queue_.pop();
+      size_--;
+      received = true;
+    }
+  }
+  if (received)
+  {
+    LockGuard guard(sending_lock_);
+    sending_cond_.notify(); 
     return true;
   }
   return false;
 };
 
-void RequestCache::acceptSending()
-{
-  LOG_DEBUG << "enable";
-  reject_sending_ = false;
-  sending_cond_.notifyAll();
-};
+// void RequestCache::acceptSending()
+// {
+//   LOG_DEBUG << "enable";
+//   sending_cond_.notifyAll();
+// };
 
-void RequestCache::rejectSending()
-{
-  LOG_DEBUG << "enable";
-  reject_sending_ = true;
-};
+// void RequestCache::rejectSending()
+// {
+//   LOG_DEBUG << "enable";
+// };
 
 }
 }

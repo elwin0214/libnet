@@ -1,5 +1,6 @@
 #include <libnet/logger.h>
 #include <libnet/eventloop.h>
+#include <libnet/eventloop_group.h>
 #include <libnet/eventloop_thread.h>
 #include <libnet/thread.h>
 #include <memory>
@@ -25,7 +26,7 @@ struct MemcacheOpt
 {
 void set(int count, const std::string& value)
 {
-  int batch = 100;
+  int batch = 2000;
   int batch_num = count / batch;
   for (int b = 0; b < batch_num; b++)
   {
@@ -53,7 +54,7 @@ void set(int count, const std::string& value)
 
 void get(int count, const std::string& value)
 {
-  int batch = 100;
+  int batch = 2000;
   int batch_num = count / batch;
   for (int b = 0; b < batch_num; b++)
   {
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
 {
   if (argc < 8)
   {
-    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <clients> <reqs> <prof>" ;
+    LOG_ERROR << "<program> <memcached ip> <memcached port> <loglevel> (set|get) <bytes> <threads> <clients> <reqs> <prof>" ;
     exit(1);
   }
 
@@ -114,24 +115,22 @@ int main(int argc, char *argv[])
     isSet = true;
 
   int bytes = atoi(argv[5]);
-  int clients = atoi(argv[6]);
-  int reqs = atoi(argv[7]);
-  gProf = (1 == atoi(argv[8]));
+  int thread_num = atoi(argv[6]);
+  int clients = atoi(argv[7]);
+  int reqs = atoi(argv[8]);
+  gProf = (1 == atoi(argv[9]));
   //int numberPerClient = number / clients;
 
-
-  EventLoopThread loopThread("loop");
-  loopThread.start();
   CountDownLatch connected_latch(clients);
   CountDownLatch closed_latch(0);
-
-  gLoop = loopThread.getLoop();
-  AsyncClient client(gLoop, host, port, connected_latch, closed_latch, clients);
+  EventLoop loop;
+  EventLoopGroup loop_group(&loop, thread_num, "io");
+  loop_group.start();
+  AsyncClient client(&loop_group, host, port, connected_latch, closed_latch, clients);
  
   gClient = &client;
   client.connect();
   connected_latch.wait();
-
 
   char buf[4096];
   for (int i = 0; i < bytes; i++)

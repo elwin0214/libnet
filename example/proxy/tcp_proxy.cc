@@ -16,6 +16,7 @@ using namespace libnet;
 typedef shared_ptr<Connection> Conn;
 typedef weak_ptr<Connection> WeakConn;
 
+//a TCP connection between proxy and backend server
 class Session : public NoCopyable
 {
 public:
@@ -79,6 +80,7 @@ private:
   function<void(const Conn&)> messageCallBack;
 };
 
+// a single thread TCP proxy server
 class Proxy
 {
 
@@ -117,7 +119,7 @@ public:
   void onConnect(const Conn& conn)
   {
     if (conn->connected())
-    {
+    { //a connection between client and proxy is established
       conn->setTcpNoDelay(true);
       shared_ptr<Session> session = make_shared<Session>(loop_, 
                                                          remote_host_, 
@@ -128,6 +130,7 @@ public:
       WeakConn wk_conn = conn;
       Proxy* self = this;
       CountDownLatch& latch = self->latch_;
+      // server close the connection
       session->setClosedCallBack([wk_conn, self, &latch](const Conn& conn)mutable{        
         Conn front_conn = wk_conn.lock();
         if (!front_conn) return;
@@ -141,7 +144,7 @@ public:
         latch.add();
         conn->setTcpNoDelay(true);
       });
-
+      // forward data from server to client
       session->setMessageCallBack([wk_conn](const Conn& conn){
         Conn front_conn = wk_conn.lock();
         if (!front_conn) return;
@@ -149,9 +152,9 @@ public:
         front_conn->send(CString(buffer.beginRead(), buffer.readable()));
         buffer.clear();
       });
-
+      // forward data from client to server
       weak_ptr<Session> wk_session = session;
-      conn->setReadCallBack([wk_session](const Conn& conn){
+      conn->setReadCallBack([wk_session](const Conn& conn){  
         shared_ptr<Session> session = wk_session.lock();
         if (!session) return;
         Buffer& buffer = conn->input();
@@ -159,7 +162,7 @@ public:
         buffer.clear();
       });
     }
-    else  //closed
+    else  // client close the connection
     {
       int id = conn->id();
       auto itr = sessions_.find(id);

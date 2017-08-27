@@ -73,6 +73,7 @@ private:
   CountDownLatch& connected_latch_;
   CountDownLatch& closed_latch_;
   size_t high_water_mark_;
+  std::atomic<bool> reject_write_;
   TimerId timer_id_;
   Conn conn_;
   std::atomic<bool> connected_;

@@ -19,7 +19,7 @@ namespace client
 using namespace libnet;
 using namespace std;
 
-AsyncClient::AsyncClient(EventLoop* loop, 
+AsyncClient::AsyncClient(EventLoopGroup* loop_group,
                          const char* host, 
                          uint16_t port, 
                          CountDownLatch& connected_latch,
@@ -34,7 +34,7 @@ AsyncClient::AsyncClient(EventLoop* loop,
   sessions.reserve(conn_size);
   for (size_t i = 0; i < conn_size; i++)
   {
-    auto s = make_shared<Session>(loop,
+    auto s = make_shared<Session>(loop_group->getNextLoop(),
                                   host,
                                   port,
                                   connected_latch,

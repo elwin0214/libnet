@@ -4,9 +4,10 @@
 #include <libnet/connection.h>
 #include <libnet/client.h>
 #include <libnet/mutexlock.h>
+#include <libnet/eventloop_group.h>
+#include <libnet/mc/command.h>
 #include <string>
 #include <future>
-#include <libnet/mc/command.h>
 
 namespace mc
 {
@@ -22,7 +23,7 @@ class AsyncClient : public NoCopyable
 public:
   typedef std::shared_ptr<Message> Msg;
 
-  AsyncClient(EventLoop* loop, 
+  AsyncClient(EventLoopGroup* loop_group, 
               const char* host, 
               uint16_t port, 
               CountDownLatch& connected_latch_,
@@ -83,9 +84,7 @@ public:
 private:
   std::vector<shared_ptr<Session>> sessions;
   int32_t send_wait_milli_;
-  //size_t high_water_mark_;
-  //uint32_t idle_timeout_milli_;
-  //size_t max_retry_;
+
 };
 
 }

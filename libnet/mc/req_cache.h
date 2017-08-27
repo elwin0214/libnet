@@ -21,7 +21,7 @@ public:
   typedef std::queue<std::shared_ptr<Command>> CommandQueue;
   typedef shared_ptr<Connection> Conn;
 
-  RequestCache(size_t buffer_size = 4096);
+  RequestCache(size_t capacity = 20000, size_t batch_buffer_size = 10240);
   
   void start();
   void close();
@@ -30,20 +30,21 @@ public:
   size_t write(const Conn& connection);
   bool receive(Buffer& input);
 
-  void acceptSending();
-  void rejectSending();
+  // void acceptSending();
+  // void rejectSending();
 
 private:
   MutexLock sending_lock_;
   MutexLock sent_lock_;
   Condition sending_cond_;
-  size_t capacity_;
+  
   std::atomic<size_t> size_;
-  std::atomic<bool> reject_sending_;
+  //std::atomic<bool> reject_sending_;
   std::atomic<bool> closed_; // used to release the thread wait on sending_queue_
   CommandQueue sending_queue_;
+  size_t capacity_;
   CommandQueue sent_queue_;
-  size_t buffer_size_;
+  size_t batch_buffer_size_;
 
 };
 

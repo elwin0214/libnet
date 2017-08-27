@@ -44,7 +44,7 @@ EventLoop::EventLoop()
 {
   LOG_TRACE << "EventLoop.tid = " << tid_ << " current.tid = "<< thread::currentTid();
   sockets::createPipe(wakeupFd_);
-  LOG_TRACE << "create pipe=" << (wakeupFd_[0]) << " and " << wakeupFd_[1] ;
+  LOG_TRACE << "create pipe = " << (wakeupFd_[0]) << " and " << wakeupFd_[1] ;
   wakeupChannel_ = new Channel(this, wakeupFd_[0]);
 
   wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));

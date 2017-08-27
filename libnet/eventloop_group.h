@@ -20,7 +20,7 @@ public:
   typedef std::shared_ptr<EventLoopThread> LoopThread;
 
 public:
-  EventLoopGroup(EventLoop* loop, int num, const std::string& name);
+  EventLoopGroup(EventLoop* loop, size_t num, const std::string& name);
     
   void start();
 
@@ -34,8 +34,8 @@ public:
 private:
   EventLoop* base_loop_;
   std::string name_;
-  int index_;
-  int num_;
+  size_t index_;
+  size_t num_;
   std::vector<LoopThread> loop_threads_;
 
 };

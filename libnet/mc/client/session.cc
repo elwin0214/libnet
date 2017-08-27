@@ -26,6 +26,7 @@ Session::Session(EventLoop* loop,
     connected_latch_(connected_latch),
     closed_latch_(closed_latch),
     high_water_mark_(high_water_mark),
+    reject_write_(false),
     timer_id_(),
     conn_(),
     connected_(false),
@@ -50,6 +51,7 @@ Session::Session(EventLoop* loop,
     connected_latch_(connected_latch),
     closed_latch_(closed_latch),
     high_water_mark_(high_water_mark),
+    reject_write_(false),
     timer_id_(),
     conn_(),
     connected_(false),
@@ -147,6 +149,7 @@ void Session::writeInLoop()
 
 void Session::notifyWrite()
 {
+  if (reject_write_) return;
   loop_->runInLoop(std::bind(&Session::writeInLoop, this));
 };
 
@@ -192,13 +195,16 @@ void Session::update()
 void Session::acceptWrite(const Conn& conn)
 {
   loop_->assertInLoopThread();
-  cache_.acceptSending();
+  //cache_.acceptSending();
+  reject_write_ = false;
+  notifyWrite();
 };
 
 void Session::rejectWrite(const Conn& conn, size_t size)
 {
   loop_->assertInLoopThread();
-  cache_.rejectSending();
+  reject_write_ = true;
+  //cache_.rejectSending();
 };
 
 }
