@@ -1,9 +1,9 @@
-#ifndef __LIBNET_MC_MSG_REQUEST_H__
-#define __LIBNET_MC_MSG_REQUEST_H__
+#ifndef __LIBNET_MC_MSG_MESSAGE_H__
+#define __LIBNET_MC_MSG_MESSAGE_H__
 #include <libnet/buffer.h>
 #include <string>
 #include <assert.h>
-#include "mcode.h"
+#include <libnet/mc/mcode.h>
 
 namespace mc
 {

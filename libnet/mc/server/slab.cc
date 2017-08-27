@@ -45,7 +45,7 @@ void Slab::push(Item* item)
 };
 
 
-SlabArray::SlabArray(const SlabOption& option)
+SlabList::SlabList(const SlabOption& option)
   : factor_(option.factor_),
     min_size_(option.min_size_),
     max_size_(option.max_size_),
@@ -56,7 +56,7 @@ SlabArray::SlabArray(const SlabOption& option)
   init();
 };
 
-void SlabArray::init()
+void SlabList::init()
 {
 
   if (factor_ <= 1)
@@ -65,8 +65,11 @@ void SlabArray::init()
   }
   min_size_ = ALIGN(ENTIRE_SIZE(min_size_));
   max_size_ = ALIGN(ENTIRE_SIZE(max_size_));
-  LOG_DEBUG << "min_size_ = " << min_size_ << " max_size_ = " << max_size_ ;
-  //std::list<int> sizes_;
+  if (batch_alloc_size_ < max_size_)
+    batch_alloc_size_ = max_size_;
+  LOG_DEBUG << " min_size_ = " << min_size_ 
+            << " max_size_ = " << max_size_ 
+            << " batch_alloc_size_ = " << batch_alloc_size_;
   size_t size;
   size_t last_size;
   for (size = min_size_; size <= max_size_; )
@@ -78,7 +81,6 @@ void SlabArray::init()
   }
   if (last_size < max_size_)
   {
-    //size = (max_size_);
     last_size = max_size_;
     sizes_.push_back(max_size_);
   }
@@ -109,12 +111,17 @@ void SlabArray::init()
 
   for (auto& slab : slabs_)
   {
-    doAlloc(slab);
+    if (doAlloc(slab) <= 0)
+    {
+      LOG_SYSFATAL << " slab_index = " << (slab.index()) 
+                   << " item_size = " << slab.item_size()
+                   << " can not alloc " << batch_alloc_size_ << " bytes memory";
+    }
   }
   //max_data_size_ = max_size_ - sizeof(Item);
 };
 
-void SlabArray::doAlloc(Slab& slab)
+size_t SlabList::doAlloc(Slab& slab)
 {
   size_t item_size = slab.item_size();
   assert(item_size <= max_size_);
@@ -124,21 +131,31 @@ void SlabArray::doAlloc(Slab& slab)
   if (ptr != NULL)
   {
     size_t offset = 0;
+    size_t number = 0;
     for(; offset + item_size <= batch_alloc_size_; )
     {
       void* item_ptr = static_cast<void*>(ptr + offset);
       Item* item = new (item_ptr)Item(slab.index(), item_size - sizeof(Item));
       offset += item_size;
-      LOG_TRACE << "slab.index = " << (slab.index()) << "item->size()= " << (item->size()) << " " << (item->size_) ;
       slab.push(item);
+      number++;
     }
+    LOG_TRACE << " slab_index = " << (slab.index()) 
+              << " item_size = " << item_size 
+              << " batch_size = " << batch_alloc_size_
+              << " number = " << number;
+    return number;
   }
   else
-    LOG_ERROR << "can not alloc " << batch_alloc_size_ << " bytes memory";
-
+  {
+    LOG_ERROR << " slab_index = " << (slab.index()) 
+              << " item_size = " << item_size 
+              << " can not alloc " << batch_alloc_size_ << " bytes memory";
+    return 0;
+  }
 };
 
-Item* SlabArray::pop(size_t data_size, int& index)
+Item* SlabList::pop(size_t data_size, int& index)
 { 
 
   size_t item_size = ENTIRE_SIZE(data_size);
@@ -170,7 +187,7 @@ Item* SlabArray::pop(size_t data_size, int& index)
   return item;
 };
   
-void SlabArray::push(Item* item)
+void SlabList::push(Item* item)
 {
   slabs_[item->index()].push(item); 
 };

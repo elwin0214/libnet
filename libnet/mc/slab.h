@@ -5,8 +5,9 @@
 #include <vector>
 #include <libnet/nocopyable.h>
 #include <libnet/logger.h>
-#include "allocator.h"
-#include "item.h"
+#include <libnet/mutexlock.h>
+#include <libnet/mc/allocator.h>
+#include <libnet/mc/item.h>
 
 namespace mc
 {
@@ -40,7 +41,8 @@ struct SlabOption
   size_t total_mem_size_; //所需的总内存大小
 };
 
-class Slab// : public NoCopyable
+// vector.reserve 扩容时候,Slab必须有copy构造，这里使用移动构造
+class Slab : public NoCopyable
 {
 
 public:
@@ -53,6 +55,19 @@ public:
   {
 
   }
+
+  Slab(Slab&& slab) noexcept
+    : number_(slab.number_),
+      index_(slab.index_),
+      item_size_(slab.item_size_),
+      head_(slab.head_),
+      tail_(slab.tail_)
+  {
+    head_ = NULL;
+    tail_ = NULL;
+  }
+
+  ~Slab() noexcept {}
 
   bool empty(){ return head_ == NULL; }
 
@@ -75,11 +90,11 @@ private:
 
 };
 
-class SlabArray : public NoCopyable
+class SlabList : public NoCopyable
 {
 
 public:
-  SlabArray(const SlabOption& option);
+  SlabList(const SlabOption& option);
 
   Item* pop(size_t data_size, int& index);
   
@@ -87,11 +102,11 @@ public:
 
   Slab& operator[](size_t index) { return slabs_[index]; }
 
-  size_t slabs() { return slabs_.size(); }
+  size_t size() { return slabs_.size(); }
     
 private:
   void init();
-  void doAlloc(Slab& slab);
+  size_t doAlloc(Slab& slab);
 
 private:
   double factor_;
@@ -102,6 +117,41 @@ private:
   std::vector<Slab> slabs_;
   MemoryAllocator allocator_;
 };
+
+class ConcurrentSlabList
+{
+public:
+  ConcurrentSlabList(const SlabOption& option)
+    : slablist_(option),
+      size_(slablist_.size()),
+      lock_()
+  {
+
+  }
+
+  Item* pop(size_t data_size, int& index)
+  {
+    LockGuard guard(lock_);
+    return slablist_.pop(data_size, index);
+  }
+  
+  void push(Item* item)
+  {
+    LockGuard guard(lock_);
+    slablist_.push(item);
+  }
+
+  size_t size() const
+  {
+    return size_;
+  }
+
+private:
+  SlabList slablist_;
+  size_t size_;
+  MutexLock lock_;
+};
+//class Slabs
 
 }
 }

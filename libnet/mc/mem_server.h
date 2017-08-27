@@ -5,9 +5,9 @@
 #include <libnet/server.h>
 #include <libnet/mutexlock.h>
 #include <memory>
-#include "message.h"
-#include "request_codec.h"
-#include "response_codec.h"
+#include <libnet/mc/message.h>
+#include <libnet/mc/request_codec.h>
+#include <libnet/mc/response_codec.h>
 
 namespace mc
 {
@@ -22,7 +22,7 @@ class MemServer : public libnet::NoCopyable
 public:
   typedef std::shared_ptr<Connection> Conn;
 
-  MemServer(EventLoop* loop, const char* ip, int port, size_t max_connections);
+  MemServer(EventLoop* loop, const char* ip, int port, EventLoopGroup* loop_group = NULL, size_t max_connections = 1000);
 
   void start();
   
@@ -43,9 +43,6 @@ private:
 
   RequestCodec request_codec_;
   ResponseCodec response_codec_;
-
-  // std::function<void(Message&, Buffer&)> encodec_;
-  // std::function<bool(Message&, Buffer&)> decodec_;
 
 };
 

@@ -1,7 +1,7 @@
 #ifndef __LIBNET_MC_MSG_RESPONSECODEC_H__
 #define __LIBNET_MC_MSG_RESPONSECODEC_H__
 #include <libnet/buffer.h>
-#include "message.h"
+#include <libnet/mc/message.h>
 
 namespace mc
 {

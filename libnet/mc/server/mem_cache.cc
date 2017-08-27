@@ -10,20 +10,20 @@ using namespace libnet;
 void MemCache::remove(Item* item)
 {
   hash_table_.removeItem(item);
-  slab_array_.push(item);
+  slablist_.push(item);
 };
 
 Item* MemCache::find(const char* key, bool lru)
 {
   Item* item = hash_table_.get(key);
-  uint64_t now = Timestamp::now().secondsValue();
   if (NULL == item) return NULL;
+  uint64_t now = Timestamp::now().secondsValue();
   if (item->expired(now))
   {
     LOG_TRACE << "key = " << (item->key()) << " exptime = " << (item->get_exptime()) << " result = expired" ;
     lru_list_.remove(item);
     hash_table_.removeItem(item);
-    slab_array_.push(item);
+    slablist_.push(item);
     return NULL;
   }
   if (lru)
@@ -36,14 +36,13 @@ Item* MemCache::find(const char* key, bool lru)
 Item* MemCache::alloc(size_t data_size)
 {
   int index = -1; 
-  uint64_t now = Timestamp::now().secondsValue();
-  Item* item = slab_array_.pop(data_size, index);
+  Item* item = slablist_.pop(data_size, index);
   if (item != NULL) 
     return item;
-
   if (index >= 0)
   {
     assert(index < 256);
+    uint64_t now = Timestamp::now().secondsValue();
     item = lru_list_.recycle(index, now);
     if (NULL != item) 
       hash_table_.removeItem(item);

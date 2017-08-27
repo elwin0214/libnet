@@ -2,6 +2,7 @@
 #include <libnet/mc/mem_handler.h>
 #include <libnet/mc/mcode.h>
 #include <libnet/mc/message.h>
+#include <libnet/mc/item.h>
 
 namespace mc
 {
@@ -12,9 +13,13 @@ static const size_t kSecondsOneMonth = 30 * 24 * 3600;
 
 void MemHandler::handle(Message& request, Message& response)
 {
+  size_t hashcode = hash_func_(request.data_.key_);
+  size_t shard = hashcode%shards_;
+  LockGuard guard(locks_[shard]);
+  MemCache& cache = *(caches_[shard]);
   if (request.data_.op_ == Opt::kGet)
   {
-    Item* item = cache_.find(request.data_.key_.c_str(), true);
+    Item* item = cache.find(request.data_.key_.c_str(), true);
     if (NULL ==  item)
     {
       response.stat_.code_ = kFail;
@@ -26,7 +31,7 @@ void MemHandler::handle(Message& request, Message& response)
   }
   else if (request.data_.op_ == Opt::kSet || request.data_.op_ == Opt::kReplace || request.data_.op_ == Opt::kAdd)
   {
-    Item* item = cache_.find(request.data_.key_.c_str(), false);
+    Item* item = cache.find(request.data_.key_.c_str(), false);
     if (NULL == item)
     {
       if (request.data_.op_ == Opt::kReplace)
@@ -43,8 +48,8 @@ void MemHandler::handle(Message& request, Message& response)
         return;
       }
     }
-    if (NULL != item) cache_.remove(item);
-    Item* nitem = cache_.alloc(request.data_.key_.size() + request.data_.value_.size() + 2);
+    if (NULL != item) cache.remove(item);
+    Item* nitem = cache.alloc(request.data_.key_.size() + request.data_.value_.size() + 2);
     if (NULL == nitem)
     {
       LOG_ERROR << "can not alloc!" ;
@@ -56,15 +61,17 @@ void MemHandler::handle(Message& request, Message& response)
     else if (request.data_.exptime_ <= kSecondsOneMonth) nitem->set_exptime(now + request.data_.exptime_);// todo overflow
     else nitem->set_exptime(request.data_.exptime_ );
     nitem->set_time(now);
-    nitem->set_key(request.data_.key_.c_str(), request.data_.key_.size());
+    string& key = request.data_.key_;
+    nitem->set_key(key.c_str(), key.size());
     nitem->set_value(request.data_.value_.c_str(), request.data_.value_.size());
-    cache_.add(nitem);
+    nitem->set_hashcode(hash_func_(key));
+    cache.add(nitem);
     response.stat_.code_ = kSucc;
     return;
   }
   else if (request.data_.op_ == Opt::kDelete)
   {
-    Item* item = cache_.find(request.data_.key_.c_str(), false);
+    Item* item = cache.find(request.data_.key_.c_str(), false);
     if (NULL != item)
     {
       response.stat_.code_ = kFail;
@@ -72,14 +79,14 @@ void MemHandler::handle(Message& request, Message& response)
     }
     else
     {
-      cache_.remove(item);
+      cache.remove(item);
       response.stat_.code_ = kSucc;
       return;
     }
   }
   else if (request.data_.op_ == Opt::kIncr || request.data_.op_ == Opt::kDecr)
   {
-    Item* item = cache_.find(request.data_.key_.c_str(), true);
+    Item* item = cache.find(request.data_.key_.c_str(), true);
     if (NULL != item)
     {
       response.stat_.code_ = kFail;

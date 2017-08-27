@@ -15,7 +15,7 @@ struct RequestCodec
   bool decode(Message& message, Buffer& buffer);
 
   bool decodeSimple(Message& message, Buffer& buffer);
-  bool decodeStore(Message& message, Buffer& buffer);
+  bool decodeStore(Message& message, Buffer& buffer, const char* end);
   bool decodeCount(Message& message, Buffer& buffer);
 };
 

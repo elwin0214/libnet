@@ -60,10 +60,17 @@ void LRUList::add(Item* item)
 Item* LRUList::recycle(size_t index, uint64_t now)
 {
   Item* item = tail_item_list_[index];
-  if (NULL == item) return NULL;
-  for (; NULL != item; item = item->prev_) 
+  if (NULL == item)
   {
-    if (item->exptime_ == 0) continue; // dont remove the item whose exptime is 0
+    return NULL;
+  }
+  int number = 0; 
+  for (; NULL != item && number < 3; item = item->prev_) 
+  { 
+    number++;
+    // dont remove the item whose exptime is 0
+    // may slow the request if all item exptime is 0.
+    if (item->exptime_ == 0) continue; 
     if (item->exptime_ < now)
     {
       remove(item);

@@ -36,7 +36,8 @@ enum Opt
   kDelete = 4,
   kIncr = 5,
   kDecr = 6,
-  kVer = 7
+  kVer = 7,
+  kQuit = 8
 };
 
 enum State
@@ -48,7 +49,7 @@ enum State
   kLineEnd
 };
 
-static const char* OpName[8] = 
+static const char* OpName[9] = 
 {
   "add", 
   "replace", 
@@ -57,7 +58,8 @@ static const char* OpName[8] =
   "delete",
   "incr",
   "decr",
-  "version"
+  "version",
+  "quit"
 };
 static const char* CRLF = "\r\n";
 

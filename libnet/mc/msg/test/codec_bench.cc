@@ -1,6 +1,7 @@
 #include <benchmark/benchmark.h>
 #include <libnet/buffer.h>
 #include <gtest/gtest.h>
+#include <chrono>
 #include <iostream>
 #include <libnet/mc/message.h>
 #include <libnet/mc/request_codec.h>

@@ -72,10 +72,10 @@ bool RequestCodec::decode(Message& message, Buffer& buffer)
 { 
   Stat& stat = message.stat_;
   Data& data = message.data_;
-
+  const char* end = NULL;
   if (data.op() == kNo)
   {
-    const char* end = buffer.find(CRLF);
+    end = buffer.find(CRLF);
     if (NULL == end) return false; 
     buffer.trim();
     if (buffer.startWiths("get")) data.op_ = kGet;
@@ -87,7 +87,15 @@ bool RequestCodec::decode(Message& message, Buffer& buffer)
     else if (buffer.startWiths("decr")) data.op_ = kDecr;
     else if (buffer.startWiths("version"))
     {
+      stat.code_ = kSucc;
       data.op_ = kVer;
+      buffer.skip(end - buffer.beginRead() + 2);
+      return true;
+    }
+    else if (buffer.startWiths("quit"))
+    {
+      stat.code_ = kSucc;
+      data.op_ = kQuit;
       buffer.skip(end - buffer.beginRead() + 2);
       return true;
     }
@@ -101,9 +109,9 @@ bool RequestCodec::decode(Message& message, Buffer& buffer)
   }
 
   if (data.op_ == kGet) return decodeSimple(message, buffer);
-  if (data.op_ == kSet) return decodeStore(message, buffer);
-  if (data.op_ == kReplace) return decodeStore(message, buffer);
-  if (data.op_ == kAdd) return decodeStore(message, buffer);
+  if (data.op_ == kSet) return decodeStore(message, buffer, end);
+  if (data.op_ == kReplace) return decodeStore(message, buffer, end);
+  if (data.op_ == kAdd) return decodeStore(message, buffer, end);
   if (data.op_ == kDelete) return decodeSimple(message, buffer);
   if (data.op_ == kIncr || data.op_ == kDecr) return decodeCount(message, buffer);
   else
@@ -159,7 +167,7 @@ bool RequestCodec::decodeCount(Message& message, Buffer& buffer)
   return true; 
 };
 
-bool RequestCodec::decodeStore(Message& message, Buffer& buffer)
+bool RequestCodec::decodeStore(Message& message, Buffer& buffer, const char* cmd_end)
 {
   Data& data = message.data_;
   Stat& stat = message.stat_;
@@ -170,7 +178,7 @@ bool RequestCodec::decodeStore(Message& message, Buffer& buffer)
     {
       case kLineCmd:
       {
-        const char* end = buffer.find(CRLF);
+        const char* end = cmd_end;//buffer.find(CRLF);
         if (NULL == end) return false;
         const char* start = buffer.beginRead();
         Reader reader(start, end, ' ');

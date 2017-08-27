@@ -11,11 +11,10 @@ TEST(Slab, prealloc_slab)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
-  SlabArray slab_array(option);
-  //slab_array.init();
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 100};
+  SlabList slab_list(option);
   int item_index = -1;
-  Item* item = slab_array.pop(16, item_index);
+  Item* item = slab_list.pop(16, item_index);
   ASSERT_TRUE(NULL != item);
   ASSERT_EQ(item->size(), 16);
   const char* k = "abcdefg";
@@ -32,13 +31,13 @@ TEST(Slab, slab_number)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
-  SlabArray slab_array(option);
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 100};
+  SlabList slab_list(option);
 
-  size_t slabs = slab_array.slabs();
-  for (size_t i = 0 ; i < slabs; i++)
+  size_t slab_size = slab_list.size();
+  for (size_t i = 0 ; i < slab_size; i++)
   {
-    Slab& slab = slab_array[i];
+    Slab& slab = slab_list[i];
     cout << "index = " << (slab.index()) <<"item size = " << (slab.item_size()) <<" number = " << (slab.number()) << endl; 
   }
 }
@@ -47,14 +46,14 @@ TEST(Slab, pop_push)
 {
   log::LogLevel logLevel = log::LogLevel(0);
   setLogLevel(logLevel);
-  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 2};
-  SlabArray slab_array(option);
+  SlabOption option = {16, 1024, 1.2, 1024, true, 1024 * 1024 * 100};
+  SlabList slab_list(option);
 
-  Slab& slab = slab_array[0];
+  Slab& slab = slab_list[0];
 
   std::vector<Item*> items;
   int item_index = -1;
-  Item* item = slab_array.pop(16, item_index); //index = 0
+  Item* item = slab_list.pop(16, item_index); //index = 0
 
   ASSERT_TRUE(NULL != item);
   items.push_back(item);// first 

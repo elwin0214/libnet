@@ -15,6 +15,8 @@ namespace server
 using namespace libnet;
 class Item : public NoCopyable
 {
+public:
+  typedef std::function<size_t(std::string)>  HashFunc;
 
 public:
   Item(uint8_t index, uint32_t size)
@@ -24,7 +26,7 @@ public:
       //hash_next_(NULL),
       index_(index),
       size_(size),
-      hash_(0),
+      hashcode_(0),
       flags_(0), 
       time_(0),
       exptime_(0), 
@@ -38,7 +40,7 @@ public:
   {
     prev_ = NULL;
     next_ = NULL;
-    hash_ = 0;
+    hashcode_ = 0;
     flags_ = 0;
     exptime_ = 0;
   }
@@ -52,8 +54,9 @@ public:
     ::memcpy(data_, key, len);
     data_[len] = '\0';
     key_size_ = len;
-    hash_ = std::hash<std::string>()(std::string(data_, len));
-  }
+  };
+
+  void set_hashcode(size_t hashcode) { hashcode_ = hashcode; }
 
   void set_value(const char* value, uint16_t len)
   {
@@ -79,6 +82,7 @@ public:
 
   void set_exptime(uint64_t exptime) { exptime_ = exptime; }
   uint64_t get_exptime() { return exptime_; }
+
   bool expired(uint64_t now)
   { 
     if (exptime_ == 0)
@@ -91,11 +95,11 @@ public:
   }
   void set_time(uint64_t time) { time_ = time; }
   uint64_t get_time() {return time_; }
-
+  size_t hashcode() { return hashcode_; }
 
 private:
   ~Item(){} //can not be delete
-
+  
 public:
   Item* prev_;
   Item* next_;    
@@ -103,15 +107,19 @@ public:
   //Item* hash_next_;
   const uint8_t index_;  //const
   const uint32_t size_; // const
-  size_t hash_;
+  size_t hashcode_;
   uint16_t flags_; 
   uint64_t time_; 
   uint64_t exptime_; 
   uint32_t bytes_;  // the length of value
   uint8_t key_size_; // the length of key
-  char data_[0]; //store the key and value, <key>\0<value>\0//align??
+  char data_[0]; //store the key and value, <key>\0<value>\0//align?
+
+// public:
+//   static HashFunc hash_func_;
 
 };
+
 }
 }
 

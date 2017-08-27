@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <assert.h>
-#include "item.h"
+#include <libnet/mc/item.h>
 
 namespace mc
 {

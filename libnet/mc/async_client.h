@@ -6,7 +6,7 @@
 #include <libnet/mutexlock.h>
 #include <string>
 #include <future>
-#include "command.h"
+#include <libnet/mc/command.h>
 
 namespace mc
 {

@@ -27,8 +27,8 @@ TEST(LoggerStream, append_over)
   }
   stream << "abc" ;
   stream << "def" ;
-  ASSERT_EQ(stream.buffer().remain(), 0);
-  ASSERT_EQ(stream.buffer().size(), 1024);
+  ASSERT_EQ(stream.buffer().remain(), 1);
+  ASSERT_EQ(stream.buffer().size(), 1023);
 }
 
 TEST(LoggerStream, close)

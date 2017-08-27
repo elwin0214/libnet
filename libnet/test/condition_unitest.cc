@@ -127,9 +127,8 @@ TEST(Condition, wait)
     sleep(1);// 1s
     c.notifyAll();
   }).start();
-  bool r = c.wait(2000);
-
-  ASSERT_TRUE(!r);
+  int64_t remain = c.wait(2000);
+  ASSERT_TRUE(remain > 500 && remain < 1500);
 
 }
 

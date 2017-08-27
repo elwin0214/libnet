@@ -14,8 +14,8 @@ namespace server
 {
 using namespace libnet;
 
-MemServer::MemServer(EventLoop* loop, const char* ip, int port, size_t max_connections)
-  : server_(loop, ip, port), //single thread server
+MemServer::MemServer(EventLoop* loop, const char* ip, int port, EventLoopGroup* loop_group, size_t max_connections)
+  : server_(loop, ip, port, loop_group), 
     kMaxConnecitons_(max_connections),
     num_connections_(0),
     request_codec_(),
@@ -32,6 +32,7 @@ void MemServer::start()
 
 void MemServer::onConnection(const Conn& conn)
 {
+
   if (conn->connected())
   {
     num_connections_++;
@@ -62,6 +63,12 @@ void MemServer::onMessage(const Conn& conn)
       conn->send("ERROR\r\n");
       request.reset();
       continue;
+    }
+    if (request.data_.op_ == kQuit)
+    {
+      LOG_DEBUG << " conn = " << conn->get_name() << " quit";
+      conn->shutdown();
+      return;
     }
     LOG_TRACE << " op = " << request.op()  << " key = "  << request.data_.key_;
     Message response(request.data_.op_);

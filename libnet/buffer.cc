@@ -67,13 +67,15 @@ bool Buffer::equals(const char* str)
 
 const char* Buffer::find(size_t pos, const char* str)
 {
-  assert (pos <= readable());
-  for (size_t i = pos; i < readable(); i++)
+  size_t len = readable();
+  size_t str_len = strlen(str);
+  assert (pos <= len);
+  for (size_t i = pos; i < len; i++)
   {
     bool found = true;
-    for (size_t start = 0; start < strlen(str); start++)
+    for (size_t start = 0; start < str_len; start++)
     {
-      if (start + i >= readable()) return NULL;
+      if (start + i >= len) return NULL;
       if (at(start + i) == str[start]) continue;
       else 
       {

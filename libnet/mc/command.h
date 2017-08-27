@@ -4,10 +4,10 @@
 #include <libnet/buffer.h>
 #include <libnet/countdown_latch.h>
 #include <string>
-#include "mcode.h"
-#include "message.h"
-#include "request_codec.h"
-#include "response_codec.h"
+#include <libnet/mc/mcode.h>
+#include <libnet/mc/message.h>
+#include <libnet/mc/request_codec.h>
+#include <libnet/mc/response_codec.h>
 
 namespace mc
 {

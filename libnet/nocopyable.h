@@ -13,7 +13,7 @@ protected:
 
 private:
   NoCopyable(const NoCopyable &);
-  const NoCopyable& operator=(const NoCopyable &);
+  NoCopyable& operator=(const NoCopyable &);
 
 };
 
