@@ -136,6 +136,7 @@ public:
         if (!front_conn) return;
         front_conn->shutdown();
         int id = front_conn->id();
+        //it is executed in session.closedCallBack，so we can not free the Session object this time
         conn->loop()->queueInLoop(bind(&Proxy::removeSession, self, id));// queueInLoop
         latch.countDown();
       });
